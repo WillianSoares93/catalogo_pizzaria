@@ -161,13 +161,8 @@
                 padding-bottom: 0.5rem; /* pb-2 */
                 box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* subtle shadow */
             }
-            .category-buttons-mobile-flex-col {
-                flex-direction: column;
-                gap: 0.5rem; /* space-y-2 */
-            }
-            .category-buttons-mobile-overflow {
-                overflow-x: hidden; /* No horizontal scroll on mobile when stacked */
-            }
+            /* Removed flex-direction: column and gap for horizontal layout on mobile */
+            /* Removed overflow-x: hidden for horizontal scroll on mobile */
         }
     </style>
 </head>
@@ -195,8 +190,7 @@
                     <!-- Sticky Category Buttons Container -->
                     <div class="category-bar-mobile-sticky lg:static lg:p-0">
                         <div class="flex space-x-2 mb-6 overflow-x-auto pb-2 
-                                    lg:flex-row lg:space-x-2 lg:mb-6 lg:overflow-visible lg:pb-0
-                                    category-buttons-mobile-flex-col category-buttons-mobile-overflow">
+                                    lg:flex-row lg:space-x-2 lg:mb-6 lg:overflow-visible lg:pb-0">
                             <button class="category-btn px-4 py-2 rounded-full bg-red-600 text-white whitespace-nowrap lg:flex-grow-0 lg:flex-shrink-0" data-category="tradicionais" data-target-id="tradicionais-section">Tradicionais</button>
                             <button class="category-btn px-4 py-2 rounded-full bg-gray-200 text-gray-800 whitespace-nowrap lg:flex-grow-0 lg:flex-shrink-0" data-category="especiais" data-target-id="especiais-section">Especiais</button>
                             <button class="category-btn px-4 py-2 rounded-full bg-gray-200 text-gray-800 whitespace-nowrap lg:flex-grow-0 lg:flex-shrink-0" data-category="doces" data-target-id="doces-section">Doces</button>
@@ -665,15 +659,15 @@
 
             // Função para enviar o pedido para o WhatsApp
             function sendOrderToWhatsapp() {
-                let orderMessage = `*Pedido Sua Pizzaria:*\n\n*Itens:*\n`; // Alterado aqui
+                let orderMessage = `Boa noite, esse será meu pedido!\n\n*Itens:*\n`; // Alterado aqui
                 order.forEach(item => {
                     let line = '';
                     if (item.selected_slices) { // Verifica se é um item de pizza pela presença de selected_slices
                         const sizeLabel = `${item.selected_slices} FATIAS`.toUpperCase();
                         if (item.type === 'half_pending') {
-                            line = `- *${sizeLabel}*: ${item.name} (Aguardando 2ª metade)`;
+                            line = `- *${sizeLabel}*: ${item.name} (Aguardando 2ª metade) - R$ ${item.price.toFixed(2).replace('.', ',')}`;
                         } else {
-                            line = `- *${sizeLabel}*: ${item.name}`;
+                            line = `- *${sizeLabel}*: ${item.name} - R$ ${item.price.toFixed(2).replace('.', ',')}`; // Incluindo o preço
                         }
                     } else {
                         // Para outros itens (como bebidas), usa o formato original
@@ -688,8 +682,8 @@
                 orderMessage += `\n*Resumo:*\n`;
                 orderMessage += `Subtotal: R$ ${subtotal.toFixed(2).replace('.', ',')}\n`;
                 orderMessage += `Taxa de entrega: R$ ${deliveryFee.toFixed(2).replace('.', ',')}\n`;
-                orderMessage += `Total: R$ ${total.toFixed(2).replace('.', ',')}\n\n`;
-                orderMessage += `Pedido enviado! Aguardando confirmação.`; // Alterado aqui
+                orderMessage += `Total: R$ ${total.toFixed(2).replace('.', ',')}`;
+                // Removido: orderMessage += `\n\nPedido enviado! Aguardando confirmação.`;
 
                 const encodedMessage = encodeURIComponent(orderMessage);
                 const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
