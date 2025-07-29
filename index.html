@@ -149,6 +149,26 @@
             height: 70px; /* Altura ajustada para retangular */
             object-fit: contain; /* Garante que a imagem se ajuste sem distorção */
         }
+
+        /* Custom styles for sticky category bar on mobile */
+        @media (max-width: 1023px) { /* Applies to screens smaller than 'lg' breakpoint */
+            .category-bar-mobile-sticky {
+                position: sticky;
+                top: 0;
+                z-index: 10;
+                background-color: #f9fafb; /* bg-gray-50 */
+                padding-top: 1rem; /* pt-4 */
+                padding-bottom: 0.5rem; /* pb-2 */
+                box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* subtle shadow */
+            }
+            .category-buttons-mobile-flex-col {
+                flex-direction: column;
+                gap: 0.5rem; /* space-y-2 */
+            }
+            .category-buttons-mobile-overflow {
+                overflow-x: hidden; /* No horizontal scroll on mobile when stacked */
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-50 font-sans">
@@ -172,237 +192,253 @@
                         <i class="fas fa-hand-point-right mr-1"></i> Arraste para o lado para ver outras opções
                     </div>
 
-                    <!-- Botões de Categoria das Pizzas -->
-                    <div class="flex space-x-2 mb-6 overflow-x-auto pb-2">
-                        <button class="category-btn px-4 py-2 rounded-full bg-red-600 text-white whitespace-nowrap" data-category="tradicionais">Tradicionais</button>
-                        <button class="category-btn px-4 py-2 rounded-full bg-gray-200 text-gray-800 whitespace-nowrap" data-category="especiais">Especiais</button>
-                        <button class="category-btn px-4 py-2 rounded-full bg-gray-200 text-gray-800 whitespace-nowrap" data-category="doces">Doces</button>
-                        <button class="category-btn px-4 py-2 rounded-full bg-gray-200 text-gray-800 whitespace-nowrap" data-category="bebidas">Bebidas</button>
+                    <!-- Sticky Category Buttons Container -->
+                    <div class="category-bar-mobile-sticky lg:static lg:p-0">
+                        <div class="flex space-x-2 mb-6 overflow-x-auto pb-2 
+                                    lg:flex-row lg:space-x-2 lg:mb-6 lg:overflow-visible lg:pb-0
+                                    category-buttons-mobile-flex-col category-buttons-mobile-overflow">
+                            <button class="category-btn px-4 py-2 rounded-full bg-red-600 text-white whitespace-nowrap lg:flex-grow-0 lg:flex-shrink-0" data-category="tradicionais" data-target-id="tradicionais-section">Tradicionais</button>
+                            <button class="category-btn px-4 py-2 rounded-full bg-gray-200 text-gray-800 whitespace-nowrap lg:flex-grow-0 lg:flex-shrink-0" data-category="especiais" data-target-id="especiais-section">Especiais</button>
+                            <button class="category-btn px-4 py-2 rounded-full bg-gray-200 text-gray-800 whitespace-nowrap lg:flex-grow-0 lg:flex-shrink-0" data-category="doces" data-target-id="doces-section">Doces</button>
+                            <button class="category-btn px-4 py-2 rounded-full bg-gray-200 text-gray-800 whitespace-nowrap lg:flex-grow-0 lg:flex-shrink-0" data-category="bebidas" data-target-id="bebidas-section">Bebidas</button>
+                        </div>
                     </div>
                     
                     <!-- Lista de Itens do Cardápio -->
                     <div id="pizza-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <!-- Itens Tradicionais -->
-                        <div class="pizza-item tradicionais bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                            <div class="p-4">
-                                <h3 class="font-bold text-lg text-gray-800">Margherita</h3>
-                                <p class="text-gray-600 text-sm mb-3">Molho de tomate, mussarela, manjericão fresco</p>
-                                <div class="flex justify-between items-center">
-                                    <span class="font-bold text-red-600">R$ 45,90</span>
-                                    <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
-                                            data-name="Margherita" 
-                                            data-price="45.90" 
-                                            data-description="Molho de tomate, mussarela, manjericão fresco"
-                                            data-is-pizza="true">
-                                        Adicionar
-                                    </button>
+                        <div id="tradicionais-section" class="pizza-category-section">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4">Pizzas Tradicionais</h3>
+                            <!-- Itens Tradicionais -->
+                            <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                                <div class="p-4">
+                                    <h4 class="font-bold text-lg text-gray-800">Margherita</h4>
+                                    <p class="text-gray-600 text-sm mb-3">Molho de tomate, mussarela, manjericão fresco</p>
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-bold text-red-600">R$ 45,90</span>
+                                        <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
+                                                data-name="Margherita" 
+                                                data-price="45.90" 
+                                                data-description="Molho de tomate, mussarela, manjericão fresco"
+                                                data-is-pizza="true">
+                                            Adicionar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                                <div class="p-4">
+                                    <h4 class="font-bold text-lg text-gray-800">Calabresa</h4>
+                                    <p class="text-gray-600 text-sm mb-3">Molho de tomate, mussarela, calabresa, cebola</p>
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-bold text-red-600">R$ 48,90</span>
+                                        <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
+                                                data-name="Calabresa" 
+                                                data-price="48.90" 
+                                                data-description="Molho de tomate, mussarela, calabresa, cebola"
+                                                data-is-pizza="true">
+                                            Adicionar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                                <div class="p-4">
+                                    <h4 class="font-bold text-lg text-gray-800">Quatro Queijos</h4>
+                                    <p class="text-gray-600 text-sm mb-3">Molho de tomate, mussarela, provolone, parmesão, gorgonzola</p>
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-bold text-red-600">R$ 52,90</span>
+                                        <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
+                                                data-name="Quatro Queijos" 
+                                                data-price="52.90" 
+                                                data-description="Molho de tomate, mussarela, provolone, parmesão, gorgonzola"
+                                                data-is-pizza="true">
+                                            Adicionar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                                <div class="p-4">
+                                    <h4 class="font-bold text-lg text-gray-800">Portuguesa</h4>
+                                    <p class="text-gray-600 text-sm mb-3">Molho de tomate, mussarela, presunto, ovos, cebola, azeitonas</p>
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-bold text-red-600">R$ 54,90</span>
+                                        <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
+                                                data-name="Portuguesa" 
+                                                data-price="54.90" 
+                                                data-description="Molho de tomate, mussarela, presunto, ovos, cebola, azeitonas"
+                                                data-is-pizza="true">
+                                            Adicionar
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                         
-                        <div class="pizza-item tradicionais bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                            <div class="p-4">
-                                <h3 class="font-bold text-lg text-gray-800">Calabresa</h3>
-                                <p class="text-gray-600 text-sm mb-3">Molho de tomate, mussarela, calabresa, cebola</p>
-                                <div class="flex justify-between items-center">
-                                    <span class="font-bold text-red-600">R$ 48,90</span>
-                                    <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
-                                            data-name="Calabresa" 
-                                            data-price="48.90" 
-                                            data-description="Molho de tomate, mussarela, calabresa, cebola"
-                                            data-is-pizza="true">
-                                        Adicionar
-                                    </button>
+                        <div id="especiais-section" class="pizza-category-section">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4">Pizzas Especiais</h3>
+                            <!-- Itens Especiais -->
+                            <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                                <div class="p-4">
+                                    <h4 class="font-bold text-lg text-gray-800">Frango com Catupiry</h4>
+                                    <p class="text-gray-600 text-sm mb-3">Molho de tomate, mussarela, frango desfiado, catupiry</p>
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-bold text-red-600">R$ 56,90</span>
+                                        <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
+                                                data-name="Frango com Catupiry" 
+                                                data-price="56.90" 
+                                                data-description="Molho de tomate, mussarela, frango desfiado, catupiry"
+                                                data-is-pizza="true">
+                                            Adicionar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                                <div class="p-4">
+                                    <h4 class="font-bold text-lg text-gray-800">Pepperoni</h4>
+                                    <p class="text-gray-600 text-sm mb-3">Molho de tomate, mussarela, pepperoni, pimentão</p>
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-bold text-red-600">R$ 58,90</span>
+                                        <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
+                                                data-name="Pepperoni" 
+                                                data-price="58.90" 
+                                                data-description="Molho de tomate, mussarela, pepperoni, pimentão"
+                                                data-is-pizza="true">
+                                            Adicionar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                                <div class="p-4">
+                                    <h4 class="font-bold text-lg text-gray-800">Vegetariana</h4>
+                                    <p class="text-gray-600 text-sm mb-3">Molho de tomate, mussarela, berinjela, abobrinha, pimentão, champignon</p>
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-bold text-red-600">R$ 55,90</span>
+                                        <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
+                                                data-name="Vegetariana" 
+                                                data-price="55.90" 
+                                                data-description="Molho de tomate, mussarela, berinjela, abobrinha, pimentão, champignon"
+                                                data-is-pizza="true">
+                                            Adicionar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                                <div class="p-4">
+                                    <h4 class="font-bold text-lg text-gray-800">Bacon Supreme</h4>
+                                    <p class="text-gray-600 text-sm mb-3">Molho de tomate, mussarela, bacon, milho, cebola caramelizada</p>
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-bold text-red-600">R$ 59,90</span>
+                                        <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
+                                                data-name="Bacon Supreme" 
+                                                data-price="59.90" 
+                                                data-description="Molho de tomate, mussarela, bacon, milho, cebola caramelizada"
+                                                data-is-pizza="true">
+                                            Adicionar
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                         
-                        <div class="pizza-item tradicionais bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                            <div class="p-4">
-                                <h3 class="font-bold text-lg text-gray-800">Quatro Queijos</h3>
-                                <p class="text-gray-600 text-sm mb-3">Molho de tomate, mussarela, provolone, parmesão, gorgonzola</p>
-                                <div class="flex justify-between items-center">
-                                    <span class="font-bold text-red-600">R$ 52,90</span>
-                                    <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
-                                            data-name="Quatro Queijos" 
-                                            data-price="52.90" 
-                                            data-description="Molho de tomate, mussarela, provolone, parmesão, gorgonzola"
-                                            data-is-pizza="true">
-                                        Adicionar
-                                    </button>
+                        <div id="doces-section" class="pizza-category-section">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4">Pizzas Doces</h3>
+                            <!-- Itens Doces -->
+                            <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                                <div class="p-4">
+                                    <h4 class="font-bold text-lg text-gray-800">Chocolate com Morango</h4>
+                                    <p class="text-gray-600 text-sm mb-3">Chocolate ao leite, morangos frescos</p>
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-bold text-red-600">R$ 49,90</span>
+                                        <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
+                                                data-name="Chocolate com Morango" 
+                                                data-price="49.90" 
+                                                data-description="Chocolate ao leite, morangos frescos"
+                                                data-is-pizza="true">
+                                            Adicionar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                                <div class="p-4">
+                                    <h4 class="font-bold text-lg text-gray-800">Romeu e Julieta</h4>
+                                    <p class="text-gray-600 text-sm mb-3">Goiabada, mussarela, canela em pó</p>
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-bold text-red-600">R$ 47,90</span>
+                                        <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
+                                                data-name="Romeu e Julieta" 
+                                                data-price="47.90" 
+                                                data-description="Goiabada, mussarela, canela em pó"
+                                                data-is-pizza="true">
+                                            Adicionar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                                <div class="p-4">
+                                    <h4 class="font-bold text-lg text-gray-800">Banana Caramelada</h4>
+                                    <p class="text-gray-600 text-sm mb-3">Banana, doce de leite, canela</p>
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-bold text-red-600">R$ 46,90</span>
+                                        <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
+                                                data-name="Banana Caramelada" 
+                                                data-price="46.90" 
+                                                data-description="Banana, doce de leite, canela"
+                                                data-is-pizza="true">
+                                            Adicionar
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                         
-                        <div class="pizza-item tradicionais bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                            <div class="p-4">
-                                <h3 class="font-bold text-lg text-gray-800">Portuguesa</h3>
-                                <p class="text-gray-600 text-sm mb-3">Molho de tomate, mussarela, presunto, ovos, cebola, azeitonas</p>
-                                <div class="flex justify-between items-center">
-                                    <span class="font-bold text-red-600">R$ 54,90</span>
-                                    <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
-                                            data-name="Portuguesa" 
-                                            data-price="54.90" 
-                                            data-description="Molho de tomate, mussarela, presunto, ovos, cebola, azeitonas"
-                                            data-is-pizza="true">
-                                        Adicionar
-                                    </button>
+                        <div id="bebidas-section" class="pizza-category-section">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4">Bebidas</h3>
+                            <!-- Itens Bebidas (sem opção de meia por padrão) -->
+                            <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                                <div class="p-4">
+                                    <h4 class="font-bold text-lg text-gray-800">Refrigerante 600ml</h4>
+                                    <p class="text-gray-600 text-sm mb-3">Coca-Cola, Guaraná, Fanta, Sprite</p>
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-bold text-red-600">R$ 8,90</span>
+                                        <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
+                                                data-name="Refrigerante 600ml" 
+                                                data-price="8.90" 
+                                                data-description="Coca-Cola, Guaraná, Fanta, Sprite"
+                                                data-is-pizza="false">
+                                            Adicionar
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        
-                        <!-- Itens Especiais (inicialmente ocultos) -->
-                        <div class="pizza-item especiais hidden bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                            <div class="p-4">
-                                <h3 class="font-bold text-lg text-gray-800">Frango com Catupiry</h3>
-                                <p class="text-gray-600 text-sm mb-3">Molho de tomate, mussarela, frango desfiado, catupiry</p>
-                                <div class="flex justify-between items-center">
-                                    <span class="font-bold text-red-600">R$ 56,90</span>
-                                    <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
-                                            data-name="Frango com Catupiry" 
-                                            data-price="56.90" 
-                                            data-description="Molho de tomate, mussarela, frango desfiado, catupiry"
-                                            data-is-pizza="true">
-                                        Adicionar
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="pizza-item especiais hidden bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                            <div class="p-4">
-                                <h3 class="font-bold text-lg text-gray-800">Pepperoni</h3>
-                                <p class="text-gray-600 text-sm mb-3">Molho de tomate, mussarela, pepperoni, pimentão</p>
-                                <div class="flex justify-between items-center">
-                                    <span class="font-bold text-red-600">R$ 58,90</span>
-                                    <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
-                                            data-name="Pepperoni" 
-                                            data-price="58.90" 
-                                            data-description="Molho de tomate, mussarela, pepperoni, pimentão"
-                                            data-is-pizza="true">
-                                        Adicionar
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="pizza-item especiais hidden bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                            <div class="p-4">
-                                <h3 class="font-bold text-lg text-gray-800">Vegetariana</h3>
-                                <p class="text-gray-600 text-sm mb-3">Molho de tomate, mussarela, berinjela, abobrinha, pimentão, champignon</p>
-                                <div class="flex justify-between items-center">
-                                    <span class="font-bold text-red-600">R$ 55,90</span>
-                                    <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
-                                            data-name="Vegetariana" 
-                                            data-price="55.90" 
-                                            data-description="Molho de tomate, mussarela, berinjela, abobrinha, pimentão, champignon"
-                                            data-is-pizza="true">
-                                        Adicionar
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="pizza-item especiais hidden bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                            <div class="p-4">
-                                <h3 class="font-bold text-lg text-gray-800">Bacon Supreme</h3>
-                                <p class="text-gray-600 text-sm mb-3">Molho de tomate, mussarela, bacon, milho, cebola caramelizada</p>
-                                <div class="flex justify-between items-center">
-                                    <span class="font-bold text-red-600">R$ 59,90</span>
-                                    <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
-                                            data-name="Bacon Supreme" 
-                                            data-price="59.90" 
-                                            data-description="Molho de tomate, mussarela, bacon, milho, cebola caramelizada"
-                                            data-is-pizza="true">
-                                        Adicionar
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Itens Doces (inicialmente ocultos) -->
-                        <div class="pizza-item doces hidden bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                            <div class="p-4">
-                                <h3 class="font-bold text-lg text-gray-800">Chocolate com Morango</h3>
-                                <p class="text-gray-600 text-sm mb-3">Chocolate ao leite, morangos frescos</p>
-                                <div class="flex justify-between items-center">
-                                    <span class="font-bold text-red-600">R$ 49,90</span>
-                                    <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
-                                            data-name="Chocolate com Morango" 
-                                            data-price="49.90" 
-                                            data-description="Chocolate ao leite, morangos frescos"
-                                            data-is-pizza="true">
-                                        Adicionar
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="pizza-item doces hidden bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                            <div class="p-4">
-                                <h3 class="font-bold text-lg text-gray-800">Romeu e Julieta</h3>
-                                <p class="text-gray-600 text-sm mb-3">Goiabada, mussarela, canela em pó</p>
-                                <div class="flex justify-between items-center">
-                                    <span class="font-bold text-red-600">R$ 47,90</span>
-                                    <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
-                                            data-name="Romeu e Julieta" 
-                                            data-price="47.90" 
-                                            data-description="Goiabada, mussarela, canela em pó"
-                                            data-is-pizza="true">
-                                        Adicionar
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="pizza-item doces hidden bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                            <div class="p-4">
-                                <h3 class="font-bold text-lg text-gray-800">Banana Caramelada</h3>
-                                <p class="text-gray-600 text-sm mb-3">Banana, doce de leite, canela</p>
-                                <div class="flex justify-between items-center">
-                                    <span class="font-bold text-red-600">R$ 46,90</span>
-                                    <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
-                                            data-name="Banana Caramelada" 
-                                            data-price="46.90" 
-                                            data-description="Banana, doce de leite, canela"
-                                            data-is-pizza="true">
-                                        Adicionar
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Itens Bebidas (sem opção de meia por padrão) -->
-                        <div class="pizza-item bebidas hidden bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                            <div class="p-4">
-                                <h3 class="font-bold text-lg text-gray-800">Refrigerante 600ml</h3>
-                                <p class="text-gray-600 text-sm mb-3">Coca-Cola, Guaraná, Fanta, Sprite</p>
-                                <div class="flex justify-between items-center">
-                                    <span class="font-bold text-red-600">R$ 8,90</span>
-                                    <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
-                                            data-name="Refrigerante 600ml" 
-                                            data-price="8.90" 
-                                            data-description="Coca-Cola, Guaraná, Fanta, Sprite"
-                                            data-is-pizza="false">
-                                        Adicionar
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="pizza-item bebidas hidden bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                            <div class="p-4">
-                                <h3 class="font-bold text-lg text-gray-800">Suco Natural 500ml</h3>
-                                <p class="text-gray-600 text-sm mb-3">Laranja, Maracujá, Limão, Abacaxi</p>
-                                <div class="flex justify-between items-center">
-                                    <span class="font-bold text-red-600">R$ 10,90</span>
-                                    <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
-                                            data-name="Suco Natural 500ml" 
-                                            data-price="10.90" 
-                                            data-description="Laranja, Maracujá, Limão, Abacaxi"
-                                            data-is-pizza="false">
-                                        Adicionar
-                                    </button>
+                            
+                            <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                                <div class="p-4">
+                                    <h4 class="font-bold text-lg text-gray-800">Suco Natural 500ml</h4>
+                                    <p class="text-gray-600 text-sm mb-3">Laranja, Maracujá, Limão, Abacaxi</p>
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-bold text-red-600">R$ 10,90</span>
+                                        <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
+                                                data-name="Suco Natural 500ml" 
+                                                data-price="10.90" 
+                                                data-description="Laranja, Maracujá, Limão, Abacaxi"
+                                                data-is-pizza="false">
+                                            Adicionar
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -491,28 +527,19 @@
             // Seleciona todos os botões de categoria e todos os itens de pizza
             const categoryBtns = document.querySelectorAll('.category-btn');
             const pizzaItems = document.querySelectorAll('.pizza-item');
+            const categorySections = document.querySelectorAll('.pizza-category-section');
             
             // Adiciona um listener de clique para cada botão de categoria
             categoryBtns.forEach(btn => {
                 btn.addEventListener('click', function() {
-                    // Remove as classes de "ativo" de todos os botões e adiciona as de "inativo"
-                    categoryBtns.forEach(b => b.classList.remove('bg-red-600', 'text-white'));
-                    categoryBtns.forEach(b => b.classList.add('bg-gray-200', 'text-gray-800'));
-                    // Adiciona as classes de "ativo" ao botão clicado
-                    this.classList.remove('bg-gray-200', 'text-gray-800');
-                    this.classList.add('bg-red-600', 'text-white');
+                    const category = this.dataset.category;
+                    const targetId = this.dataset.targetId;
                     
-                    // Mostra apenas os itens da categoria selecionada
-                    const category = this.dataset.category; // Pega a categoria do atributo data-category
-                    pizzaItems.forEach(item => {
-                        if (item.classList.contains(category)) {
-                            item.classList.remove('hidden'); // Mostra o item
-                            item.classList.add('flip-in'); // Adiciona animação
-                        } else {
-                            item.classList.add('hidden'); // Oculta o item
-                            item.classList.remove('flip-in'); // Remove animação
-                        }
-                    });
+                    // Set active button
+                    setActiveCategoryButton(category);
+
+                    // Scroll to the target section
+                    document.getElementById(targetId).scrollIntoView({ behavior: 'smooth', block: 'start' });
                 });
             });
             
@@ -593,6 +620,49 @@
                 }
             });
 
+            // Function to set active category button
+            function setActiveCategoryButton(category) {
+                categoryBtns.forEach(btn => {
+                    if (btn.dataset.category === category) {
+                        btn.classList.remove('bg-gray-200', 'text-gray-800');
+                        btn.classList.add('bg-red-600', 'text-white');
+                        // Scroll the active button into view if it's in the scrollable area
+                        btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                    } else {
+                        btn.classList.remove('bg-red-600', 'text-white');
+                        btn.classList.add('bg-gray-200', 'text-gray-800');
+                    }
+                });
+            }
+
+            // Intersection Observer for scroll-based active category
+            const observerOptions = {
+                root: null, // viewport
+                rootMargin: '0px',
+                threshold: 0.5 // Trigger when 50% of the section is visible
+            };
+
+            const categoryObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const category = entry.target.id.replace('-section', '');
+                        // Only update if not currently selecting second half of pizza
+                        // and if it's a mobile view (or if we want this behavior on desktop too)
+                        // For now, let's keep it active for both to simplify.
+                        setActiveCategoryButton(category);
+                    }
+                });
+            }, observerOptions);
+
+            // Observe each category section
+            categorySections.forEach(section => {
+                categoryObserver.observe(section);
+            });
+
+            // Initial active category
+            setActiveCategoryButton('tradicionais');
+
+
             // Função para enviar o pedido para o WhatsApp
             function sendOrderToWhatsapp() {
                 let orderMessage = `*Pedido Sua Pizzaria:*\n\n*Itens:*\n`; // Alterado aqui
@@ -619,7 +689,7 @@
                 orderMessage += `Subtotal: R$ ${subtotal.toFixed(2).replace('.', ',')}\n`;
                 orderMessage += `Taxa de entrega: R$ ${deliveryFee.toFixed(2).replace('.', ',')}\n`;
                 orderMessage += `Total: R$ ${total.toFixed(2).replace('.', ',')}\n\n`;
-                orderMessage += `Obrigado pelo seu pedido!`;
+                orderMessage += `Pedido enviado! Aguardando confirmação.`; // Alterado aqui
 
                 const encodedMessage = encodeURIComponent(orderMessage);
                 const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
@@ -698,7 +768,7 @@
                         }
 
                         // Combina as duas metades
-                        const cleanFirstName = firstHalfPizza.name.replace(` (${firstHalfPizza.selected_slices} Fatias, Aguardando 2ª metade)`, '');
+                        const cleanFirstName = firstHalfPizza.name; // Já é só o nome do sabor
                         const combinedName = `Meia ${cleanFirstName} & Meia ${name}`; // Remove o tamanho daqui, será adicionado na exibição
                         
                         // Encontra o multiplicador para o tamanho da pizza combinada
