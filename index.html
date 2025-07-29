@@ -143,8 +143,11 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             transform: translateY(-2px);
         }
-        .pizza-size-option svg {
+        .pizza-size-option img { /* Alterado de svg para img */
             margin-bottom: 8px;
+            width: 100px; /* Largura ajustada para retangular */
+            height: 70px; /* Altura ajustada para retangular */
+            object-fit: contain; /* Garante que a imagem se ajuste sem distorção */
         }
     </style>
 </head>
@@ -446,9 +449,6 @@
             <div id="pizza-size-options" class="grid grid-cols-1 sm:grid-cols-3 gap-4 justify-items-center">
                 <!-- Opções de tamanho e "meia a meia" serão inseridas aqui pelo JS -->
             </div>
-            <button id="half-and-half-button" class="px-6 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition w-full mt-4 hidden">
-                Fazer Meia a Meia (Base 8 Fatias)
-            </button>
         </div>
     </div>
 
@@ -520,11 +520,10 @@
             const modalPizzaName = document.getElementById('modal-pizza-name');
             const modalPizzaDescription = document.getElementById('modal-pizza-description');
             const pizzaSizeOptions = document.getElementById('pizza-size-options'); // Referência para o contêiner de opções de tamanho
-            const halfAndHalfButton = document.getElementById('half-and-half-button'); // Botão "Fazer Meia a Meia"
 
             // Referências para o modal de mensagem
             const messageModal = document.getElementById('message-modal');
-            const closeMessageModalBtn = document.getElementById('close-message-modal');
+            const closeMessageModalBtn = document = document.getElementById('close-message-modal');
             const okMessageModalBtn = document.getElementById('ok-message-modal');
             const messageModalText = document.getElementById('message-modal-text');
 
@@ -544,15 +543,20 @@
                 { name: 'Suco Natural 500ml (Laranja)', price: 10.90, description: 'Laranja, Maracujá, Limão, Abacaxi', category: 'bebidas' }
             ];
 
-            // Função para gerar o SVG de uma fatia de pizza genérica
-            function getGenericPizzaSliceSVG() {
+            // Define tamanhos e seus multiplicadores de preço em relação ao preço de 8 fatias
+            const sizes = [
+                { slices: 4, label: '4 Fatias', multiplier: 0.7 },
+                { slices: 6, label: '6 Fatias', multiplier: 0.85 },
+                { slices: 8, label: '8 Fatias', multiplier: 1.0 }
+            ];
+
+            // Função para gerar a imagem de uma fatia de pizza
+            function getGenericPizzaSliceImage() {
+                // Usando o caminho relativo para a imagem no mesmo repositório
                 return `
-                    <svg width="80" height="80" viewBox="0 0 100 100">
-                        <path d="M50 50 L95 50 A45 45 0 0 0 75.7 14.6 Z" fill="#FFD700" stroke="#FFA500" stroke-width="2"/>
-                        <circle cx="75" cy="30" r="5" fill="#C21807"/>
-                        <circle cx="60" cy="70" r="5" fill="#C21807"/>
-                        <circle cx="85" cy="80" r="5" fill="#C21807"/>
-                    </svg>
+                    <img src="icon fatia.avif" 
+                         alt="Fatia de Pizza" 
+                         onerror="this.onerror=null;this.src='https://placehold.co/100x70/cccccc/000000?text=Pizza';" />
                 `;
             }
 
@@ -669,9 +673,15 @@
                         }
 
                         // Combina as duas metades
-                        const cleanFirstName = firstHalfPizza.name.replace(' (Aguardando 2ª metade)', '');
-                        const combinedName = `Meia ${cleanFirstName} & Meia ${name}`;
-                        const combinedPrice = (firstHalfPizza.original_full_price / 2) + (price / 2); // price is the 8-slice price of the second half
+                        const cleanFirstName = firstHalfPizza.name.replace(` (${firstHalfPizza.selected_slices} Fatias, Aguardando 2ª metade)`, '');
+                        const combinedName = `Meia ${cleanFirstName} & Meia ${name} (${firstHalfPizza.selected_slices} Fatias)`;
+                        
+                        // Encontra o multiplicador para o tamanho da pizza combinada
+                        const multiplierForTargetSlices = sizes.find(s => s.slices === firstHalfPizza.selected_slices).multiplier;
+                        // Calcula o preço da segunda metade baseado no preço de 8 fatias e no multiplicador do tamanho alvo
+                        const selectedSecondHalfPrice = price * multiplierForTargetSlices; 
+
+                        const combinedPrice = (firstHalfPizza.original_full_price / 2) + (selectedSecondHalfPrice / 2);
                         const combinedDescription = `${firstHalfPizza.description.replace('Primeira metade: ', '')} e ${description}`;
 
                         addToOrder({
@@ -693,25 +703,28 @@
                         modalPizzaDescription.textContent = description;
 
                         pizzaSizeOptions.innerHTML = ''; // Limpa as opções anteriores
-                        halfAndHalfButton.classList.add('hidden'); // Oculta o botão de meia a meia por padrão
-
-                        // Define tamanhos e seus multiplicadores de preço em relação ao preço de 8 fatias
-                        const sizes = [
-                            { slices: 4, label: '4 Fatias', multiplier: 0.7 },
-                            { slices: 6, label: '6 Fatias', multiplier: 0.85 },
-                            { slices: 8, label: '8 Fatias', multiplier: 1.0 }
-                        ];
-
+                        
                         sizes.forEach(size => {
                             const sizePrice = currentPizzaData.price * size.multiplier;
                             const optionDiv = document.createElement('div');
                             optionDiv.className = 'pizza-size-option';
                             optionDiv.innerHTML = `
-                                ${getGenericPizzaSliceSVG()}
+                                ${getGenericPizzaSliceImage()}
                                 <span class="font-bold text-lg text-gray-800">${size.label}</span>
                                 <span class="text-red-600 font-bold">R$ ${sizePrice.toFixed(2).replace('.', ',')}</span>
+                                <div class="flex flex-col gap-2 mt-2 w-full">
+                                    <button class="add-full-size-pizza-btn px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition">
+                                        Adicionar Inteira
+                                    </button>
+                                    <button class="add-half-size-pizza-btn px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition">
+                                        Adicionar Meia Pizza
+                                    </button>
+                                </div>
                             `;
-                            optionDiv.addEventListener('click', () => {
+                            pizzaSizeOptions.appendChild(optionDiv);
+
+                            // Adiciona event listeners para os botões recém-criados
+                            optionDiv.querySelector('.add-full-size-pizza-btn').addEventListener('click', function() {
                                 addToOrder({
                                     type: 'full',
                                     name: `${currentPizzaData.name} (${size.label})`,
@@ -721,13 +734,29 @@
                                 });
                                 pizzaOptionModal.style.display = 'none';
                             });
-                            pizzaSizeOptions.appendChild(optionDiv);
-                        });
 
-                        // Mostra o botão "Fazer Meia a Meia" apenas para pizzas (não para bebidas)
-                        if (isPizza) {
-                            halfAndHalfButton.classList.remove('hidden');
-                        }
+                            optionDiv.querySelector('.add-half-size-pizza-btn').addEventListener('click', function() {
+                                firstHalfPizza = {
+                                    name: currentPizzaData.name,
+                                    price: sizePrice / 2, // Preço desta metade
+                                    description: currentPizzaData.description,
+                                    original_full_price: sizePrice, // Armazena o preço total deste tamanho para o cálculo final
+                                    selected_slices: size.slices, // Armazena o número de fatias selecionado para a pizza combinada
+                                    category: currentPizzaData.category
+                                };
+                                isSelectingSecondHalf = true;
+                                pizzaOptionModal.style.display = 'none';
+                                addToOrder({
+                                    type: 'half_pending',
+                                    name: `½ ${currentPizzaData.name} (${size.label}, Aguardando 2ª metade)`,
+                                    price: sizePrice / 2,
+                                    description: `Primeira metade: ${currentPizzaData.description}`,
+                                    id: 'pending-half-pizza',
+                                    category: currentPizzaData.category
+                                });
+                                showMessageModal('Agora, escolha a segunda metade da sua pizza.');
+                            });
+                        });
 
                         pizzaOptionModal.style.display = 'flex'; // Exibe o modal
                     } else {
@@ -741,28 +770,6 @@
                         });
                     }
                 }
-            });
-
-            // Listener para o botão "Fazer Meia a Meia"
-            halfAndHalfButton.addEventListener('click', function() {
-                firstHalfPizza = {
-                    name: currentPizzaData.name,
-                    price: currentPizzaData.price / 2, // Preço desta metade
-                    description: currentPizzaData.description,
-                    original_full_price: currentPizzaData.price, // Armazena o preço total de 8 fatias para o cálculo final
-                    category: currentPizzaData.category
-                };
-                isSelectingSecondHalf = true;
-                pizzaOptionModal.style.display = 'none';
-                addToOrder({
-                    type: 'half_pending',
-                    name: `½ ${currentPizzaData.name} (Aguardando 2ª metade)`,
-                    price: currentPizzaData.price / 2,
-                    description: `Primeira metade: ${currentPizzaData.description}`,
-                    id: 'pending-half-pizza',
-                    category: currentPizzaData.category
-                });
-                showMessageModal('Agora, escolha a segunda metade da sua pizza.');
             });
 
             // Listener para fechar o modal de seleção de pizza
