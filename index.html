@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saborelli - Cardápio Online</title>
+    <!-- Inclui a biblioteca Tailwind CSS para estilização rápida e responsiva -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inclui a biblioteca Font Awesome para ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Estilos personalizados para efeitos visuais */
+        .pizza-half {
+            position: relative;
+            overflow: hidden;
+        }
+        /* Pseudo-elementos para um leve efeito visual em metades de pizza (não usados diretamente na lógica atual) */
+        .pizza-half::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 50%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.03);
+            z-index: -1;
+        }
+        .pizza-half::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 50%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.03);
+            z-index: -1;
+        }
+        /* Animação para "virar" elementos ao aparecer */
+        .flip-in {
+            animation: flipIn 0.5s ease-out;
+        }
+        @keyframes flipIn {
+            from { transform: rotateY(90deg); opacity: 0; }
+            to { transform: rotateY(0); opacity: 1; }
+        }
+        /* Animação para "deslizar" elementos ao aparecer */
+        @keyframes slideIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Estilos para o modal principal */
+        .modal {
+            display: none; /* Oculto por padrão */
+            position: fixed; /* Posição fixa na tela */
+            z-index: 1000; /* Acima de outros elementos */
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto; /* Habilita rolagem se o conteúdo for muito grande */
+            background-color: rgba(0,0,0,0.4); /* Fundo escuro semitransparente */
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: relative;
+            animation: fadeIn 0.3s ease-out;
+        }
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            cursor: pointer;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Estilos para o modal de mensagem */
+        .message-modal {
+            display: none; /* Oculto por padrão */
+            position: fixed; /* Posição fixa na tela */
+            z-index: 1001; /* Acima de outros elementos */
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto; /* Habilita rolagem se o conteúdo for muito grande */
+            background-color: rgba(0,0,0,0.4); /* Fundo escuro semitransparente */
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .message-modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: relative;
+            text-align: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        /* Estilos para os desenhos de pizza no modal de seleção */
+        .pizza-size-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            border: 2px solid #e5e7eb; /* gray-200 */
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            text-align: center;
+            min-width: 120px; /* Garante que os itens não fiquem muito pequenos */
+        }
+        .pizza-size-option:hover {
+            border-color: #ef4444; /* red-500 */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+        .pizza-size-option svg {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <!-- Cabeçalho da página -->
+        <header class="text-center mb-12">
+            <h1 class="text-5xl font-bold text-red-600 mb-2">SABORELLI</h1>
+            <p class="text-xl text-gray-600">Pizzaria Artesanal</p>
+            <div class="w-24 h-1 bg-red-500 mx-auto mt-4"></div>
+        </header>
+
+        <!-- Conteúdo principal: Menu e Pedido -->
+        <div class="flex flex-col lg:flex-row gap-8">
+            <!-- Seção do Menu -->
+            <div class="lg:w-2/3">
+                <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-2">Cardápio</h2>
+                    
+                    <!-- Botões de Categoria das Pizzas -->
+                    <div class="flex space-x-2 mb-6 overflow-x-auto pb-2">
+                        <button class="category-btn px-4 py-2 rounded-full bg-red-600 text-white whitespace-nowrap" data-category="tradicionais">Tradicionais</button>
+                        <button class="category-btn px-4 py-2 rounded-full bg-gray-200 text-gray-800 whitespace-nowrap" data-category="especiais">Especiais</button>
+                        <button class="category-btn px-4 py-2 rounded-full bg-gray-200 text-gray-800 whitespace-nowrap" data-category="doces">Doces</button>
+                        <button class="category-btn px-4 py-2 rounded-full bg-gray-200 text-gray-800 whitespace-nowrap" data-category="bebidas">Bebidas</button>
+                    </div>
+                    
+                    <!-- Lista de Itens do Cardápio -->
+                    <div id="pizza-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Itens Tradicionais -->
+                        <div class="pizza-item tradicionais bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                            <div class="p-4">
+                                <h3 class="font-bold text-lg text-gray-800">Margherita</h3>
+                                <p class="text-gray-600 text-sm mb-3">Molho de tomate, mussarela, manjericão fresco</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="font-bold text-red-600">R$ 45,90</span>
+                                    <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
+                                            data-name="Margherita" 
+                                            data-price="45.90" 
+                                            data-description="Molho de tomate, mussarela, manjericão fresco"
+                                            data-is-pizza="true">
+                                        Adicionar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="pizza-item tradicionais bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                            <div class="p-4">
+                                <h3 class="font-bold text-lg text-gray-800">Calabresa</h3>
+                                <p class="text-gray-600 text-sm mb-3">Molho de tomate, mussarela, calabresa, cebola</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="font-bold text-red-600">R$ 48,90</span>
+                                    <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
+                                            data-name="Calabresa" 
+                                            data-price="48.90" 
+                                            data-description="Molho de tomate, mussarela, calabresa, cebola"
+                                            data-is-pizza="true">
+                                        Adicionar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="pizza-item tradicionais bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                            <div class="p-4">
+                                <h3 class="font-bold text-lg text-gray-800">Quatro Queijos</h3>
+                                <p class="text-gray-600 text-sm mb-3">Molho de tomate, mussarela, provolone, parmesão, gorgonzola</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="font-bold text-red-600">R$ 52,90</span>
+                                    <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
+                                            data-name="Quatro Queijos" 
+                                            data-price="52.90" 
+                                            data-description="Molho de tomate, mussarela, provolone, parmesão, gorgonzola"
+                                            data-is-pizza="true">
+                                        Adicionar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="pizza-item tradicionais bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                            <div class="p-4">
+                                <h3 class="font-bold text-lg text-gray-800">Portuguesa</h3>
+                                <p class="text-gray-600 text-sm mb-3">Molho de tomate, mussarela, presunto, ovos, cebola, azeitonas</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="font-bold text-red-600">R$ 54,90</span>
+                                    <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
+                                            data-name="Portuguesa" 
+                                            data-price="54.90" 
+                                            data-description="Molho de tomate, mussarela, presunto, ovos, cebola, azeitonas"
+                                            data-is-pizza="true">
+                                        Adicionar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Itens Especiais (inicialmente ocultos) -->
+                        <div class="pizza-item especiais hidden bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                            <div class="p-4">
+                                <h3 class="font-bold text-lg text-gray-800">Frango com Catupiry</h3>
+                                <p class="text-gray-600 text-sm mb-3">Molho de tomate, mussarela, frango desfiado, catupiry</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="font-bold text-red-600">R$ 56,90</span>
+                                    <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
+                                            data-name="Frango com Catupiry" 
+                                            data-price="56.90" 
+                                            data-description="Molho de tomate, mussarela, frango desfiado, catupiry"
+                                            data-is-pizza="true">
+                                        Adicionar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="pizza-item especiais hidden bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                            <div class="p-4">
+                                <h3 class="font-bold text-lg text-gray-800">Pepperoni</h3>
+                                <p class="text-gray-600 text-sm mb-3">Molho de tomate, mussarela, pepperoni, pimentão</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="font-bold text-red-600">R$ 58,90</span>
+                                    <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
+                                            data-name="Pepperoni" 
+                                            data-price="58.90" 
+                                            data-description="Molho de tomate, mussarela, pepperoni, pimentão"
+                                            data-is-pizza="true">
+                                        Adicionar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="pizza-item especiais hidden bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                            <div class="p-4">
+                                <h3 class="font-bold text-lg text-gray-800">Vegetariana</h3>
+                                <p class="text-gray-600 text-sm mb-3">Molho de tomate, mussarela, berinjela, abobrinha, pimentão, champignon</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="font-bold text-red-600">R$ 55,90</span>
+                                    <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
+                                            data-name="Vegetariana" 
+                                            data-price="55.90" 
+                                            data-description="Molho de tomate, mussarela, berinjela, abobrinha, pimentão, champignon"
+                                            data-is-pizza="true">
+                                        Adicionar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="pizza-item especiais hidden bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                            <div class="p-4">
+                                <h3 class="font-bold text-lg text-gray-800">Bacon Supreme</h3>
+                                <p class="text-gray-600 text-sm mb-3">Molho de tomate, mussarela, bacon, milho, cebola caramelizada</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="font-bold text-red-600">R$ 59,90</span>
+                                    <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
+                                            data-name="Bacon Supreme" 
+                                            data-price="59.90" 
+                                            data-description="Molho de tomate, mussarela, bacon, milho, cebola caramelizada"
+                                            data-is-pizza="true">
+                                        Adicionar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Itens Doces (inicialmente ocultos) -->
+                        <div class="pizza-item doces hidden bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                            <div class="p-4">
+                                <h3 class="font-bold text-lg text-gray-800">Chocolate com Morango</h3>
+                                <p class="text-gray-600 text-sm mb-3">Chocolate ao leite, morangos frescos</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="font-bold text-red-600">R$ 49,90</span>
+                                    <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
+                                            data-name="Chocolate com Morango" 
+                                            data-price="49.90" 
+                                            data-description="Chocolate ao leite, morangos frescos"
+                                            data-is-pizza="true">
+                                        Adicionar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="pizza-item doces hidden bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                            <div class="p-4">
+                                <h3 class="font-bold text-lg text-gray-800">Romeu e Julieta</h3>
+                                <p class="text-gray-600 text-sm mb-3">Goiabada, mussarela, canela em pó</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="font-bold text-red-600">R$ 47,90</span>
+                                    <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
+                                            data-name="Romeu e Julieta" 
+                                            data-price="47.90" 
+                                            data-description="Goiabada, mussarela, canela em pó"
+                                            data-is-pizza="true">
+                                        Adicionar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="pizza-item doces hidden bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                            <div class="p-4">
+                                <h3 class="font-bold text-lg text-gray-800">Banana Caramelada</h3>
+                                <p class="text-gray-600 text-sm mb-3">Banana, doce de leite, canela</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="font-bold text-red-600">R$ 46,90</span>
+                                    <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
+                                            data-name="Banana Caramelada" 
+                                            data-price="46.90" 
+                                            data-description="Banana, doce de leite, canela"
+                                            data-is-pizza="true">
+                                        Adicionar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Itens Bebidas (sem opção de meia por padrão) -->
+                        <div class="pizza-item bebidas hidden bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                            <div class="p-4">
+                                <h3 class="font-bold text-lg text-gray-800">Refrigerante 600ml</h3>
+                                <p class="text-gray-600 text-sm mb-3">Coca-Cola, Guaraná, Fanta, Sprite</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="font-bold text-red-600">R$ 8,90</span>
+                                    <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
+                                            data-name="Refrigerante 600ml" 
+                                            data-price="8.90" 
+                                            data-description="Coca-Cola, Guaraná, Fanta, Sprite"
+                                            data-is-pizza="false">
+                                        Adicionar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="pizza-item bebidas hidden bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                            <div class="p-4">
+                                <h3 class="font-bold text-lg text-gray-800">Suco Natural 500ml</h3>
+                                <p class="text-gray-600 text-sm mb-3">Laranja, Maracujá, Limão, Abacaxi</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="font-bold text-red-600">R$ 10,90</span>
+                                    <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
+                                            data-name="Suco Natural 500ml" 
+                                            data-price="10.90" 
+                                            data-description="Laranja, Maracujá, Limão, Abacaxi"
+                                            data-is-pizza="false">
+                                        Adicionar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Seção do Pedido (Carrinho) -->
+            <div class="lg:w-1/3">
+                <div class="bg-white rounded-lg shadow-md p-6 sticky top-4">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-2">Seu Pedido</h2>
+                    
+                    <!-- Itens adicionados ao pedido -->
+                    <div id="order-items" class="mb-6">
+                        <p class="text-gray-500 text-center py-4">Seu pedido está vazio</p>
+                    </div>
+                    
+                    <!-- Resumo dos valores do pedido -->
+                    <div class="border-t pt-4">
+                        <div class="flex justify-between mb-2">
+                            <span class="font-medium">Subtotal:</span>
+                            <span id="subtotal" class="font-bold">R$ 0,00</span>
+                        </div>
+                        <div class="flex justify-between mb-2">
+                            <span class="font-medium">Taxa de entrega:</span>
+                            <span id="delivery-fee" class="font-bold">R$ 5,00</span>
+                        </div>
+                        <div class="flex justify-between text-lg font-bold border-t pt-2 mt-2">
+                            <span>Total:</span>
+                            <span id="total">R$ 5,00</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Botão para finalizar o pedido -->
+                    <button id="checkout-btn" class="w-full mt-6 py-3 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition flex items-center justify-center">
+                        <i class="fas fa-shopping-cart mr-2"></i> Finalizar Pedido
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Seleção de Pizza (Inteira/Meia) -->
+    <div id="pizza-option-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="close-pizza-option-modal">&times;</span>
+            <h3 class="text-xl font-bold text-gray-800 mb-4" id="modal-pizza-name"></h3>
+            <p class="text-gray-600 mb-6" id="modal-pizza-description"></p>
+            <div id="pizza-size-options" class="grid grid-cols-1 sm:grid-cols-3 gap-4 justify-items-center">
+                <!-- Opções de tamanho e "meia a meia" serão inseridas aqui pelo JS -->
+            </div>
+            <button id="half-and-half-button" class="px-6 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition w-full mt-4 hidden">
+                Fazer Meia a Meia (Base 8 Fatias)
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal de Mensagem (para feedback do usuário) -->
+    <div id="message-modal" class="message-modal">
+        <div class="modal-content">
+            <span class="close-button" id="close-message-modal">&times;</span>
+            <p class="text-lg font-semibold text-gray-800 mb-4" id="message-modal-text"></p>
+            <button id="ok-message-modal" class="px-4 py-2 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition">OK</button>
+        </div>
+    </div>
+
+    <!-- Modal de Sugestão de Bebidas -->
+    <div id="drink-suggestion-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="close-drink-suggestion-modal">&times;</span>
+            <h3 class="text-xl font-bold text-gray-800 mb-4">Que tal adicionar uma bebida?</h3>
+            <p class="text-gray-600 mb-6">Seu pedido não contém bebidas. Gostaria de adicionar alguma?</p>
+            <div id="suggested-drinks-list" class="flex flex-col gap-3 mb-6">
+                <!-- Sugestões de bebidas serão inseridas aqui via JS -->
+            </div>
+            <button id="proceed-without-drinks" class="px-6 py-3 bg-gray-500 text-white rounded-lg font-bold hover:bg-gray-600 transition w-full">
+                Continuar sem bebidas
+            </button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Seleciona todos os botões de categoria e todos os itens de pizza
+            const categoryBtns = document.querySelectorAll('.category-btn');
+            const pizzaItems = document.querySelectorAll('.pizza-item');
+            
+            // Adiciona um listener de clique para cada botão de categoria
+            categoryBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // Remove as classes de "ativo" de todos os botões e adiciona as de "inativo"
+                    categoryBtns.forEach(b => b.classList.remove('bg-red-600', 'text-white'));
+                    categoryBtns.forEach(b => b.classList.add('bg-gray-200', 'text-gray-800'));
+                    // Adiciona as classes de "ativo" ao botão clicado
+                    this.classList.remove('bg-gray-200', 'text-gray-800');
+                    this.classList.add('bg-red-600', 'text-white');
+                    
+                    // Mostra apenas os itens da categoria selecionada
+                    const category = this.dataset.category; // Pega a categoria do atributo data-category
+                    pizzaItems.forEach(item => {
+                        if (item.classList.contains(category)) {
+                            item.classList.remove('hidden'); // Mostra o item
+                            item.classList.add('flip-in'); // Adiciona animação
+                        } else {
+                            item.classList.add('hidden'); // Oculta o item
+                            item.classList.remove('flip-in'); // Remove animação
+                        }
+                    });
+                });
+            });
+            
+            // Funcionalidade do Carrinho de Pedidos
+            let order = []; // Array para armazenar os itens do pedido
+            const orderItemsEl = document.getElementById('order-items');
+            const subtotalEl = document.getElementById('subtotal');
+            const totalEl = document.getElementById('total');
+            const deliveryFee = 5.00; // Taxa de entrega fixa
+            const whatsappNumber = '5587996070638'; // Número de WhatsApp para envio do pedido
+
+            // Referências para o modal de seleção de pizza
+            const pizzaOptionModal = document.getElementById('pizza-option-modal');
+            const closePizzaOptionModalBtn = document.getElementById('close-pizza-option-modal');
+            const modalPizzaName = document.getElementById('modal-pizza-name');
+            const modalPizzaDescription = document.getElementById('modal-pizza-description');
+            const pizzaSizeOptions = document.getElementById('pizza-size-options'); // Referência para o contêiner de opções de tamanho
+            const halfAndHalfButton = document.getElementById('half-and-half-button'); // Botão "Fazer Meia a Meia"
+
+            // Referências para o modal de mensagem
+            const messageModal = document.getElementById('message-modal');
+            const closeMessageModalBtn = document.getElementById('close-message-modal');
+            const okMessageModalBtn = document.getElementById('ok-message-modal');
+            const messageModalText = document.getElementById('message-modal-text');
+
+            // Referências para o modal de sugestão de bebidas
+            const drinkSuggestionModal = document.getElementById('drink-suggestion-modal');
+            const closeDrinkSuggestionModalBtn = document.getElementById('close-drink-suggestion-modal');
+            const suggestedDrinksList = document.getElementById('suggested-drinks-list');
+            const proceedWithoutDrinksBtn = document.getElementById('proceed-without-drinks');
+
+            let currentPizzaData = {}; // Objeto para armazenar temporariamente os dados da pizza selecionada
+            let firstHalfPizza = null; // Armazena os dados da primeira metade de uma pizza dividida
+            let isSelectingSecondHalf = false; // Flag para indicar se o usuário está escolhendo a segunda metade
+
+            // Amostra de bebidas sugeridas
+            const suggestedDrinks = [
+                { name: 'Refrigerante 600ml (Coca-Cola)', price: 8.90, description: 'Coca-Cola, Guaraná, Fanta, Sprite', category: 'bebidas' },
+                { name: 'Suco Natural 500ml (Laranja)', price: 10.90, description: 'Laranja, Maracujá, Limão, Abacaxi', category: 'bebidas' }
+            ];
+
+            // Função para gerar o SVG de uma fatia de pizza genérica
+            function getGenericPizzaSliceSVG() {
+                return `
+                    <svg width="80" height="80" viewBox="0 0 100 100">
+                        <path d="M50 50 L95 50 A45 45 0 0 0 75.7 14.6 Z" fill="#FFD700" stroke="#FFA500" stroke-width="2"/>
+                        <circle cx="75" cy="30" r="5" fill="#C21807"/>
+                        <circle cx="60" cy="70" r="5" fill="#C21807"/>
+                        <circle cx="85" cy="80" r="5" fill="#C21807"/>
+                    </svg>
+                `;
+            }
+
+            // Função para exibir o modal de mensagem
+            function showMessageModal(message) {
+                messageModalText.textContent = message;
+                messageModal.style.display = 'flex'; // Usa flexbox para centralizar
+            }
+
+            // Função para ocultar o modal de mensagem
+            function hideMessageModal() {
+                messageModal.style.display = 'none';
+            }
+
+            // Listeners para fechar o modal de mensagem
+            closeMessageModalBtn.addEventListener('click', hideMessageModal);
+            okMessageModalBtn.addEventListener('click', hideMessageModal);
+            window.addEventListener('click', function(event) {
+                if (event.target == messageModal) {
+                    hideMessageModal();
+                }
+            });
+
+            // Função para enviar o pedido para o WhatsApp
+            function sendOrderToWhatsapp() {
+                let orderMessage = `*Pedido Saborelli:*\n\n*Itens:*\n`;
+                order.forEach(item => {
+                    orderMessage += `- ${item.name}: R$ ${item.price.toFixed(2).replace('.', ',')}\n`;
+                });
+
+                const subtotal = order.reduce((sum, item) => sum + item.price, 0);
+                const total = subtotal + deliveryFee;
+
+                orderMessage += `\n*Resumo:*\n`;
+                orderMessage += `Subtotal: R$ ${subtotal.toFixed(2).replace('.', ',')}\n`;
+                orderMessage += `Taxa de entrega: R$ ${deliveryFee.toFixed(2).replace('.', ',')}\n`;
+                orderMessage += `Total: R$ ${total.toFixed(2).replace('.', ',')}\n\n`;
+                orderMessage += `Obrigado pelo seu pedido!`;
+
+                const encodedMessage = encodeURIComponent(orderMessage);
+                const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
+                window.open(whatsappUrl, '_blank'); // Abre o WhatsApp em uma nova aba
+
+                // Reseta o pedido após o envio
+                order = [];
+                updateOrderDisplay();
+            }
+
+            // Função para verificar bebidas e sugerir
+            function checkAndSuggestDrinks() {
+                if (isSelectingSecondHalf) {
+                    showMessageModal('Por favor, escolha a segunda metade da sua pizza antes de finalizar o pedido.');
+                    return;
+                }
+                if (order.length === 0) {
+                    showMessageModal('Seu pedido está vazio. Adicione itens antes de finalizar.');
+                    return;
+                }
+
+                const hasDrinks = order.some(item => item.category === 'bebidas');
+
+                if (!hasDrinks) {
+                    // Limpa sugestões anteriores
+                    suggestedDrinksList.innerHTML = '';
+                    // Popula e mostra o modal de sugestão de bebidas
+                    suggestedDrinks.forEach(drink => {
+                        const drinkBtn = document.createElement('button');
+                        drinkBtn.className = 'px-4 py-2 bg-green-500 text-white rounded-lg font-bold hover:bg-green-600 transition w-full';
+                        drinkBtn.textContent = `Adicionar ${drink.name} (R$ ${drink.price.toFixed(2).replace('.', ',')})`;
+                        drinkBtn.addEventListener('click', () => {
+                            addToOrder(drink);
+                            drinkSuggestionModal.style.display = 'none';
+                            sendOrderToWhatsapp(); // Envia para o WhatsApp após adicionar a bebida
+                        });
+                        suggestedDrinksList.appendChild(drinkBtn);
+                    });
+                    drinkSuggestionModal.style.display = 'flex';
+                } else {
+                    // Se houver bebidas, prossegue com a finalização do pedido
+                    sendOrderToWhatsapp(); // Envia para o WhatsApp
+                }
+            }
+
+            // Adiciona item ao pedido quando um botão "Adicionar" é clicado
+            document.addEventListener('click', function(e) {
+                // Verifica se o clique foi em um botão de adicionar pizza
+                if (e.target.classList.contains('add-pizza-btn')) { 
+                    const name = e.target.dataset.name;
+                    const price = parseFloat(e.target.dataset.price); // Este é o preço da pizza de 8 fatias
+                    const description = e.target.dataset.description;
+                    const isPizza = e.target.dataset.isPizza === 'true'; // Verifica se é uma pizza
+
+                    // Encontra o elemento pai 'pizza-item' para determinar a categoria
+                    const pizzaItemElement = e.target.closest('.pizza-item');
+                    let category = 'outros'; // Categoria padrão
+                    if (pizzaItemElement) {
+                        if (pizzaItemElement.classList.contains('tradicionais')) category = 'tradicionais';
+                        else if (pizzaItemElement.classList.contains('especiais')) category = 'especiais';
+                        else if (pizzaItemElement.classList.contains('doces')) category = 'doces';
+                        else if (pizzaItemElement.classList.contains('bebidas')) category = 'bebidas';
+                    }
+
+                    if (isSelectingSecondHalf) {
+                        // Se o usuário está selecionando a segunda metade de uma pizza
+                        if (!isPizza) {
+                            showMessageModal('Por favor, escolha uma pizza para a segunda metade.');
+                            return;
+                        }
+
+                        // Encontra e remove a meia pizza pendente do pedido
+                        const pendingHalfIndex = order.findIndex(item => item.id === 'pending-half-pizza');
+                        if (pendingHalfIndex > -1) {
+                            order.splice(pendingHalfIndex, 1); // Remove a meia pizza pendente
+                        }
+
+                        // Combina as duas metades
+                        const cleanFirstName = firstHalfPizza.name.replace(' (Aguardando 2ª metade)', '');
+                        const combinedName = `Meia ${cleanFirstName} & Meia ${name}`;
+                        const combinedPrice = (firstHalfPizza.original_full_price / 2) + (price / 2); // price is the 8-slice price of the second half
+                        const combinedDescription = `${firstHalfPizza.description.replace('Primeira metade: ', '')} e ${description}`;
+
+                        addToOrder({
+                            type: 'split',
+                            name: combinedName,
+                            price: combinedPrice,
+                            description: combinedDescription,
+                            category: 'tradicionais' // Assume categoria de pizza combinada
+                        });
+
+                        firstHalfPizza = null; // Reseta a primeira metade
+                        isSelectingSecondHalf = false; // Sai do modo de pizza dividida
+                        showMessageModal('Pizza meio a meio adicionada ao pedido!');
+
+                    } else if (isPizza) {
+                        // Se for uma pizza e não estiver no modo de divisão, abre o modal de seleção
+                        currentPizzaData = { name, price, description, category };
+                        modalPizzaName.textContent = name;
+                        modalPizzaDescription.textContent = description;
+
+                        pizzaSizeOptions.innerHTML = ''; // Limpa as opções anteriores
+                        halfAndHalfButton.classList.add('hidden'); // Oculta o botão de meia a meia por padrão
+
+                        // Define tamanhos e seus multiplicadores de preço em relação ao preço de 8 fatias
+                        const sizes = [
+                            { slices: 4, label: '4 Fatias', multiplier: 0.7 },
+                            { slices: 6, label: '6 Fatias', multiplier: 0.85 },
+                            { slices: 8, label: '8 Fatias', multiplier: 1.0 }
+                        ];
+
+                        sizes.forEach(size => {
+                            const sizePrice = currentPizzaData.price * size.multiplier;
+                            const optionDiv = document.createElement('div');
+                            optionDiv.className = 'pizza-size-option';
+                            optionDiv.innerHTML = `
+                                ${getGenericPizzaSliceSVG()}
+                                <span class="font-bold text-lg text-gray-800">${size.label}</span>
+                                <span class="text-red-600 font-bold">R$ ${sizePrice.toFixed(2).replace('.', ',')}</span>
+                            `;
+                            optionDiv.addEventListener('click', () => {
+                                addToOrder({
+                                    type: 'full',
+                                    name: `${currentPizzaData.name} (${size.label})`,
+                                    price: sizePrice,
+                                    description: currentPizzaData.description,
+                                    category: currentPizzaData.category
+                                });
+                                pizzaOptionModal.style.display = 'none';
+                            });
+                            pizzaSizeOptions.appendChild(optionDiv);
+                        });
+
+                        // Mostra o botão "Fazer Meia a Meia" apenas para pizzas (não para bebidas)
+                        if (isPizza) {
+                            halfAndHalfButton.classList.remove('hidden');
+                        }
+
+                        pizzaOptionModal.style.display = 'flex'; // Exibe o modal
+                    } else {
+                        // Se não for pizza (ex: bebida), adiciona diretamente
+                        addToOrder({
+                            type: 'full',
+                            name,
+                            price,
+                            description,
+                            category // Passa a categoria da bebida
+                        });
+                    }
+                }
+            });
+
+            // Listener para o botão "Fazer Meia a Meia"
+            halfAndHalfButton.addEventListener('click', function() {
+                firstHalfPizza = {
+                    name: currentPizzaData.name,
+                    price: currentPizzaData.price / 2, // Preço desta metade
+                    description: currentPizzaData.description,
+                    original_full_price: currentPizzaData.price, // Armazena o preço total de 8 fatias para o cálculo final
+                    category: currentPizzaData.category
+                };
+                isSelectingSecondHalf = true;
+                pizzaOptionModal.style.display = 'none';
+                addToOrder({
+                    type: 'half_pending',
+                    name: `½ ${currentPizzaData.name} (Aguardando 2ª metade)`,
+                    price: currentPizzaData.price / 2,
+                    description: `Primeira metade: ${currentPizzaData.description}`,
+                    id: 'pending-half-pizza',
+                    category: currentPizzaData.category
+                });
+                showMessageModal('Agora, escolha a segunda metade da sua pizza.');
+            });
+
+            // Listener para fechar o modal de seleção de pizza
+            closePizzaOptionModalBtn.addEventListener('click', function() {
+                pizzaOptionModal.style.display = 'none';
+            });
+
+            // Fecha o modal se clicar fora do conteúdo do modal
+            window.addEventListener('click', function(event) {
+                if (event.target == pizzaOptionModal) {
+                    pizzaOptionModal.style.display = 'none';
+                }
+            });
+            
+            // Função para adicionar um item ao array de pedidos
+            function addToOrder(item) {
+                order.push(item); // Adiciona o item ao array
+                updateOrderDisplay(); // Atualiza a exibição do carrinho
+                
+                // Feedback visual de adição
+                const feedback = document.createElement('div');
+                feedback.textContent = '✔️ Adicionado ao pedido!';
+                feedback.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg slide-in';
+                document.body.appendChild(feedback);
+                
+                // Remove o feedback após 2 segundos
+                setTimeout(() => {
+                    feedback.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+                    setTimeout(() => feedback.remove(), 300);
+                }, 2000);
+            }
+            
+            // Função para atualizar a exibição do carrinho e os totais
+            function updateOrderDisplay() {
+                if (order.length === 0) {
+                    orderItemsEl.innerHTML = '<p class="text-gray-500 text-center py-4">Seu pedido está vazio</p>';
+                } else {
+                    orderItemsEl.innerHTML = ''; // Limpa a lista de itens
+                    
+                    order.forEach((item, index) => {
+                        const itemEl = document.createElement('div');
+                        // Ajusta a classe com base no tipo de item para distinção visual
+                        itemEl.className = `flex justify-between items-start py-3 border-b ${item.type === 'half_pending' ? 'bg-yellow-50 border-yellow-300' : ''}`;
+                        
+                        // Cria o HTML para cada item do pedido
+                        itemEl.innerHTML = `
+                            <div class="flex-1">
+                                <h4 class="font-medium">${item.name}</h4>
+                                <p class="text-sm text-gray-600">${item.description}</p>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="font-bold mr-4">R$ ${item.price.toFixed(2).replace('.', ',')}</span>
+                                ${item.type !== 'half_pending' ? `<button class="remove-item-btn text-red-500 hover:text-red-700" data-index="${index}">
+                                    <i class="fas fa-times"></i>
+                                </button>` : ''}
+                            </div>
+                        `;
+                        
+                        orderItemsEl.appendChild(itemEl); // Adiciona o item à lista
+                    });
+                }
+                
+                // Calcula e atualiza os totais
+                const subtotal = order.reduce((sum, item) => sum + item.price, 0);
+                const total = subtotal + deliveryFee;
+                
+                subtotalEl.textContent = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
+                totalEl.textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
+            }
+            
+            // Remove item do pedido quando o botão de remover é clicado
+            orderItemsEl.addEventListener('click', function(e) {
+                if (e.target.classList.contains('remove-item-btn') || e.target.closest('.remove-item-btn')) {
+                    const btn = e.target.classList.contains('remove-item-btn') ? e.target : e.target.closest('.remove-item-btn');
+                    const index = parseInt(btn.dataset.index); // Pega o índice do item a ser removido
+                    
+                    order.splice(index, 1); // Remove o item do array
+                    updateOrderDisplay(); // Atualiza a exibição
+                }
+            });
+            
+            // Botão Finalizar Pedido
+            document.getElementById('checkout-btn').addEventListener('click', checkAndSuggestDrinks);
+
+            // Listener para o botão "Continuar sem bebidas" do modal de sugestão
+            proceedWithoutDrinksBtn.addEventListener('click', () => {
+                drinkSuggestionModal.style.display = 'none';
+                sendOrderToWhatsapp(); // Envia para o WhatsApp mesmo sem bebidas
+            });
+
+            // Listener para fechar o modal de sugestão de bebidas
+            closeDrinkSuggestionModalBtn.addEventListener('click', () => {
+                drinkSuggestionModal.style.display = 'none';
+            });
+
+            // Fecha o modal de sugestão de bebidas se clicar fora
+            window.addEventListener('click', function(event) {
+                if (event.target == drinkSuggestionModal) {
+                    drinkSuggestionModal.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
