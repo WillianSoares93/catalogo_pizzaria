@@ -597,25 +597,19 @@
             function sendOrderToWhatsapp() {
                 let orderMessage = `*Pedido Sua Pizzaria:*\n\n*Itens:*\n`; // Alterado aqui
                 order.forEach(item => {
-                    // Extrai o tamanho e o nome da pizza para formatar
-                    let itemName = item.name;
-                    let itemSize = '';
-
-                    // Regex para encontrar "(X Fatias)" ou "(X Fatias, Aguardando 2ª metade)"
-                    const sizeMatch = itemName.match(/\((\d+ Fatias)(, Aguardando 2ª metade)?\)/);
-                    if (sizeMatch) {
-                        itemSize = sizeMatch[1].toUpperCase(); // Ex: "8 FATIAS"
-                        itemName = itemName.replace(sizeMatch[0], '').trim(); // Remove o tamanho do nome
+                    let line = '';
+                    if (item.selected_slices) { // Verifica se é um item de pizza pela presença de selected_slices
+                        const sizeLabel = `${item.selected_slices} FATIAS`.toUpperCase();
+                        if (item.type === 'half_pending') {
+                            line = `- *${sizeLabel}*: ${item.name} (Aguardando 2ª metade)`;
+                        } else {
+                            line = `- *${sizeLabel}*: ${item.name}`;
+                        }
+                    } else {
+                        // Para outros itens (como bebidas), usa o formato original
+                        line = `- ${item.name}: R$ ${item.price.toFixed(2).replace('.', ',')}`;
                     }
-
-                    if (item.type === 'split') {
-                        // Para pizzas meio a meio, o nome já deve estar formatado como "Meia Sabor1 & Meia Sabor2"
-                        orderMessage += `- *${itemSize}*: ${itemName}\n`;
-                    } else if (item.type === 'full') {
-                        orderMessage += `- *${itemSize}*: ${itemName}\n`;
-                    } else { // Para bebidas ou outras coisas
-                        orderMessage += `- ${item.name}: R$ ${item.price.toFixed(2).replace('.', ',')}\n`;
-                    }
+                    orderMessage += `${line}\n`;
                 });
 
                 const subtotal = order.reduce((sum, item) => sum + item.price, 0);
@@ -759,11 +753,11 @@
                             optionDiv.querySelector('.add-full-size-pizza-btn').addEventListener('click', function() {
                                 addToOrder({
                                     type: 'full',
-                                    name: currentPizzaData.name, // Nome base
+                                    name: currentPizzaData.name, // Apenas o nome do sabor
                                     price: sizePrice,
                                     description: currentPizzaData.description,
                                     category: currentPizzaData.category,
-                                    selected_slices: size.slices // Adiciona o tamanho selecionado
+                                    selected_slices: size.slices // Armazena o número de fatias separadamente
                                 });
                                 pizzaOptionModal.style.display = 'none';
                             });
@@ -781,12 +775,12 @@
                                 pizzaOptionModal.style.display = 'none';
                                 addToOrder({
                                     type: 'half_pending',
-                                    name: `½ ${currentPizzaData.name}`, // Nome base da primeira metade
+                                    name: `½ ${currentPizzaData.name}`, // Apenas o nome do sabor da primeira metade
                                     price: sizePrice / 2,
                                     description: `Primeira metade: ${currentPizzaData.description}`,
                                     id: 'pending-half-pizza',
                                     category: currentPizzaData.category,
-                                    selected_slices: size.slices // Adiciona o tamanho selecionado para a pizza pendente
+                                    selected_slices: size.slices // Armazena o número de fatias separadamente
                                 });
                                 showMessageModal('Agora, escolha a segunda metade da sua pizza.');
                             });
@@ -850,10 +844,9 @@
                         itemEl.className = `flex justify-between items-start py-3 border-b ${item.type === 'half_pending' ? 'bg-yellow-50 border-yellow-300' : ''}`;
                         
                         let displayName = item.name;
-                        if (item.type === 'full' || item.type === 'split' || item.type === 'half_pending') {
-                            // Para pizzas, adiciona o tamanho em negrito no início
-                            const sizeLabel = item.selected_slices ? `${item.selected_slices} FATIAS` : '';
-                            displayName = sizeLabel ? `<b>${sizeLabel}</b>: ${item.name}` : item.name;
+                        if (item.selected_slices) { // Para pizzas, adiciona o tamanho em negrito no início
+                            const sizeLabel = `${item.selected_slices} FATIAS`.toUpperCase();
+                            displayName = `<b>${sizeLabel}</b>: ${item.name}`;
                         }
 
                         // Cria o HTML para cada item do pedido
