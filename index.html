@@ -164,6 +164,11 @@
             /* Removed flex-direction: column and gap for horizontal layout on mobile */
             /* Removed overflow-x: hidden for horizontal scroll on mobile */
         }
+
+        /* Adicionado para ajustar a rolagem para as seções, considerando a barra fixa */
+        .pizza-category-section {
+            scroll-margin-top: 6rem; /* Ajuste este valor se a altura da barra fixa mudar */
+        }
     </style>
 </head>
 <body class="bg-gray-50 font-sans">
@@ -683,7 +688,7 @@
                     // Set active button
                     setActiveCategoryButton(category);
 
-                    // Scroll to the target section
+                    // Scroll to the target section with smooth behavior
                     document.getElementById(targetId).scrollIntoView({ behavior: 'smooth', block: 'start' });
                 });
             });
@@ -794,16 +799,28 @@
 
             // Intersection Observer for scroll-based active category
             const categoryObserver = new IntersectionObserver((entries) => {
+                let activeCategory = null;
+                let maxRatio = 0;
+
                 entries.forEach(entry => {
+                    // Only consider sections that are currently intersecting
                     if (entry.isIntersecting) {
-                        const category = entry.target.id.replace('-section', '');
-                        setActiveCategoryButton(category);
+                        // If this section has a higher intersection ratio than the current max,
+                        // or if it's the first intersecting section found
+                        if (entry.intersectionRatio > maxRatio) {
+                            maxRatio = entry.intersectionRatio;
+                            activeCategory = entry.target.id.replace('-section', '');
+                        }
                     }
                 });
+
+                if (activeCategory) {
+                    setActiveCategoryButton(activeCategory);
+                }
             }, {
                 root: null, // viewport
                 rootMargin: '0px',
-                threshold: 0.5 // Trigger when 50% of the section is visible
+                threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0] // Observe all visibility changes
             });
 
             // Observe each category section
