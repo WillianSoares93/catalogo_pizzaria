@@ -697,8 +697,8 @@
                     // Após um pequeno atraso, redefine a flag e reavalia a categoria ativa
                     setTimeout(() => {
                         isScrollingFromClick = false;
-                        // Reavalia a categoria ativa após a rolagem, garantindo que o estado esteja correto
-                        updateActiveCategoryFromScroll(); 
+                        // Força uma reavaliação da categoria ativa após a rolagem, garantindo o estado correto
+                        window.dispatchEvent(new Event('scroll')); 
                     }, 700); // 700ms é um bom equilíbrio para rolagem suave
                 });
             });
@@ -815,56 +815,8 @@
             // Function to get the current sticky header height dynamically
             function getStickyHeaderHeight() {
                 const stickyHeader = document.querySelector('.category-bar-mobile-sticky');
+                // Use offsetHeight for accurate height including padding and border
                 return stickyHeader ? stickyHeader.offsetHeight : 0;
-            }
-
-            // Function to update the active category based on scroll position
-            function updateActiveCategoryFromScroll() {
-                let activeCategoryFound = null;
-                const stickyHeaderHeight = getStickyHeaderHeight();
-                let minDistanceToStickyBottom = Infinity;
-
-                categorySections.forEach(section => {
-                    const rect = section.getBoundingClientRect();
-                    const category = section.id.replace('-section', '');
-
-                    // Calculate the distance of the section's top from the bottom of the sticky header.
-                    const distance = rect.top - stickyHeaderHeight;
-
-                    // We are looking for the section whose top is closest to the sticky header (ideally just below it, or just passed it).
-                    // Consider sections that are visible and whose top is within a small range around the sticky header's bottom.
-                    // Prioritize sections that are at or just below the sticky header.
-                    if (rect.bottom > 0 && rect.top < window.innerHeight) { // Ensure section is visible
-                        if (distance <= 0 && rect.bottom > stickyHeaderHeight) { // Section top is above/at sticky bottom, but content is below
-                            // This section is currently "under" the sticky header, it's the primary one.
-                            activeCategoryFound = category;
-                            return; // Found the best candidate, exit early from forEach
-                        } else if (distance > 0 && distance < minDistanceToStickyBottom) { // Section is just below sticky header
-                            minDistanceToStickyBottom = distance;
-                            activeCategoryFound = category; // Keep track of the closest one
-                        }
-                    }
-                });
-
-                // Fallback for cases where no section is perfectly aligned (e.g., at the very top or very bottom of scroll)
-                if (!activeCategoryFound && categorySections.length > 0) {
-                    // Take the first visible section if nothing else is identified, or the last if at the very end.
-                    // This handles initial load and very short pages.
-                    for (let i = 0; i < categorySections.length; i++) {
-                        const section = categorySections[i];
-                        const rect = section.getBoundingClientRect();
-                        const category = section.id.replace('-section', '');
-                        if (rect.bottom > 0 && rect.top < window.innerHeight) {
-                            activeCategoryFound = category;
-                            break; // Take the first visible one
-                        }
-                    }
-                }
-                
-                if (activeCategoryFound && activeCategoryFound !== currentActiveCategoryByScroll) {
-                    setActiveCategoryButton(activeCategoryFound);
-                    currentActiveCategoryByScroll = activeCategoryFound;
-                }
             }
 
             // Intersection Observer para destaque de categoria baseado na rolagem
@@ -874,79 +826,55 @@
                 }
 
                 let newActiveCategory = null;
-                let smallestTopRelativeToRoot = Infinity;
+                let maxIntersectionRatio = 0;
+                const stickyHeaderHeight = getStickyHeaderHeight();
 
-                // Iterate through intersecting entries to find the one whose top is closest to the top of the adjusted root (0).
                 entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        // entry.boundingClientRect.top is relative to the observer's root (viewport with rootMargin applied).
-                        // A value closer to 0 means it's higher up in the adjusted content area.
-                        if (entry.boundingClientRect.top < smallestTopRelativeToRoot) {
-                            smallestTopRelativeToRoot = entry.boundingClientRect.top;
-                            newActiveCategory = entry.target.id.replace('-section', '');
-                        }
+                    // Check if the section is intersecting the viewport and its top is at or above the sticky header's bottom
+                    // This ensures we're only considering sections that are "under" or "just past" the sticky header.
+                    const rect = entry.boundingClientRect;
+                    if (entry.isIntersecting && rect.top <= stickyHeaderHeight + 5 && entry.intersectionRatio > maxIntersectionRatio) { // +5px buffer
+                        maxIntersectionRatio = entry.intersectionRatio;
+                        newActiveCategory = entry.target.id.replace('-section', '');
                     }
                 });
 
-                // Fallback: If no intersecting entry is found (e.g., at the very top of the page before any section
-                // intersects the adjusted root, or if the page is very short).
-                // In this case, we manually determine the active category by checking the first visible section.
+                // Fallback for initial load or if no section is significantly intersecting the "active" zone
                 if (!newActiveCategory && categorySections.length > 0) {
-                    const stickyHeaderHeight = getStickyHeaderHeight();
-                    for (let i = 0; i < categorySections.length; i++) {
-                        const section = categorySections[i];
-                        const rect = section.getBoundingClientRect();
-                        const category = section.id.replace('-section', '');
-
-                        // If the section is visible and its top is at or above the sticky header's bottom
-                        // (or very close to it), it's a good candidate for the initial highlight.
-                        if (rect.bottom > 0 && rect.top <= stickyHeaderHeight + 10) { // +10px buffer for initial visibility
-                            newActiveCategory = category;
-                            break; // Take the first one found from top
+                    // If scrolled near the very top of the page, default to 'tradicionais'
+                    if (window.scrollY < stickyHeaderHeight + 50) { // Small buffer for top of page
+                        newActiveCategory = 'tradicionais';
+                    } else {
+                        // As a last resort, find the topmost visible section, even if it's not perfectly aligned with the sticky header
+                        for (let i = 0; i < categorySections.length; i++) {
+                            const section = categorySections[i];
+                            const rect = section.getBoundingClientRect();
+                            if (rect.bottom > 0 && rect.top < window.innerHeight) { // Check if any part is visible
+                                newActiveCategory = section.id.replace('-section', '');
+                                break; // Take the first visible one from the top
+                            }
                         }
                     }
                 }
-                
+
                 if (newActiveCategory && newActiveCategory !== currentActiveCategoryByScroll) {
                     setActiveCategoryButton(newActiveCategory);
                     currentActiveCategoryByScroll = newActiveCategory;
                 }
             }, {
-                root: null, // viewport
-                // The rootMargin effectively defines the "active area" for intersection.
-                // By setting a negative top margin equal to the sticky header's height,
-                // we make the intersection calculation start *below* the sticky header.
-                // So, `isIntersecting` will be true when an element enters this adjusted viewport.
-                // We add a small buffer (e.g., 1px) to ensure it triggers immediately below the header.
-                rootMargin: `-${getStickyHeaderHeight() + 1}px 0px 0px 0px`,
-                threshold: 0 // Trigger as soon as any part of the target enters/leaves the adjusted root.
+                root: null, // O viewport
+                // O rootMargin ajusta a área de interseção.
+                // Ao definir uma margem superior negativa igual à altura do cabeçalho fixo,
+                // a interseção é calculada a partir da parte inferior do cabeçalho fixo.
+                // Isso significa que `isIntersecting` se torna verdadeiro quando um elemento entra na área abaixo do cabeçalho.
+                rootMargin: `-${getStickyHeaderHeight()}px 0px 0px 0px`,
+                threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0] // Observa todas as mudanças para controle mais granular
             });
 
-            // Intersection Observer for the "Ver Pedido" button
-            const orderSectionObserver = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        // Se a seção do pedido está visível, oculta o botão "Ver Pedido" mobile
-                        viewOrderMobileBtn.classList.add('hidden');
-                    } else {
-                        // Se a seção do pedido não está visível, mostra o botão "Ver Pedido" mobile
-                        // mas apenas se houver itens no pedido
-                        if (order.length > 0) {
-                            viewOrderMobileBtn.classList.remove('hidden');
-                        }
-                    }
-                });
-            }, {
-                root: null, // relativo à viewport
-                rootMargin: '0px',
-                threshold: 0 // assim que qualquer parte do alvo entra/sai
+            // Observa cada seção de categoria
+            categorySections.forEach(section => {
+                categoryObserver.observe(section);
             });
-
-            // Observa o elemento de itens do pedido
-            orderSectionObserver.observe(orderItemsEl);
-
-            // Categoria ativa inicial
-            setActiveCategoryButton('tradicionais');
 
             // Listener de evento para os radio buttons de opção de entrega
             deliveryOptionRadios.forEach(radio => {
@@ -1284,7 +1212,13 @@
 
             // Atualização inicial da exibição para refletir a opção de entrega padrão
             // É importante chamar isso depois que o DOM estiver totalmente carregado e os elementos tiverem suas dimensões finais.
-            window.addEventListener('load', updateActiveCategoryFromScroll);
+            window.addEventListener('load', () => {
+                // Dispara um evento de rolagem após um curto atraso para garantir que o observador seja executado
+                // depois que todos os elementos forem renderizados e posicionados corretamente.
+                setTimeout(() => {
+                    window.dispatchEvent(new Event('scroll'));
+                }, 100);
+            });
         });
     </script>
 </body>
