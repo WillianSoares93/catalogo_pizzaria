@@ -205,377 +205,21 @@
                     
                     <!-- Lista de Itens do Cardápio -->
                     <div id="pizza-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Conteúdo do cardápio será preenchido dinamicamente por JavaScript -->
                         <div id="tradicionais-section" class="pizza-category-section">
                             <h3 class="text-xl font-bold text-gray-800 mb-4">Pizzas Tradicionais</h3>
-                            <!-- Itens Tradicionais -->
-                            <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                                <div class="p-4">
-                                    <h4 class="font-bold text-lg text-gray-800">Margherita</h4>
-                                    <p class="text-gray-600 text-sm mb-3">Molho de tomate, mussarela, manjericão fresco</p>
-                                    <div class="flex justify-between items-center">
-                                        <span class="font-bold text-red-600">R$ 45,90</span>
-                                        <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
-                                                data-name="Margherita" 
-                                                data-price="45.90" 
-                                                data-description="Molho de tomate, mussarela, manjericão fresco"
-                                                data-is-pizza="true">
-                                            Adicionar
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                                <div class="p-4">
-                                    <h4 class="font-bold text-lg text-gray-800">Calabresa</h4>
-                                    <p class="text-gray-600 text-sm mb-3">Molho de tomate, mussarela, calabresa, cebola</p>
-                                    <div class="flex justify-between items-center">
-                                        <span class="font-bold text-red-600">R$ 48,90</span>
-                                        <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
-                                                data-name="Calabresa" 
-                                                data-price="48.90" 
-                                                data-description="Molho de tomate, mussarela, calabresa, cebola"
-                                                data-is-pizza="true">
-                                            Adicionar
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                                <div class="p-4">
-                                    <h4 class="font-bold text-lg text-gray-800">Quatro Queijos</h4>
-                                    <p class="text-gray-600 text-sm mb-3">Molho de tomate, mussarela, provolone, parmesão, gorgonzola</p>
-                                    <div class="flex justify-between items-center">
-                                        <span class="font-bold text-red-600">R$ 52,90</span>
-                                        <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
-                                                data-name="Quatro Queijos" 
-                                                data-price="52.90" 
-                                                data-description="Molho de tomate, mussarela, provolone, parmesão, gorgonzola"
-                                                data-is-pizza="true">
-                                            Adicionar
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                                <div class="p-4">
-                                    <h4 class="font-bold text-lg text-gray-800">Portuguesa</h4>
-                                    <p class="text-gray-600 text-sm mb-3">Molho de tomate, mussarela, presunto, ovos, cebola, azeitonas</p>
-                                    <div class="flex justify-between items-center">
-                                        <span class="font-bold text-red-600">R$ 54,90</span>
-                                        <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
-                                                data-name="Portuguesa" 
-                                                data-price="54.90" 
-                                                data-description="Molho de tomate, mussarela, presunto, ovos, cebola, azeitonas"
-                                                data-is-pizza="true">
-                                            Adicionar
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                         
                         <div id="especiais-section" class="pizza-category-section">
                             <h3 class="text-xl font-bold text-gray-800 mb-4">Pizzas Especiais</h3>
-                            <!-- Itens Especiais -->
-                            <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                                <div class="p-4">
-                                    <h4 class="font-bold text-lg text-gray-800">Frango com Catupiry</h4>
-                                    <p class="text-gray-600 text-sm mb-3">Molho de tomate, mussarela, frango desfiado, catupiry</p>
-                                    <div class="flex justify-between items-center">
-                                        <span class="font-bold text-red-600">R$ 56,90</span>
-                                        <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
-                                                data-name="Frango com Catupiry" 
-                                                data-price="56.90" 
-                                                data-description="Molho de tomate, mussarela, frango desfiado, catupiry"
-                                                data-is-pizza="true">
-                                            Adicionar
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                                <div class="p-4">
-                                    <h4 class="font-bold text-lg text-gray-800">Pepperoni</h4>
-                                    <p class="text-gray-600 text-sm mb-3">Molho de tomate, mussarela, pepperoni, pimentão</p>
-                                    <div class="flex justify-between items-center">
-                                        <span class="font-bold text-red-600">R$ 58,90</span>
-                                        <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
-                                                data-name="Pepperoni" 
-                                                data-price="58.90" 
-                                                data-description="Molho de tomate, mussarela, pepperoni, pimentão"
-                                                data-is-pizza="true">
-                                            Adicionar
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                                <div class="p-4">
-                                    <h4 class="font-bold text-lg text-gray-800">Vegetariana</h4>
-                                    <p class="text-gray-600 text-sm mb-3">Molho de tomate, mussarela, berinjela, abobrinha, pimentão, champignon</p>
-                                    <div class="flex justify-between items-center">
-                                        <span class="font-bold text-red-600">R$ 55,90</span>
-                                        <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
-                                                data-name="Vegetariana" 
-                                                data-price="55.90" 
-                                                data-description="Molho de tomate, mussarela, berinjela, abobrinha, pimentão, champignon"
-                                                data-is-pizza="true">
-                                            Adicionar
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                                <div class="p-4">
-                                    <h4 class="font-bold text-lg text-gray-800">Bacon Supreme</h4>
-                                    <p class="text-gray-600 text-sm mb-3">Molho de tomate, mussarela, bacon, milho, cebola caramelizada</p>
-                                    <div class="flex justify-between items-center">
-                                        <span class="font-bold text-red-600">R$ 59,90</span>
-                                        <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
-                                                data-name="Bacon Supreme" 
-                                                data-price="59.90" 
-                                                data-description="Molho de tomate, mussarela, bacon, milho, cebola caramelizada"
-                                                data-is-pizza="true">
-                                            Adicionar
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                         
                         <div id="doces-section" class="pizza-category-section">
                             <h3 class="text-xl font-bold text-gray-800 mb-4">Pizzas Doces</h3>
-                            <!-- Itens Doces -->
-                            <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                                <div class="p-4">
-                                    <h4 class="font-bold text-lg text-gray-800">Chocolate com Morango</h4>
-                                    <p class="text-gray-600 text-sm mb-3">Chocolate ao leite, morangos frescos</p>
-                                    <div class="flex justify-between items-center">
-                                        <span class="font-bold text-red-600">R$ 49,90</span>
-                                        <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
-                                                data-name="Chocolate com Morango" 
-                                                data-price="49.90" 
-                                                data-description="Chocolate ao leite, morangos frescos"
-                                                data-is-pizza="true">
-                                            Adicionar
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                                <div class="p-4">
-                                    <h4 class="font-bold text-lg text-gray-800">Romeu e Julieta</h4>
-                                    <p class="text-gray-600 text-sm mb-3">Goiabada, mussarela, canela em pó</p>
-                                    <div class="flex justify-between items-center">
-                                        <span class="font-bold text-red-600">R$ 47,90</span>
-                                        <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
-                                                data-name="Romeu e Julieta" 
-                                                data-price="47.90" 
-                                                data-description="Goiabada, mussarela, canela em pó"
-                                                data-is-pizza="true">
-                                            Adicionar
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                                <div class="p-4">
-                                    <h4 class="font-bold text-lg text-gray-800">Banana Caramelada</h4>
-                                    <p class="text-gray-600 text-sm mb-3">Banana, doce de leite, canela</p>
-                                    <div class="flex justify-between items-center">
-                                        <span class="font-bold text-red-600">R$ 46,90</span>
-                                        <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
-                                                data-name="Banana Caramelada" 
-                                                data-price="46.90" 
-                                                data-description="Banana, doce de leite, canela"
-                                                data-is-pizza="true">
-                                            Adicionar
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                         
                         <div id="bebidas-section" class="pizza-category-section">
                             <h3 class="text-xl font-bold text-gray-800 mb-4">Bebidas</h3>
-                            <!-- Itens Bebidas (sem opção de meia por padrão) -->
-                            <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                                <div class="p-4">
-                                    <h4 class="font-bold text-lg text-gray-800">Refrigerante 600ml</h4>
-                                    <p class="text-gray-600 text-sm mb-3">Coca-Cola, Guaraná, Fanta, Sprite</p>
-                                    <div class="flex justify-between items-center">
-                                        <span class="font-bold text-red-600">R$ 8,90</span>
-                                        <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
-                                                data-name="Refrigerante 600ml" 
-                                                data-price="8.90" 
-                                                data-description="Coca-Cola, Guaraná, Fanta, Sprite"
-                                                data-is-pizza="false">
-                                            Adicionar
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                                <div class="p-4">
-                                    <h4 class="font-bold text-lg text-gray-800">Suco Natural 500ml</h4>
-                                    <p class="text-gray-600 text-sm mb-3">Laranja, Maracujá, Limão, Abacaxi</p>
-                                    <div class="flex justify-between items-center">
-                                        <span class="font-bold text-red-600">R$ 10,90</span>
-                                        <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
-                                                data-name="Suco Natural 500ml" 
-                                                data-price="10.90" 
-                                                data-description="Laranja, Maracujá, Limão, Abacaxi"
-                                                data-is-pizza="false">
-                                            Adicionar
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                                <div class="p-4">
-                                    <h4 class="font-bold text-lg text-gray-800">Cerveja Long Neck</h4>
-                                    <p class="text-gray-600 text-sm mb-3">Heineken, Stella Artois, Budweiser</p>
-                                    <div class="flex justify-between items-center">
-                                        <span class="font-bold text-red-600">R$ 12,00</span>
-                                        <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
-                                                data-name="Cerveja Long Neck" 
-                                                data-price="12.00" 
-                                                data-description="Heineken, Stella Artois, Budweiser"
-                                                data-is-pizza="false">
-                                            Adicionar
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                                <div class="p-4">
-                                    <h4 class="font-bold text-lg text-gray-800">Água Mineral</h4>
-                                    <p class="text-gray-600 text-sm mb-3">Garrafa 500ml, sem gás</p>
-                                    <div class="flex justify-between items-center">
-                                        <span class="font-bold text-red-600">R$ 4,00</span>
-                                        <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
-                                                data-name="Água Mineral" 
-                                                data-price="4.00" 
-                                                data-description="Garrafa 500ml, sem gás"
-                                                data-is-pizza="false">
-                                            Adicionar
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                                <div class="p-4">
-                                    <h4 class="font-bold text-lg text-gray-800">Água Mineral com Gás</h4>
-                                    <p class="text-gray-600 text-sm mb-3">Garrafa 500ml, com gás</p>
-                                    <div class="flex justify-between items-center">
-                                        <span class="font-bold text-red-600">R$ 5,00</span>
-                                        <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
-                                                data-name="Água Mineral com Gás" 
-                                                data-price="5.00" 
-                                                data-description="Garrafa 500ml, com gás"
-                                                data-is-pizza="false">
-                                            Adicionar
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                                <div class="p-4">
-                                    <h4 class="font-bold text-lg text-gray-800">H2OH! Limão</h4>
-                                    <p class="text-gray-600 text-sm mb-3">Garrafa 500ml</p>
-                                    <div class="flex justify-between items-center">
-                                        <span class="font-bold text-red-600">R$ 7,50</span>
-                                        <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
-                                                data-name="H2OH! Limão" 
-                                                data-price="7.50" 
-                                                data-description="Garrafa 500ml"
-                                                data-is-pizza="false">
-                                            Adicionar
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                                <div class="p-4">
-                                    <h4 class="font-bold text-lg text-gray-800">Chá Gelado (Limoneto)</h4>
-                                    <p class="text-gray-600 text-sm mb-3">Lipton Chá Gelado Limão 300ml</p>
-                                    <div class="flex justify-between items-center">
-                                        <span class="font-bold text-red-600">R$ 6,00</span>
-                                        <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
-                                                data-name="Chá Gelado (Limoneto)" 
-                                                data-price="6.00" 
-                                                data-description="Lipton Chá Gelado Limão 300ml"
-                                                data-is-pizza="false">
-                                            Adicionar
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                                <div class="p-4">
-                                    <h4 class="font-bold text-lg text-gray-800">Energetico (250ml)</h4>
-                                    <p class="text-gray-600 text-sm mb-3">Red Bull, Monster</p>
-                                    <div class="flex justify-between items-center">
-                                        <span class="font-bold text-red-600">R$ 13,00</span>
-                                        <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
-                                                data-name="Energetico (250ml)" 
-                                                data-price="13.00" 
-                                                data-description="Red Bull, Monster"
-                                                data-is-pizza="false">
-                                            Adicionar
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                                <div class="p-4">
-                                    <h4 class="font-bold text-lg text-gray-800">Cerveja Artesanal (IPA)</h4>
-                                    <p class="text-gray-600 text-sm mb-3">Cerveja India Pale Ale, 500ml</p>
-                                    <div class="flex justify-between items-center">
-                                        <span class="font-bold text-red-600">R$ 25,00</span>
-                                        <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
-                                                data-name="Cerveja Artesanal (IPA)" 
-                                                data-price="25.00" 
-                                                data-description="Cerveja India Pale Ale, 500ml"
-                                                data-is-pizza="false">
-                                            Adicionar
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                                <div class="p-4">
-                                    <h4 class="font-bold text-lg text-gray-800">Vinho Tinto (Taça)</h4>
-                                    <p class="text-gray-600 text-sm mb-3">Vinho da Casa, Taça 180ml</p>
-                                    <div class="flex justify-between items-center">
-                                        <span class="font-bold text-red-600">R$ 18,00</span>
-                                        <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition" 
-                                                data-name="Vinho Tinto (Taça)" 
-                                                data-price="18.00" 
-                                                data-description="Vinho da Casa, Taça 180ml"
-                                                data-is-pizza="false">
-                                            Adicionar
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -674,9 +318,102 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Dados do cardápio centralizados em JavaScript
+            const pizzaMenuData = [
+                {
+                    name: "Margherita",
+                    description: "Molho de tomate, mussarela, manjericão fresco",
+                    basePrice: 45.90, // Preço para 8 fatias
+                    category: "tradicionais",
+                    isPizza: true
+                },
+                {
+                    name: "Calabresa",
+                    description: "Molho de tomate, mussarela, calabresa, cebola",
+                    basePrice: 48.90,
+                    category: "tradicionais",
+                    isPizza: true
+                },
+                {
+                    name: "Quatro Queijos",
+                    description: "Molho de tomate, mussarela, provolone, parmesão, gorgonzola",
+                    basePrice: 52.90,
+                    category: "tradicionais",
+                    isPizza: true
+                },
+                {
+                    name: "Portuguesa",
+                    description: "Molho de tomate, mussarela, presunto, ovos, cebola, azeitonas",
+                    basePrice: 54.90,
+                    category: "tradicionais",
+                    isPizza: true
+                },
+                {
+                    name: "Frango com Catupiry",
+                    description: "Molho de tomate, mussarela, frango desfiado, catupiry",
+                    basePrice: 56.90,
+                    category: "especiais",
+                    isPizza: true
+                },
+                {
+                    name: "Pepperoni",
+                    description: "Molho de tomate, mussarela, pepperoni, pimentão",
+                    basePrice: 58.90,
+                    category: "especiais",
+                    isPizza: true
+                },
+                {
+                    name: "Vegetariana",
+                    description: "Molho de tomate, mussarela, berinjela, abobrinha, pimentão, champignon",
+                    basePrice: 55.90,
+                    category: "especiais",
+                    isPizza: true
+                },
+                {
+                    name: "Bacon Supreme",
+                    description: "Molho de tomate, mussarela, bacon, milho, cebola caramelizada",
+                    basePrice: 59.90,
+                    category: "especiais",
+                    isPizza: true
+                },
+                {
+                    name: "Chocolate com Morango",
+                    description: "Chocolate ao leite, morangos frescos",
+                    basePrice: 49.90,
+                    category: "doces",
+                    isPizza: true
+                },
+                {
+                    name: "Romeu e Julieta",
+                    description: "Goiabada, mussarela, canela em pó",
+                    basePrice: 47.90,
+                    category: "doces",
+                    isPizza: true
+                },
+                {
+                    name: "Banana Caramelada",
+                    description: "Banana, doce de leite, canela",
+                    basePrice: 46.90,
+                    category: "doces",
+                    isPizza: true
+                },
+            ];
+
+            const drinkMenuData = [
+                { name: 'Refrigerante 600ml', price: 8.90, description: 'Coca-Cola, Guaraná, Fanta, Sprite', category: 'bebidas', isPizza: false },
+                { name: 'Suco Natural 500ml', price: 10.90, description: 'Laranja, Maracujá, Limão, Abacaxi', category: 'bebidas', isPizza: false },
+                { name: 'Cerveja Long Neck', price: 12.00, description: 'Heineken, Stella Artois, Budweiser', category: 'bebidas', isPizza: false },
+                { name: 'Água Mineral', price: 4.00, description: 'Garrafa 500ml, sem gás', category: 'bebidas', isPizza: false },
+                { name: 'Água Mineral com Gás', price: 5.00, description: 'Garrafa 500ml, com gás', category: 'bebidas', isPizza: false },
+                { name: 'H2OH! Limão', price: 7.50, description: 'Garrafa 500ml', category: 'bebidas', isPizza: false },
+                { name: 'Chá Gelado (Limoneto)', price: 6.00, description: 'Lipton Chá Gelado Limão 300ml', category: 'bebidas', isPizza: false },
+                { name: 'Energetico (250ml)', price: 13.00, description: 'Red Bull, Monster', category: 'bebidas', isPizza: false },
+                { name: 'Cerveja Artesanal (IPA)', price: 25.00, description: 'Cerveja India Pale Ale, 500ml', category: 'bebidas', isPizza: false },
+                { name: 'Vinho Tinto (Taça)', price: 18.00, description: 'Vinho da Casa, Taça 180ml', category: 'bebidas', isPizza: false }
+            ];
+
             // Seleciona todos os botões de categoria e todos os itens de pizza
             const categoryBtns = document.querySelectorAll('.category-btn');
-            const pizzaItems = document.querySelectorAll('.pizza-item');
             const categorySections = document.querySelectorAll('.pizza-category-section');
             
             // Adiciona um listener de clique para cada botão de categoria
@@ -741,20 +478,6 @@
             let currentPizzaData = {}; // Objeto para armazenar temporariamente os dados da pizza selecionada
             let firstHalfPizza = null; // Armazena os dados da primeira metade de uma pizza dividida
             let isSelectingSecondHalf = false; // Flag para indicar se o usuário está escolhendo a segunda metade
-
-            // Amostra de bebidas sugeridas (10 opções)
-            const suggestedDrinks = [
-                { name: 'Refrigerante 600ml (Coca-Cola)', price: 8.90, description: 'Coca-Cola, Guaraná, Fanta, Sprite', category: 'bebidas' },
-                { name: 'Suco Natural 500ml (Laranja)', price: 10.90, description: 'Laranja, Maracujá, Limão, Abacaxi', category: 'bebidas' },
-                { name: 'Cerveja Long Neck (Heineken)', price: 12.00, description: 'Heineken, Stella Artois, Budweiser', category: 'bebidas' },
-                { name: 'Água Mineral (500ml)', price: 4.00, description: 'Garrafa 500ml, sem gás', category: 'bebidas' },
-                { name: 'Água Mineral com Gás (500ml)', price: 5.00, description: 'Garrafa 500ml, com gás', category: 'bebidas' },
-                { name: 'H2OH! Limão (500ml)', price: 7.50, description: 'Garrafa 500ml', category: 'bebidas' },
-                { name: 'Chá Gelado (Limoneto) (300ml)', price: 6.00, description: 'Lipton Chá Gelado Limão 300ml', category: 'bebidas' },
-                { name: 'Energetico (250ml)', price: 13.00, description: 'Red Bull, Monster', category: 'bebidas' },
-                { name: 'Cerveja Artesanal (IPA) (500ml)', price: 25.00, description: 'Cerveja India Pale Ale, 500ml', category: 'bebidas' },
-                { name: 'Vinho Tinto (Taça) (180ml)', price: 18.00, description: 'Vinho da Casa, Taça 180ml', category: 'bebidas' }
-            ];
 
             // Define tamanhos e seus multiplicadores de preço em relação ao preço de 8 fatias
             const sizes = [
@@ -996,7 +719,7 @@
                     // Limpa sugestões anteriores
                     suggestedDrinksList.innerHTML = '';
                     // Popula e mostra o modal de sugestão de bebidas
-                    suggestedDrinks.forEach(drink => {
+                    drinkMenuData.forEach(drink => { // Usando drinkMenuData para sugestões
                         const drinkBtn = document.createElement('button');
                         drinkBtn.className = 'px-4 py-2 bg-green-500 text-white rounded-lg font-bold hover:bg-green-600 transition w-full';
                         drinkBtn.textContent = `Adicionar ${drink.name} (R$ ${drink.price.toFixed(2).replace('.', ',')})`;
@@ -1014,141 +737,206 @@
                 }
             }
 
-            // Adiciona item ao pedido quando um botão "Adicionar" é clicado
-            document.addEventListener('click', function(e) {
-                // Verifica se o clique foi em um botão de adicionar pizza
-                if (e.target.classList.contains('add-pizza-btn')) { 
-                    const name = e.target.dataset.name;
-                    const price = parseFloat(e.target.dataset.price); // Este é o preço da pizza de 8 fatias
-                    const description = e.target.dataset.description;
-                    const isPizza = e.target.dataset.isPizza === 'true'; // Verifica se é uma pizza
+            // Função para lidar com o clique no botão "Adicionar"
+            function handleAddButtonClick(e) {
+                const name = e.target.dataset.name;
+                const price = parseFloat(e.target.dataset.price); // Este é o preço base (8 fatias)
+                const description = e.target.dataset.description;
+                const isPizza = e.target.dataset.isPizza === 'true';
 
-                    // Encontra o elemento pai 'pizza-item' para determinar a categoria
-                    const pizzaItemElement = e.target.closest('.pizza-item');
-                    let category = 'outros'; // Categoria padrão
-                    // A categoria da bebida deve ser definida pelo data-category na div da bebida
-                    // Se o botão não tem data-category, procure no pai mais próximo com uma categoria definida
-                    const categorySection = e.target.closest('.pizza-category-section');
-                    if (categorySection) {
-                        category = categorySection.id.replace('-section', ''); // "bebidas-section" -> "bebidas"
-                    }
-
-
-                    if (isSelectingSecondHalf) {
-                        // Se o usuário está selecionando a segunda metade de uma pizza
-                        if (!isPizza) {
-                            showMessageModal('Por favor, escolha uma pizza para a segunda metade.');
-                            return;
-                        }
-
-                        // Encontra e remove a meia pizza pendente do pedido
-                        const pendingHalfIndex = order.findIndex(item => item.id === 'pending-half-pizza');
-                        if (pendingHalfIndex > -1) {
-                            order.splice(pendingHalfIndex, 1); // Remove a meia pizza pendente
-                        }
-
-                        // Combina as duas metades
-                        const cleanFirstName = firstHalfPizza.name; // Já é só o nome do sabor
-                        const combinedName = `Meia ${cleanFirstName} & Meia ${name}`; // Remove o tamanho daqui, será adicionado na exibição
-                        
-                        // Encontra o multiplicador para o tamanho da pizza combinada
-                        const multiplierForTargetSlices = sizes.find(s => s.slices === firstHalfPizza.selected_slices).multiplier;
-                        // Calcula o preço da segunda metade baseado no preço de 8 fatias e no multiplicador do tamanho alvo
-                        const selectedSecondHalfPrice = price * multiplierForTargetSlices; 
-
-                        const combinedPrice = (firstHalfPizza.original_full_price / 2) + (selectedSecondHalfPrice / 2);
-                        const combinedDescription = `${firstHalfPizza.description.replace('Primeira metade: ', '')} e ${description}`;
-
-                        addToOrder({
-                            type: 'split',
-                            name: combinedName,
-                            price: combinedPrice,
-                            description: combinedDescription,
-                            category: 'tradicionais', // Assume categoria de pizza combinada
-                            selected_slices: firstHalfPizza.selected_slices // Mantém o tamanho da pizza combinada
-                        });
-
-                        firstHalfPizza = null; // Reseta a primeira metade
-                        isSelectingSecondHalf = false; // Sai do modo de pizza dividida
-                        showMessageModal('Pizza meio a meio adicionada ao pedido!');
-
-                    } else if (isPizza) {
-                        // Se for uma pizza e não estiver no modo de divisão, abre o modal de seleção
-                        currentPizzaData = { name, price, description, category };
-                        modalPizzaName.textContent = name;
-                        modalPizzaDescription.textContent = description;
-
-                        pizzaSizeOptions.innerHTML = ''; // Limpa as opções anteriores
-                        
-                        sizes.forEach(size => {
-                            const sizePrice = currentPizzaData.price * size.multiplier;
-                            const optionDiv = document.createElement('div');
-                            optionDiv.className = 'pizza-size-option';
-                            optionDiv.innerHTML = `
-                                ${getGenericPizzaSliceImage()}
-                                <span class="font-bold text-lg text-gray-800">${size.label}</span>
-                                <span class="text-red-600 font-bold">R$ ${sizePrice.toFixed(2).replace('.', ',')}</span>
-                                <div class="flex flex-col gap-2 mt-2 w-full">
-                                    <button class="add-full-size-pizza-btn px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition">
-                                        Adicionar Inteira
-                                    </button>
-                                    <button class="add-half-size-pizza-btn px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition">
-                                        Adicionar Meia Pizza
-                                    </button>
-                                </div>
-                            `;
-                            pizzaSizeOptions.appendChild(optionDiv);
-
-                            // Adiciona event listeners para os botões recém-criados
-                            optionDiv.querySelector('.add-full-size-pizza-btn').addEventListener('click', function() {
-                                addToOrder({
-                                    type: 'full',
-                                    name: currentPizzaData.name, // Apenas o nome do sabor
-                                    price: sizePrice,
-                                    description: currentPizzaData.description,
-                                    category: currentPizzaData.category,
-                                    selected_slices: size.slices // Armazena o número de fatias separadamente
-                                });
-                                pizzaOptionModal.style.display = 'none';
-                            });
-
-                            optionDiv.querySelector('.add-half-size-pizza-btn').addEventListener('click', function() {
-                                firstHalfPizza = {
-                                    name: currentPizzaData.name,
-                                    price: sizePrice / 2, // Preço desta metade
-                                    description: currentPizzaData.description,
-                                    original_full_price: sizePrice, // Armazena o preço total deste tamanho para o cálculo final
-                                    selected_slices: size.slices, // Armazena o número de fatias selecionado para a pizza combinada
-                                    category: currentPizzaData.category
-                                };
-                                isSelectingSecondHalf = true;
-                                pizzaOptionModal.style.display = 'none';
-                                addToOrder({
-                                    type: 'half_pending',
-                                    name: `½ ${currentPizzaData.name}`, // Apenas o nome do sabor da primeira metade
-                                    price: sizePrice / 2,
-                                    description: `Primeira metade: ${currentPizzaData.description}`,
-                                    id: 'pending-half-pizza',
-                                    category: currentPizzaData.category,
-                                    selected_slices: size.slices // Armazena o número de fatias separadamente
-                                });
-                                showMessageModal('Agora, escolha a segunda metade da sua pizza.');
-                            });
-                        });
-
-                        pizzaOptionModal.style.display = 'flex'; // Exibe o modal
-                    } else {
-                        // Se não for pizza (ex: bebida), adiciona diretamente
-                        addToOrder({
-                            type: 'full',
-                            name,
-                            price,
-                            description,
-                            category // Passa a categoria da bebida
-                        });
-                    }
+                const categorySection = e.target.closest('.pizza-category-section');
+                let category = 'outros';
+                if (categorySection) {
+                    category = categorySection.id.replace('-section', '');
                 }
-            });
+
+                if (isSelectingSecondHalf) {
+                    if (!isPizza) {
+                        showMessageModal('Por favor, escolha uma pizza para a segunda metade.');
+                        return;
+                    }
+
+                    const pendingHalfIndex = order.findIndex(item => item.id === 'pending-half-pizza');
+                    if (pendingHalfIndex > -1) {
+                        order.splice(pendingHalfIndex, 1);
+                    }
+
+                    const cleanFirstName = firstHalfPizza.name;
+                    const combinedName = `Meia ${cleanFirstName} & Meia ${name}`;
+                    
+                    const multiplierForTargetSlices = sizes.find(s => s.slices === firstHalfPizza.selected_slices).multiplier;
+                    const selectedSecondHalfPrice = price * multiplierForTargetSlices; 
+
+                    const combinedPrice = (firstHalfPizza.original_full_price / 2) + (selectedSecondHalfPrice / 2);
+                    const combinedDescription = `${firstHalfPizza.description.replace('Primeira metade: ', '')} e ${description}`;
+
+                    addToOrder({
+                        type: 'split',
+                        name: combinedName,
+                        price: combinedPrice,
+                        description: combinedDescription,
+                        category: 'tradicionais',
+                        selected_slices: firstHalfPizza.selected_slices
+                    });
+
+                    firstHalfPizza = null;
+                    isSelectingSecondHalf = false;
+                    showMessageModal('Pizza meio a meio adicionada ao pedido!');
+
+                } else if (isPizza) {
+                    currentPizzaData = { name, price, description, category };
+                    modalPizzaName.textContent = name;
+                    modalPizzaDescription.textContent = description;
+
+                    pizzaSizeOptions.innerHTML = '';
+                    
+                    sizes.forEach(size => {
+                        const sizePrice = currentPizzaData.price * size.multiplier;
+                        const optionDiv = document.createElement('div');
+                        optionDiv.className = 'pizza-size-option';
+                        optionDiv.innerHTML = `
+                            ${getGenericPizzaSliceImage()}
+                            <span class="font-bold text-lg text-gray-800">${size.label}</span>
+                            <span class="text-red-600 font-bold">R$ ${sizePrice.toFixed(2).replace('.', ',')}</span>
+                            <div class="flex flex-col gap-2 mt-2 w-full">
+                                <button class="add-full-size-pizza-btn px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition">
+                                    Adicionar Inteira
+                                </button>
+                                <button class="add-half-size-pizza-btn px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition">
+                                    Adicionar Meia Pizza
+                                </button>
+                            </div>
+                        `;
+                        pizzaSizeOptions.appendChild(optionDiv);
+
+                        optionDiv.querySelector('.add-full-size-pizza-btn').addEventListener('click', function() {
+                            addToOrder({
+                                type: 'full',
+                                name: currentPizzaData.name,
+                                price: sizePrice,
+                                description: currentPizzaData.description,
+                                category: currentPizzaData.category,
+                                selected_slices: size.slices
+                            });
+                            pizzaOptionModal.style.display = 'none';
+                        });
+
+                        optionDiv.querySelector('.add-half-size-pizza-btn').addEventListener('click', function() {
+                            firstHalfPizza = {
+                                name: currentPizzaData.name,
+                                price: sizePrice / 2,
+                                description: currentPizzaData.description,
+                                original_full_price: sizePrice,
+                                selected_slices: size.slices,
+                                category: currentPizzaData.category
+                            };
+                            isSelectingSecondHalf = true;
+                            pizzaOptionModal.style.display = 'none';
+                            addToOrder({
+                                type: 'half_pending',
+                                name: `½ ${currentPizzaData.name}`,
+                                price: sizePrice / 2,
+                                description: `Primeira metade: ${currentPizzaData.description}`,
+                                id: 'pending-half-pizza',
+                                category: currentPizzaData.category,
+                                selected_slices: size.slices
+                            });
+                            showMessageModal('Agora, escolha a segunda metade da sua pizza.');
+                        });
+                    });
+
+                    pizzaOptionModal.style.display = 'flex';
+                } else {
+                    addToOrder({
+                        type: 'full',
+                        name,
+                        price,
+                        description,
+                        category
+                    });
+                }
+            }
+
+            // Função para anexar os event listeners aos botões "Adicionar"
+            function attachAddButtonListeners() {
+                document.querySelectorAll('.add-pizza-btn').forEach(button => {
+                    // Remove o listener anterior para evitar duplicações
+                    button.removeEventListener('click', handleAddButtonClick); 
+                    button.addEventListener('click', handleAddButtonClick);
+                });
+            }
+
+            // Função para popular o cardápio dinamicamente
+            function populateMenu() {
+                // Limpa as seções existentes antes de preencher
+                document.getElementById('tradicionais-section').innerHTML = '<h3 class="text-xl font-bold text-gray-800 mb-4">Pizzas Tradicionais</h3>';
+                document.getElementById('especiais-section').innerHTML = '<h3 class="text-xl font-bold text-gray-800 mb-4">Pizzas Especiais</h3>';
+                document.getElementById('doces-section').innerHTML = '<h3 class="text-xl font-bold text-gray-800 mb-4">Pizzas Doces</h3>';
+                document.getElementById('bebidas-section').innerHTML = '<h3 class="text-xl font-bold text-gray-800 mb-4">Bebidas</h3>';
+
+                // Popula Pizzas
+                pizzaMenuData.forEach(item => {
+                    const sectionEl = document.getElementById(`${item.category}-section`);
+                    if (sectionEl) {
+                        let priceString = '';
+                        // Calcula e formata os preços para todos os tamanhos de pizza
+                        const price4F = (item.basePrice * sizes.find(s => s.slices === 4).multiplier).toFixed(2).replace('.', ',');
+                        const price6F = (item.basePrice * sizes.find(s => s.slices === 6).multiplier).toFixed(2).replace('.', ',');
+                        const price8F = item.basePrice.toFixed(2).replace('.', ',');
+                        priceString = `4F: R$ ${price4F} | 6F: R$ ${price6F} | 8F: R$ ${price8F}`;
+                        
+
+                        const itemHtml = `
+                            <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                                <div class="p-4">
+                                    <h4 class="font-bold text-lg text-gray-800">${item.name}</h4>
+                                    <p class="text-gray-600 text-sm mb-3">${item.description}</p>
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-bold text-red-600">${priceString}</span>
+                                        <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition"
+                                                data-name="${item.name}"
+                                                data-price="${item.basePrice}"
+                                                data-description="${item.description}"
+                                                data-is-pizza="${item.isPizza}">
+                                            Adicionar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        sectionEl.insertAdjacentHTML('beforeend', itemHtml);
+                    }
+                });
+
+                // Popula Bebidas
+                drinkMenuData.forEach(item => {
+                    const sectionEl = document.getElementById(`${item.category}-section`);
+                    if (sectionEl) {
+                        const itemHtml = `
+                            <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                                <div class="p-4">
+                                    <h4 class="font-bold text-lg text-gray-800">${item.name}</h4>
+                                    <p class="text-gray-600 text-sm mb-3">${item.description}</p>
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-bold text-red-600">R$ ${item.price.toFixed(2).replace('.', ',')}</span>
+                                        <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition"
+                                                data-name="${item.name}"
+                                                data-price="${item.price}"
+                                                data-description="${item.description}"
+                                                data-is-pizza="${item.isPizza}">
+                                            Adicionar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        sectionEl.insertAdjacentHTML('beforeend', itemHtml);
+                    }
+                });
+
+                // Reanexa os event listeners após popular o cardápio
+                attachAddButtonListeners();
+            }
 
             // Listener para fechar o modal de seleção de pizza
             closePizzaOptionModalBtn.addEventListener('click', function() {
@@ -1175,13 +963,22 @@
 
                 // Calcula a posição logo acima do botão "Ver Pedido"
                 // Garante que o botão "Ver Pedido" esteja visível para obter sua altura
-                viewOrderMobileBtn.classList.remove('hidden'); 
+                // Temporariamente mostra o botão para pegar a altura correta
+                const wasHidden = viewOrderMobileBtn.classList.contains('hidden');
+                if (wasHidden) {
+                    viewOrderMobileBtn.classList.remove('hidden');
+                }
                 const viewOrderBtnHeight = viewOrderMobileBtn.offsetHeight;
-                const bottomPosition = viewOrderBtnHeight + 16; // 16px para o espaçamento bottom-4
+                const bottomPosition = viewOrderBtnHeight + 16; // 16px para o espaçamento bottom-4 do botão
                 feedback.style.bottom = `${bottomPosition}px`;
 
                 document.body.appendChild(feedback);
                 
+                // Restaura o estado de visibilidade original do botão "Ver Pedido"
+                if (wasHidden) {
+                    viewOrderMobileBtn.classList.add('hidden');
+                }
+
                 // Remove o feedback após 2 segundos
                 setTimeout(() => {
                     feedback.classList.add('opacity-0', 'transition-opacity', 'duration-300');
@@ -1230,6 +1027,7 @@
                 }
                 
                 // Calcula e atualiza os totais
+                // Garante que a soma é feita sobre o preço de cada item no pedido
                 const subtotal = order.reduce((sum, item) => sum + item.price, 0);
                 const total = subtotal + currentDeliveryFee; // Usa a taxa de entrega atual
                 
@@ -1286,8 +1084,9 @@
                 }
             });
 
-            // Chamada inicial para definir a categoria ativa correta no carregamento
+            // Chamada inicial para popular o cardápio e definir a categoria ativa correta no carregamento
             window.addEventListener('load', () => {
+                populateMenu(); // Popula o cardápio dinamicamente
                 // Dispara um evento de rolagem após um curto atraso para garantir que o observer seja executado
                 // depois que todos os elementos forem renderizados e posicionados corretamente.
                 setTimeout(() => {
