@@ -137,6 +137,7 @@
             transition: all 0.2s ease-in-out;
             text-align: center;
             min-width: 120px; /* Garante que os itens não fiquem muito pequenos */
+            flex-shrink: 0; /* Prevents items from shrinking */
         }
         .pizza-size-option:hover {
             border-color: #ef4444; /* red-500 */
@@ -290,7 +291,7 @@
             <span class="close-button" id="close-pizza-option-modal">&times;</span>
             <h3 class="text-xl font-bold text-gray-800 mb-4" id="modal-pizza-name"></h3>
             <p class="text-gray-600 mb-6" id="modal-pizza-description"></p>
-            <div id="pizza-size-options" class="flex flex-wrap justify-center gap-4">
+            <div id="pizza-size-options" class="flex flex-nowrap justify-center gap-4 overflow-x-auto pb-2">
                 <!-- Opções de tamanho e "meia a meia" serão inseridas aqui pelo JS -->
             </div>
         </div>
