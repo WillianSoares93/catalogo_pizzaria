@@ -1170,7 +1170,16 @@
                 // Feedback visual de adição
                 const feedback = document.createElement('div');
                 feedback.textContent = '✔️ Adicionado ao pedido!';
-                feedback.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg slide-in';
+                feedback.className = 'fixed right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg slide-in';
+                feedback.style.zIndex = '100'; // Garante que esteja acima de outros elementos
+
+                // Calcula a posição logo acima do botão "Ver Pedido"
+                // Garante que o botão "Ver Pedido" esteja visível para obter sua altura
+                viewOrderMobileBtn.classList.remove('hidden'); 
+                const viewOrderBtnHeight = viewOrderMobileBtn.offsetHeight;
+                const bottomPosition = viewOrderBtnHeight + 16; // 16px para o espaçamento bottom-4
+                feedback.style.bottom = `${bottomPosition}px`;
+
                 document.body.appendChild(feedback);
                 
                 // Remove o feedback após 2 segundos
@@ -1219,6 +1228,15 @@
                     // Isso será tratado pelo orderSectionObserver
                     // viewOrderMobileBtn.classList.remove('hidden'); 
                 }
+                
+                // Calcula e atualiza os totais
+                const subtotal = order.reduce((sum, item) => sum + item.price, 0);
+                const total = subtotal + currentDeliveryFee; // Usa a taxa de entrega atual
+                
+                subtotalEl.textContent = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
+                deliveryFeeEl.textContent = `R$ ${currentDeliveryFee.toFixed(2).replace('.', ',')}`; // Atualiza a exibição da taxa
+                totalEl.textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
+
                 // Reavalia a visibilidade do botão "Ver Pedido" após a atualização do pedido
                 // para garantir que o IntersectionObserver seja acionado.
                 if (orderSectionContainer) {
