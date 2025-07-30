@@ -820,7 +820,7 @@
                 return stickyHeader ? stickyHeader.offsetHeight : 0;
             }
 
-            // O IntersectionObserver agora será mais inteligente
+            // O IntersectionObserver para destaque de categoria
             const categoryObserver = new IntersectionObserver((entries) => {
                 if (isScrollingFromClick) {
                     return; // Ignora eventos do observer se estivermos rolando devido a um clique
@@ -831,8 +831,6 @@
                 let bestMatchTop = Infinity; // Para encontrar a seção cujo topo está mais próximo do cabeçalho fixo
 
                 // Itera sobre todas as seções para encontrar a que está atualmente mais visível no topo
-                // Isso é mais robusto do que depender apenas das 'entries' do observer,
-                // pois as 'entries' só mostram o que mudou de interseção.
                 categorySections.forEach(section => {
                     const rect = section.getBoundingClientRect();
                     const category = section.id.replace('-section', '');
@@ -888,12 +886,8 @@
                 }
             }, {
                 root: null, // O viewport
-                // rootMargin ajustado para criar uma "janela" de detecção na área de conteúdo principal.
-                // top: a altura do cabeçalho fixo (negativo para mover a raiz para baixo)
-                // bottom: - (altura da viewport - stickyHeaderHeight - buffer) para que a área de detecção seja mais focada no topo
-                // Vamos simplificar o rootMargin para apenas definir o ponto de partida da observação.
                 rootMargin: `-${getStickyHeaderHeight()}px 0px 0px 0px`,
-                threshold: 0.1 // Um pequeno limite para acionar a observação assim que 10% do elemento entra na raiz ajustada
+                threshold: 0.1 // Um pequeno limite para acionar a observação
             });
 
             // Observa cada seção de categoria
@@ -901,16 +895,38 @@
                 categoryObserver.observe(section);
             });
 
+            // IntersectionObserver para o botão "Ver Pedido"
+            const orderSectionObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    // Se a seção do pedido está visível na tela e há itens no pedido, esconde o botão
+                    if (entry.isIntersecting && order.length > 0) {
+                        viewOrderMobileBtn.classList.add('hidden');
+                    } else if (!entry.isIntersecting && order.length > 0) {
+                        // Se a seção do pedido não está visível e há itens no pedido, mostra o botão
+                        viewOrderMobileBtn.classList.remove('hidden');
+                    } else if (order.length === 0) {
+                        // Se o pedido está vazio, sempre esconde o botão
+                        viewOrderMobileBtn.classList.add('hidden');
+                    }
+                });
+            }, {
+                root: null, // O viewport
+                threshold: 0.1 // Dispara quando 10% do elemento está visível
+            });
+
+            // Observa a seção do pedido (o elemento pai que contém os itens do pedido)
+            const orderSectionContainer = document.querySelector('.lg\\:w-1\\/3'); // Seleciona a div que contém o carrinho
+            if (orderSectionContainer) {
+                orderSectionObserver.observe(orderSectionContainer);
+            }
+
             // Adiciona um listener de rolagem para atualizações mais imediatas,
             // embora o IntersectionObserver deva lidar com a maioria dos casos.
-            // Isso serve como uma rede de segurança e ajuda com o debouncing.
             let scrollTimeout;
             window.addEventListener('scroll', () => {
                 clearTimeout(scrollTimeout);
                 scrollTimeout = setTimeout(() => {
-                    // Não chamamos updateActiveCategoryFromScroll diretamente aqui,
-                    // pois o observer já fará isso quando as interseções mudarem.
-                    // Apenas garantimos que o IntersectionObserver seja acionado.
+                    // Isso fará com que os IntersectionObservers reavaliem suas interseções.
                 }, 50); // Debounce eventos de rolagem
             });
 
@@ -1199,16 +1215,16 @@
                         
                         orderItemsEl.appendChild(itemEl); // Adiciona o item à lista
                     });
-                    viewOrderMobileBtn.classList.remove('hidden'); // Mostra o botão "Ver Pedido"
+                    // Oculta o botão "Ver Pedido" se a seção do pedido já estiver visível
+                    // Isso será tratado pelo orderSectionObserver
+                    // viewOrderMobileBtn.classList.remove('hidden'); 
                 }
-                
-                // Calcula e atualiza os totais
-                const subtotal = order.reduce((sum, item) => sum + item.price, 0);
-                const total = subtotal + currentDeliveryFee; // Usa a taxa de entrega atual
-                
-                subtotalEl.textContent = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
-                deliveryFeeEl.textContent = `R$ ${currentDeliveryFee.toFixed(2).replace('.', ',')}`; // Atualiza a exibição da taxa
-                totalEl.textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
+                // Reavalia a visibilidade do botão "Ver Pedido" após a atualização do pedido
+                // para garantir que o IntersectionObserver seja acionado.
+                if (orderSectionContainer) {
+                    orderSectionObserver.unobserve(orderSectionContainer);
+                    orderSectionObserver.observe(orderSectionContainer);
+                }
             }
             
             // Remove item do pedido quando o botão de remover é clicado
@@ -1245,7 +1261,11 @@
 
             // Listener para o botão "Ver Pedido" mobile
             viewOrderMobileBtn.addEventListener('click', function() {
-                document.getElementById('order-items').scrollIntoView({ behavior: 'smooth' });
+                // Rola para o topo da seção do pedido
+                const orderSection = document.querySelector('.lg\\:w-1\\/3');
+                if (orderSection) {
+                    orderSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
             });
 
             // Chamada inicial para definir a categoria ativa correta no carregamento
