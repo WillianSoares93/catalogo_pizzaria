@@ -630,28 +630,46 @@
             }
 
             // Intersection Observer for scroll-based active category
-            const observerOptions = {
-                root: null, // viewport
-                rootMargin: '0px',
-                threshold: 0.5 // Trigger when 50% of the section is visible
-            };
-
             const categoryObserver = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
                         const category = entry.target.id.replace('-section', '');
-                        // Only update if not currently selecting second half of pizza
-                        // and if it's a mobile view (or if we want this behavior on desktop too)
-                        // For now, let's keep it active for both to simplify.
                         setActiveCategoryButton(category);
                     }
                 });
-            }, observerOptions);
+            }, {
+                root: null, // viewport
+                rootMargin: '0px',
+                threshold: 0.5 // Trigger when 50% of the section is visible
+            });
 
             // Observe each category section
             categorySections.forEach(section => {
                 categoryObserver.observe(section);
             });
+
+            // Intersection Observer for the "Ver Pedido" button
+            const orderSectionObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        // If the order section is visible, hide the mobile view order button
+                        viewOrderMobileBtn.classList.add('hidden');
+                    } else {
+                        // If the order section is not visible, show the mobile view order button
+                        // but only if there are items in the order
+                        if (order.length > 0) {
+                            viewOrderMobileBtn.classList.remove('hidden');
+                        }
+                    }
+                });
+            }, {
+                root: null, // relative to the viewport
+                rootMargin: '0px',
+                threshold: 0 // as soon as any part of the target enters/leaves
+            });
+
+            // Observe the order items element
+            orderSectionObserver.observe(orderItemsEl);
 
             // Initial active category
             setActiveCategoryButton('tradicionais');
