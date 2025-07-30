@@ -819,56 +819,76 @@
                 return stickyHeader ? stickyHeader.offsetHeight : 0;
             }
 
-            // Intersection Observer para destaque de categoria baseado na rolagem
-            const categoryObserver = new IntersectionObserver((entries) => {
+            // Function to update the active category based on scroll position
+            function updateActiveCategoryFromScroll() {
                 if (isScrollingFromClick) {
-                    return; // Ignora eventos do observer se estivermos rolando devido a um clique
+                    return; // Não atualiza se a rolagem foi iniciada por um clique
                 }
 
                 let newActiveCategory = null;
-                let maxIntersectionRatio = 0;
                 const stickyHeaderHeight = getStickyHeaderHeight();
+                let bestMatchDistance = Infinity;
 
-                entries.forEach(entry => {
-                    // Check if the section is intersecting the viewport and its top is at or above the sticky header's bottom
-                    // This ensures we're only considering sections that are "under" or "just past" the sticky header.
-                    const rect = entry.boundingClientRect;
-                    if (entry.isIntersecting && rect.top <= stickyHeaderHeight + 5 && entry.intersectionRatio > maxIntersectionRatio) { // +5px buffer
-                        maxIntersectionRatio = entry.intersectionRatio;
-                        newActiveCategory = entry.target.id.replace('-section', '');
-                    }
-                });
+                // Itera sobre as seções para encontrar a que está atualmente no topo da visualização
+                for (let i = 0; i < categorySections.length; i++) {
+                    const section = categorySections[i];
+                    const rect = section.getBoundingClientRect();
+                    const category = section.id.replace('-section', '');
 
-                // Fallback for initial load or if no section is significantly intersecting the "active" zone
-                if (!newActiveCategory && categorySections.length > 0) {
-                    // If scrolled near the very top of the page, default to 'tradicionais'
-                    if (window.scrollY < stickyHeaderHeight + 50) { // Small buffer for top of page
-                        newActiveCategory = 'tradicionais';
-                    } else {
-                        // As a last resort, find the topmost visible section, even if it's not perfectly aligned with the sticky header
-                        for (let i = 0; i < categorySections.length; i++) {
-                            const section = categorySections[i];
-                            const rect = section.getBoundingClientRect();
-                            if (rect.bottom > 0 && rect.top < window.innerHeight) { // Check if any part is visible
-                                newActiveCategory = section.id.replace('-section', '');
-                                break; // Take the first visible one from the top
-                            }
+                    // Uma seção é considerada "ativa" se o seu topo está na ou acima da parte inferior do cabeçalho fixo,
+                    // e sua parte inferior ainda está visível (ou seja, não rolou completamente).
+                    // Queremos a seção mais ao topo que atende a esse critério, ou aquela cujo topo está mais próximo do cabeçalho fixo.
+                    
+                    // Se a seção está visível na viewport
+                    if (rect.bottom > 0 && rect.top < window.innerHeight) {
+                        // Calcula a distância do seu topo em relação à parte inferior do cabeçalho fixo
+                        const distance = rect.top - stickyHeaderHeight;
+
+                        // Estamos procurando a seção cujo topo está logo na ou um pouco abaixo do cabeçalho fixo.
+                        // Prioriza as seções que estão "entrando" na área fixa.
+                        if (distance <= 0 && rect.bottom > stickyHeaderHeight) { // Seção está atualmente "abaixo" do cabeçalho fixo
+                            newActiveCategory = category;
+                            break; // Esta é a correspondência mais precisa, pode parar a busca
+                        } else if (distance > 0 && distance < bestMatchDistance) { // Seção está logo abaixo do cabeçalho fixo
+                            bestMatchDistance = distance;
+                            newActiveCategory = category;
                         }
                     }
                 }
 
+                // Fallback para carregamento inicial ou se nenhuma seção estiver perfeitamente alinhada
+                if (!newActiveCategory && categorySections.length > 0) {
+                    // Se rolou para o topo da página, define como 'tradicionais' por padrão
+                    if (window.scrollY <= stickyHeaderHeight + 10) { // Pequeno buffer para o topo da página
+                        newActiveCategory = 'tradicionais';
+                    } else {
+                        // Como último recurso, encontra a última seção visível (para o final da rolagem)
+                        for (let i = categorySections.length - 1; i >= 0; i--) {
+                            const section = categorySections[i];
+                            const rect = section.getBoundingClientRect();
+                            if (rect.top < window.innerHeight && rect.bottom > 0) { // Se alguma parte da seção está visível
+                                newActiveCategory = section.id.replace('-section', '');
+                                break;
+                            }
+                        }
+                    }
+                }
+                
                 if (newActiveCategory && newActiveCategory !== currentActiveCategoryByScroll) {
                     setActiveCategoryButton(newActiveCategory);
                     currentActiveCategoryByScroll = newActiveCategory;
                 }
+            }
+
+            // O IntersectionObserver agora simplesmente acionará a função updateActiveCategoryFromScroll
+            const categoryObserver = new IntersectionObserver((entries) => {
+                // Este observador será acionado quando qualquer parte da seção entrar na viewport.
+                // Em seguida, chamamos nossa verificação manual para determinar a categoria ativa mais apropriada.
+                updateActiveCategoryFromScroll();
             }, {
-                root: null, // O viewport
-                // O rootMargin ajusta a área de interseção.
-                // Ao definir uma margem superior negativa igual à altura do cabeçalho fixo,
-                // a interseção é calculada a partir da parte inferior do cabeçalho fixo.
-                // Isso significa que `isIntersecting` se torna verdadeiro quando um elemento entra na área abaixo do cabeçalho.
-                rootMargin: `-${getStickyHeaderHeight()}px 0px 0px 0px`,
-                threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0] // Observa todas as mudanças para controle mais granular
+                root: null, // A viewport
+                rootMargin: `-${getStickyHeaderHeight()}px 0px 0px 0px`, // Ajusta a raiz para começar abaixo do cabeçalho fixo
+                threshold: 0.01 // Um pequeno limite para acionar frequentemente durante a rolagem
             });
 
             // Observa cada seção de categoria
@@ -876,348 +896,20 @@
                 categoryObserver.observe(section);
             });
 
-            // Listener de evento para os radio buttons de opção de entrega
-            deliveryOptionRadios.forEach(radio => {
-                radio.addEventListener('change', function() {
-                    if (this.value === 'delivery') {
-                        currentDeliveryFee = 5.00;
-                    } else {
-                        currentDeliveryFee = 0.00;
-                    }
-                    updateOrderDisplay(); // Recalcula o total com a nova taxa
-                });
+            // Adiciona um listener de rolagem para atualizações mais imediatas,
+            // embora o IntersectionObserver deva lidar com a maioria dos casos.
+            // Isso serve como uma rede de segurança e ajuda com o debouncing.
+            let scrollTimeout;
+            window.addEventListener('scroll', () => {
+                clearTimeout(scrollTimeout);
+                scrollTimeout = setTimeout(() => {
+                    updateActiveCategoryFromScroll();
+                }, 50); // Debounce eventos de rolagem
             });
 
-
-            // Função para enviar o pedido para o WhatsApp
-            function sendOrderToWhatsapp() {
-                let orderMessage = `Boa noite, esse será meu pedido!\n\n*Itens:*\n`;
-                order.forEach(item => {
-                    let line = '';
-                    if (item.selected_slices) { // Verifica se é um item de pizza pela presença de selected_slices
-                        const sizeLabel = `${item.selected_slices} FATIAS`.toUpperCase();
-                        if (item.type === 'half_pending') {
-                            line = `- *${sizeLabel}*: ${item.name} (Aguardando 2ª metade) - R$ ${item.price.toFixed(2).replace('.', ',')}`;
-                        } else {
-                            line = `- *${sizeLabel}*: ${item.name} - R$ ${item.price.toFixed(2).replace('.', ',')}`; // Incluindo o preço
-                        }
-                    } else {
-                        // Para outros itens (como bebidas), usa o formato original
-                        line = `- ${item.name}: R$ ${item.price.toFixed(2).replace('.', ',')}`;
-                    }
-                    orderMessage += `${line}\n`;
-                });
-
-                const subtotal = order.reduce((sum, item) => sum + item.price, 0);
-                const total = subtotal + currentDeliveryFee; // Usa a taxa de entrega atual
-
-                orderMessage += `\n*Resumo:*\n`;
-                orderMessage += `Subtotal: R$ ${subtotal.toFixed(2).replace('.', ',')}\n`;
-                orderMessage += `Taxa de entrega: R$ ${currentDeliveryFee.toFixed(2).replace('.', ',')}\n`; // Exibe a taxa de entrega atual
-                orderMessage += `Total: R$ ${total.toFixed(2).replace('.', ',')}`;
-
-                const encodedMessage = encodeURIComponent(orderMessage);
-                const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
-                window.open(whatsappUrl, '_blank'); // Abre o WhatsApp em uma nova aba
-
-                // Reseta o pedido após o envio
-                order = [];
-                updateOrderDisplay();
-            }
-
-            // Função para verificar bebidas e sugerir
-            function checkAndSuggestDrinks() {
-                if (isSelectingSecondHalf) {
-                    showMessageModal('Por favor, escolha a segunda metade da sua pizza antes de finalizar o pedido.');
-                    return;
-                }
-                if (order.length === 0) {
-                    showMessageModal('Seu pedido está vazio. Adicione itens antes de finalizar.');
-                    return;
-                }
-
-                const hasDrinks = order.some(item => item.category === 'bebidas');
-
-                if (!hasDrinks) {
-                    // Limpa sugestões anteriores
-                    suggestedDrinksList.innerHTML = '';
-                    // Popula e mostra o modal de sugestão de bebidas
-                    suggestedDrinks.forEach(drink => {
-                        const drinkBtn = document.createElement('button');
-                        drinkBtn.className = 'px-4 py-2 bg-green-500 text-white rounded-lg font-bold hover:bg-green-600 transition w-full';
-                        drinkBtn.textContent = `Adicionar ${drink.name} (R$ ${drink.price.toFixed(2).replace('.', ',')})`;
-                        drinkBtn.addEventListener('click', () => {
-                            addToOrder(drink);
-                            drinkSuggestionModal.style.display = 'none';
-                            sendOrderToWhatsapp(); // Envia para o WhatsApp após adicionar a bebida
-                        });
-                        suggestedDrinksList.appendChild(drinkBtn);
-                    });
-                    drinkSuggestionModal.style.display = 'flex';
-                } else {
-                    // Se houver bebidas, prossegue com a finalização do pedido
-                    sendOrderToWhatsapp(); // Envia para o WhatsApp
-                }
-            }
-
-            // Adiciona item ao pedido quando um botão "Adicionar" é clicado
-            document.addEventListener('click', function(e) {
-                // Verifica se o clique foi em um botão de adicionar pizza
-                if (e.target.classList.contains('add-pizza-btn')) { 
-                    const name = e.target.dataset.name;
-                    const price = parseFloat(e.target.dataset.price); // Este é o preço da pizza de 8 fatias
-                    const description = e.target.dataset.description;
-                    const isPizza = e.target.dataset.isPizza === 'true'; // Verifica se é uma pizza
-
-                    // Encontra o elemento pai 'pizza-item' para determinar a categoria
-                    const pizzaItemElement = e.target.closest('.pizza-item');
-                    let category = 'outros'; // Categoria padrão
-                    // A categoria da bebida deve ser definida pelo data-category na div da bebida
-                    // Se o botão não tem data-category, procure no pai mais próximo com uma categoria definida
-                    const categorySection = e.target.closest('.pizza-category-section');
-                    if (categorySection) {
-                        category = categorySection.id.replace('-section', ''); // "bebidas-section" -> "bebidas"
-                    }
-
-
-                    if (isSelectingSecondHalf) {
-                        // Se o usuário está selecionando a segunda metade de uma pizza
-                        if (!isPizza) {
-                            showMessageModal('Por favor, escolha uma pizza para a segunda metade.');
-                            return;
-                        }
-
-                        // Encontra e remove a meia pizza pendente do pedido
-                        const pendingHalfIndex = order.findIndex(item => item.id === 'pending-half-pizza');
-                        if (pendingHalfIndex > -1) {
-                            order.splice(pendingHalfIndex, 1); // Remove a meia pizza pendente
-                        }
-
-                        // Combina as duas metades
-                        const cleanFirstName = firstHalfPizza.name; // Já é só o nome do sabor
-                        const combinedName = `Meia ${cleanFirstName} & Meia ${name}`; // Remove o tamanho daqui, será adicionado na exibição
-                        
-                        // Encontra o multiplicador para o tamanho da pizza combinada
-                        const multiplierForTargetSlices = sizes.find(s => s.slices === firstHalfPizza.selected_slices).multiplier;
-                        // Calcula o preço da segunda metade baseado no preço de 8 fatias e no multiplicador do tamanho alvo
-                        const selectedSecondHalfPrice = price * multiplierForTargetSlices; 
-
-                        const combinedPrice = (firstHalfPizza.original_full_price / 2) + (selectedSecondHalfPrice / 2);
-                        const combinedDescription = `${firstHalfPizza.description.replace('Primeira metade: ', '')} e ${description}`;
-
-                        addToOrder({
-                            type: 'split',
-                            name: combinedName,
-                            price: combinedPrice,
-                            description: combinedDescription,
-                            category: 'tradicionais', // Assume categoria de pizza combinada
-                            selected_slices: firstHalfPizza.selected_slices // Mantém o tamanho da pizza combinada
-                        });
-
-                        firstHalfPizza = null; // Reseta a primeira metade
-                        isSelectingSecondHalf = false; // Sai do modo de pizza dividida
-                        showMessageModal('Pizza meio a meio adicionada ao pedido!');
-
-                    } else if (isPizza) {
-                        // Se for uma pizza e não estiver no modo de divisão, abre o modal de seleção
-                        currentPizzaData = { name, price, description, category };
-                        modalPizzaName.textContent = name;
-                        modalPizzaDescription.textContent = description;
-
-                        pizzaSizeOptions.innerHTML = ''; // Limpa as opções anteriores
-                        
-                        sizes.forEach(size => {
-                            const sizePrice = currentPizzaData.price * size.multiplier;
-                            const optionDiv = document.createElement('div');
-                            optionDiv.className = 'pizza-size-option';
-                            optionDiv.innerHTML = `
-                                ${getGenericPizzaSliceImage()}
-                                <span class="font-bold text-lg text-gray-800">${size.label}</span>
-                                <span class="text-red-600 font-bold">R$ ${sizePrice.toFixed(2).replace('.', ',')}</span>
-                                <div class="flex flex-col gap-2 mt-2 w-full">
-                                    <button class="add-full-size-pizza-btn px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition">
-                                        Adicionar Inteira
-                                    </button>
-                                    <button class="add-half-size-pizza-btn px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition">
-                                        Adicionar Meia Pizza
-                                    </button>
-                                </div>
-                            `;
-                            pizzaSizeOptions.appendChild(optionDiv);
-
-                            // Adiciona event listeners para os botões recém-criados
-                            optionDiv.querySelector('.add-full-size-pizza-btn').addEventListener('click', function() {
-                                addToOrder({
-                                    type: 'full',
-                                    name: currentPizzaData.name, // Apenas o nome do sabor
-                                    price: sizePrice,
-                                    description: currentPizzaData.description,
-                                    category: currentPizzaData.category,
-                                    selected_slices: size.slices // Armazena o número de fatias separadamente
-                                });
-                                pizzaOptionModal.style.display = 'none';
-                            });
-
-                            optionDiv.querySelector('.add-half-size-pizza-btn').addEventListener('click', function() {
-                                firstHalfPizza = {
-                                    name: currentPizzaData.name,
-                                    price: sizePrice / 2, // Preço desta metade
-                                    description: currentPizzaData.description,
-                                    original_full_price: sizePrice, // Armazena o preço total deste tamanho para o cálculo final
-                                    selected_slices: size.slices, // Armazena o número de fatias selecionado para a pizza combinada
-                                    category: currentPizzaData.category
-                                };
-                                isSelectingSecondHalf = true;
-                                pizzaOptionModal.style.display = 'none';
-                                addToOrder({
-                                    type: 'half_pending',
-                                    name: `½ ${currentPizzaData.name}`, // Apenas o nome do sabor da primeira metade
-                                    price: sizePrice / 2,
-                                    description: `Primeira metade: ${currentPizzaData.description}`,
-                                    id: 'pending-half-pizza',
-                                    category: currentPizzaData.category,
-                                    selected_slices: size.slices // Armazena o número de fatias separadamente
-                                });
-                                showMessageModal('Agora, escolha a segunda metade da sua pizza.');
-                            });
-                        });
-
-                        pizzaOptionModal.style.display = 'flex'; // Exibe o modal
-                    } else {
-                        // Se não for pizza (ex: bebida), adiciona diretamente
-                        addToOrder({
-                            type: 'full',
-                            name,
-                            price,
-                            description,
-                            category // Passa a categoria da bebida
-                        });
-                    }
-                }
-            });
-
-            // Listener para fechar o modal de seleção de pizza
-            closePizzaOptionModalBtn.addEventListener('click', function() {
-                pizzaOptionModal.style.display = 'none';
-            });
-
-            // Fecha o modal se clicar fora do conteúdo do modal
-            window.addEventListener('click', function(event) {
-                if (event.target == pizzaOptionModal) {
-                    pizzaOptionModal.style.display = 'none';
-                }
-            });
-            
-            // Função para adicionar um item ao array de pedidos
-            function addToOrder(item) {
-                order.push(item); // Adiciona o item ao array
-                updateOrderDisplay(); // Atualiza a exibição do carrinho
-                
-                // Feedback visual de adição
-                const feedback = document.createElement('div');
-                feedback.textContent = '✔️ Adicionado ao pedido!';
-                feedback.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg slide-in';
-                document.body.appendChild(feedback);
-                
-                // Remove o feedback após 2 segundos
-                setTimeout(() => {
-                    feedback.classList.add('opacity-0', 'transition-opacity', 'duration-300');
-                    setTimeout(() => feedback.remove(), 300);
-                }, 2000);
-            }
-            
-            // Função para atualizar a exibição do carrinho e os totais
-            function updateOrderDisplay() {
-                if (order.length === 0) {
-                    orderItemsEl.innerHTML = '<p class="text-gray-500 text-center py-4">Seu pedido está vazio</p>';
-                    viewOrderMobileBtn.classList.add('hidden'); // Oculta o botão "Ver Pedido"
-                } else {
-                    orderItemsEl.innerHTML = ''; // Limpa a lista de itens
-                    
-                    order.forEach((item, index) => {
-                        const itemEl = document.createElement('div');
-                        // Ajusta a classe com base no tipo de item para distinção visual
-                        itemEl.className = `flex justify-between items-start py-3 border-b ${item.type === 'half_pending' ? 'bg-yellow-50 border-yellow-300' : ''}`;
-                        
-                        let displayName = item.name;
-                        if (item.selected_slices) { // Para pizzas, adiciona o tamanho em negrito no início
-                            const sizeLabel = `${item.selected_slices} FATIAS`.toUpperCase();
-                            displayName = `<b>${sizeLabel}</b>: ${item.name}`;
-                        }
-
-                        // Cria o HTML para cada item do pedido
-                        itemEl.innerHTML = `
-                            <div class="flex-1">
-                                <h4 class="font-medium">${displayName}</h4>
-                                <p class="text-sm text-gray-600">${item.description}</p>
-                            </div>
-                            <div class="flex items-center">
-                                <span class="font-bold mr-4">R$ ${item.price.toFixed(2).replace('.', ',')}</span>
-                                ${item.type !== 'half_pending' ? `<button class="remove-item-btn text-red-500 hover:text-red-700" data-index="${index}">
-                                    <i class="fas fa-times"></i>
-                                </button>` : ''}
-                            </div>
-                        `;
-                        
-                        orderItemsEl.appendChild(itemEl); // Adiciona o item à lista
-                    });
-                    viewOrderMobileBtn.classList.remove('hidden'); // Mostra o botão "Ver Pedido"
-                }
-                
-                // Calcula e atualiza os totais
-                const subtotal = order.reduce((sum, item) => sum + item.price, 0);
-                const total = subtotal + currentDeliveryFee; // Usa a taxa de entrega atual
-                
-                subtotalEl.textContent = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
-                deliveryFeeEl.textContent = `R$ ${currentDeliveryFee.toFixed(2).replace('.', ',')}`; // Atualiza a exibição da taxa
-                totalEl.textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
-            }
-            
-            // Remove item do pedido quando o botão de remover é clicado
-            orderItemsEl.addEventListener('click', function(e) {
-                if (e.target.classList.contains('remove-item-btn') || e.target.closest('.remove-item-btn')) {
-                    const btn = e.target.classList.contains('remove-item-btn') ? e.target : e.target.closest('.remove-item-btn');
-                    const index = parseInt(btn.dataset.index); // Pega o índice do item a ser removido
-                    
-                    order.splice(index, 1); // Remove o item do array
-                    updateOrderDisplay(); // Atualiza a exibição
-                }
-            });
-            
-            // Botão Finalizar Pedido
-            document.getElementById('checkout-btn').addEventListener('click', checkAndSuggestDrinks);
-
-            // Listener para o botão "Continuar sem bebidas" do modal de sugestão
-            proceedWithoutDrinksBtn.addEventListener('click', () => {
-                drinkSuggestionModal.style.display = 'none';
-                sendOrderToWhatsapp(); // Envia para o WhatsApp mesmo sem bebidas
-            });
-
-            // Listener para fechar o modal de sugestão de bebidas
-            closeDrinkSuggestionModalBtn.addEventListener('click', () => {
-                drinkSuggestionModal.style.display = 'none';
-            });
-
-            // Fecha o modal de sugestão de bebidas se clicar fora
-            window.addEventListener('click', function(event) {
-                if (event.target == drinkSuggestionModal) {
-                    drinkSuggestionModal.style.display = 'none';
-                }
-            });
-
-            // Listener para o botão "Ver Pedido" mobile
-            viewOrderMobileBtn.addEventListener('click', function() {
-                document.getElementById('order-items').scrollIntoView({ behavior: 'smooth' });
-            });
-
-            // Atualização inicial da exibição para refletir a opção de entrega padrão
-            // É importante chamar isso depois que o DOM estiver totalmente carregado e os elementos tiverem suas dimensões finais.
+            // Chamada inicial para definir a categoria ativa correta no carregamento
             window.addEventListener('load', () => {
-                // Dispara um evento de rolagem após um curto atraso para garantir que o observador seja executado
-                // depois que todos os elementos forem renderizados e posicionados corretamente.
-                setTimeout(() => {
-                    window.dispatchEvent(new Event('scroll'));
-                }, 100);
+                updateActiveCategoryFromScroll();
             });
         });
     </script>
