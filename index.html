@@ -204,22 +204,26 @@
                     </div>
                     
                     <!-- Lista de Itens do Cardápio -->
-                    <div id="pizza-list" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div id="pizza-list">
                         <!-- Conteúdo do cardápio será preenchido dinamicamente por JavaScript -->
-                        <div id="tradicionais-section" class="pizza-category-section">
+                        <div id="tradicionais-section" class="pizza-category-section mb-8">
                             <h3 class="text-xl font-bold text-gray-800 mb-4">Pizzas Tradicionais</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="tradicionais-items"></div>
                         </div>
                         
-                        <div id="especiais-section" class="pizza-category-section">
+                        <div id="especiais-section" class="pizza-category-section mb-8">
                             <h3 class="text-xl font-bold text-gray-800 mb-4">Pizzas Especiais</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="especiais-items"></div>
                         </div>
                         
-                        <div id="doces-section" class="pizza-category-section">
+                        <div id="doces-section" class="pizza-category-section mb-8">
                             <h3 class="text-xl font-bold text-gray-800 mb-4">Pizzas Doces</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="doces-items"></div>
                         </div>
                         
-                        <div id="bebidas-section" class="pizza-category-section">
+                        <div id="bebidas-section" class="pizza-category-section mb-8">
                             <h3 class="text-xl font-bold text-gray-800 mb-4">Bebidas</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="bebidas-items"></div>
                         </div>
                     </div>
                 </div>
@@ -869,15 +873,16 @@
             // Função para popular o cardápio dinamicamente
             function populateMenu() {
                 // Limpa as seções existentes antes de preencher
-                document.getElementById('tradicionais-section').innerHTML = '<h3 class="text-xl font-bold text-gray-800 mb-4">Pizzas Tradicionais</h3>';
-                document.getElementById('especiais-section').innerHTML = '<h3 class="text-xl font-bold text-gray-800 mb-4">Pizzas Especiais</h3>';
-                document.getElementById('doces-section').innerHTML = '<h3 class="text-xl font-bold text-gray-800 mb-4">Pizzas Doces</h3>';
-                document.getElementById('bebidas-section').innerHTML = '<h3 class="text-xl font-bold text-gray-800 mb-4">Bebidas</h3>';
+                // Apenas os títulos das seções permanecem no HTML, os itens são adicionados aos seus respectivos grids internos
+                document.getElementById('tradicionais-items').innerHTML = '';
+                document.getElementById('especiais-items').innerHTML = '';
+                document.getElementById('doces-items').innerHTML = '';
+                document.getElementById('bebidas-items').innerHTML = '';
 
                 // Popula Pizzas
                 pizzaMenuData.forEach(item => {
-                    const sectionEl = document.getElementById(`${item.category}-section`);
-                    if (sectionEl) {
+                    const sectionItemsEl = document.getElementById(`${item.category}-items`);
+                    if (sectionItemsEl) {
                         const price4F = (item.basePrice * sizes.find(s => s.slices === 4).multiplier).toFixed(2).replace('.', ',');
                         const price6F = (item.basePrice * sizes.find(s => s.slices === 6).multiplier).toFixed(2).replace('.', ',');
                         const price8F = item.basePrice.toFixed(2).replace('.', ',');
@@ -908,14 +913,14 @@
                                 </div>
                             </div>
                         `;
-                        sectionEl.insertAdjacentHTML('beforeend', itemHtml);
+                        sectionItemsEl.insertAdjacentHTML('beforeend', itemHtml);
                     }
                 });
 
                 // Popula Bebidas
                 drinkMenuData.forEach(item => {
-                    const sectionEl = document.getElementById(`${item.category}-section`);
-                    if (sectionEl) {
+                    const sectionItemsEl = document.getElementById(`${item.category}-items`);
+                    if (sectionItemsEl) {
                         const itemHtml = `
                             <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                                 <div class="p-4">
@@ -934,7 +939,7 @@
                                 </div>
                             </div>
                         `;
-                        sectionEl.insertAdjacentHTML('beforeend', itemHtml);
+                        sectionItemsEl.insertAdjacentHTML('beforeend', itemHtml);
                     }
                 });
 
