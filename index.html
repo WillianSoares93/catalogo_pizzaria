@@ -750,7 +750,7 @@
                 { name: 'Água Mineral com Gás (500ml)', price: 5.00, description: 'Garrafa 500ml, com gás', category: 'bebidas' },
                 { name: 'H2OH! Limão (500ml)', price: 7.50, description: 'Garrafa 500ml', category: 'bebidas' },
                 { name: 'Chá Gelado (Limoneto) (300ml)', price: 6.00, description: 'Lipton Chá Gelado Limão 300ml', category: 'bebidas' },
-                { name: 'Energético (250ml)', price: 13.00, description: 'Red Bull, Monster', category: 'bebidas' },
+                { name: 'Energetico (250ml)', price: 13.00, description: 'Red Bull, Monster', category: 'bebidas' },
                 { name: 'Cerveja Artesanal (IPA) (500ml)', price: 25.00, description: 'Cerveja India Pale Ale, 500ml', category: 'bebidas' },
                 { name: 'Vinho Tinto (Taça) (180ml)', price: 18.00, description: 'Vinho da Casa, Taça 180ml', category: 'bebidas' }
             ];
@@ -826,43 +826,71 @@
                 }
 
                 let newActiveCategory = null;
-                let highestVisibleTop = Infinity; // Para encontrar a seção cujo topo é o mais alto (mais próximo do cabeçalho fixo)
+                const stickyHeaderHeight = getStickyHeaderHeight();
+                let bestMatchScore = -Infinity; // Usaremos uma pontuação para encontrar a melhor correspondência
 
+                // Itera sobre as entradas para encontrar a seção mais relevante
                 entries.forEach(entry => {
-                    // Considera apenas as seções que estão atualmente cruzando o root ajustado (abaixo do cabeçalho fixo)
-                    if (entry.isIntersecting) {
-                        const rect = entry.boundingClientRect;
-                        const category = entry.target.id.replace('-section', '');
+                    const rect = entry.target.getBoundingClientRect();
+                    const category = entry.target.id.replace('-section', '');
 
-                        // Queremos a seção cujo topo é o mais próximo do topo do nosso root ajustado (que é 0 em termos de entry.boundingClientRect)
-                        // Ou, mais precisamente, a que está atualmente "liderando" a rolagem.
-                        // A entrada com o menor valor de `top` (mais próximo de 0) é a mais alta na viewport ajustada.
-                        if (rect.top < highestVisibleTop) {
-                            highestVisibleTop = rect.top;
-                            newActiveCategory = category;
+                    // Pontuação baseada em quão bem a seção está alinhada com a parte inferior do cabeçalho fixo
+                    // e quão visível ela está.
+                    let score = 0;
+
+                    // Se a seção está intersectando
+                    if (entry.isIntersecting) {
+                        // Se a seção está no topo da viewport, logo abaixo do cabeçalho fixo
+                        if (rect.top <= stickyHeaderHeight && rect.bottom > stickyHeaderHeight) {
+                            // Quanto mais do título/seção estiver visível logo abaixo do cabeçalho, maior a pontuação.
+                            // Usamos a proporção de intersecção na área relevante.
+                            score = entry.intersectionRatio; // Mais visível = maior pontuação
+                        } else if (rect.top > stickyHeaderHeight && rect.top < window.innerHeight) {
+                            // Se a seção está entrando na viewport por baixo (rolando para baixo)
+                            // Pontuação menor para seções que ainda não alcançaram o topo
+                            score = entry.intersectionRatio * 0.5; 
                         }
+                    }
+
+                    // Se esta pontuação é melhor que a anterior, atualiza
+                    if (score > bestMatchScore) {
+                        bestMatchScore = score;
+                        newActiveCategory = category;
                     }
                 });
 
-                // Fallback para quando nenhuma seção está cruzando (ex: no topo da página antes de qualquer seção
-                // cruzar o root ajustado, ou se a página é muito curta).
+                // Lógica de fallback para garantir uma categoria ativa, especialmente ao rolar para cima
                 if (!newActiveCategory && categorySections.length > 0) {
-                    // Se rolou para o topo da página, define como 'tradicionais' por padrão
-                    // Isso lida com o estado inicial e quando o usuário rola até o topo.
-                    if (window.scrollY < getStickyHeaderHeight() + 50) { // Pequeno buffer para o topo da página
+                    // Se estiver no topo da página, ative a primeira categoria
+                    if (window.scrollY < stickyHeaderHeight + 50) {
                         newActiveCategory = 'tradicionais';
                     } else {
-                        // Se nenhuma seção de interseção for encontrada, mas não estamos no topo,
-                        // significa que podemos estar no final da página, ou entre as seções.
-                        // Neste caso, encontra a última seção cujo topo está acima da posição de rolagem atual.
-                        // Isso ajuda ao rolar para cima e a seção anterior se torna totalmente visível novamente.
+                        // Ao rolar para cima, queremos que o destaque mude para a categoria anterior
+                        // quando o título da categoria anterior aparece na tela.
+                        // Itera de trás para frente para encontrar a seção cujo título está visível no topo.
                         for (let i = categorySections.length - 1; i >= 0; i--) {
                             const section = categorySections[i];
-                            const rect = section.getBoundingClientRect();
-                            // Se o topo da seção está acima da parte inferior do cabeçalho fixo, e está visível.
-                            if (rect.top <= getStickyHeaderHeight() && rect.bottom > 0) {
-                                newActiveCategory = section.id.replace('-section', '');
+                            const h3 = section.querySelector('h3');
+                            if (!h3) continue;
+
+                            const h3Rect = h3.getBoundingClientRect();
+                            const category = section.id.replace('-section', '');
+
+                            // Se o título da seção está visível na área abaixo do cabeçalho fixo
+                            if (h3Rect.top <= stickyHeaderHeight && h3Rect.bottom > 0) {
+                                newActiveCategory = category;
                                 break;
+                            }
+                        }
+                        // Se mesmo assim não encontrou, e estamos no meio da página, talvez a última seção visível
+                        if (!newActiveCategory) {
+                             for (let i = categorySections.length - 1; i >= 0; i--) {
+                                const section = categorySections[i];
+                                const rect = section.getBoundingClientRect();
+                                if (rect.top < window.innerHeight && rect.bottom > 0) {
+                                    newActiveCategory = section.id.replace('-section', '');
+                                    break;
+                                }
                             }
                         }
                     }
@@ -874,10 +902,11 @@
                 }
             }, {
                 root: null, // O viewport
-                // O rootMargin ajusta a área de interseção.
-                // Ao definir uma margem superior negativa igual à altura do cabeçalho fixo,
-                // a interseção é calculada a partir da parte inferior do cabeçalho fixo.
-                // Isso significa que `isIntersecting` se torna verdadeiro quando um elemento entra na área abaixo do cabeçalho.
+                // rootMargin ajustado para criar uma "janela" de detecção na área de conteúdo principal.
+                // top: a altura do cabeçalho fixo (negativo para mover a raiz para baixo)
+                // bottom: 0 (para que a raiz termine na parte inferior da viewport)
+                // Isso faz com que o IntersectionObserver observe a interseção dentro da área de conteúdo visível,
+                // que começa logo abaixo do cabeçalho fixo.
                 rootMargin: `-${getStickyHeaderHeight()}px 0px 0px 0px`,
                 threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0] // Observa todas as mudanças para controle mais granular
             });
@@ -894,10 +923,9 @@
             window.addEventListener('scroll', () => {
                 clearTimeout(scrollTimeout);
                 scrollTimeout = setTimeout(() => {
-                    // Dispara o IntersectionObserver manualmente para reavaliar
-                    // a categoria ativa com base na posição atual da rolagem.
+                    // Força o IntersectionObserver a reavaliar as interseções.
                     // Não chamamos updateActiveCategoryFromScroll diretamente aqui,
-                    // pois o observer já fará isso.
+                    // pois o observer já fará isso quando as interseções mudarem.
                 }, 50); // Debounce eventos de rolagem
             });
 
