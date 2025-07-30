@@ -491,14 +491,9 @@
                 { slices: 8, label: '8 Fatias', multiplier: 1.0 }
             ];
 
-            // Função para gerar a imagem de uma fatia de pizza
+            // Função para gerar a imagem de uma fatia de pizza (agora vazia)
             function getGenericPizzaSliceImage() {
-                // Usando o caminho relativo para a imagem no mesmo repositório
-                return `
-                    <img src="icon fatia.avif" 
-                         alt="Fatia de Pizza" 
-                         onerror="this.onerror=null;this.src='https://placehold.co/100x70/cccccc/000000?text=Pizza';" />
-                `;
+                return ''; // Retorna uma string vazia para remover a imagem
             }
 
             // Função para exibir o modal de mensagem
