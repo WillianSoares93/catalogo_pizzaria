@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Saborelli - Cardápio Online</title>
+    <!-- Inclui a biblioteca Tailwind CSS para estilização rápida e responsiva -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inclui a biblioteca Font Awesome para ícones -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         /* Estilos personalizados para efeitos visuais */
@@ -166,21 +168,26 @@
 </head>
 <body class="bg-gray-50 font-sans">
     <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <!-- Cabeçalho da página -->
         <header class="text-center mb-12">
             <h1 class="text-5xl font-bold text-red-600 mb-2">Sua Logo Aqui</h1>
             <p class="text-xl text-gray-600">Pizzaria Artesanal</p>
             <div class="w-24 h-1 bg-red-500 mx-auto mt-4"></div>
         </header>
 
+        <!-- Conteúdo principal: Menu e Pedido -->
         <div class="flex flex-col lg:flex-row gap-8">
+            <!-- Seção do Menu -->
             <div class="lg:w-2/3">
                 <div class="bg-white rounded-lg shadow-md p-6 mb-8">
                     <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-2">Cardápio</h2>
                     
+                    <!-- Mensagem "Arrasta para o lado" para mobile -->
                     <div class="text-gray-500 text-sm text-center mb-4 lg:hidden">
                         <i class="fas fa-hand-point-right mr-1"></i> Arraste para o lado para ver outras opções
                     </div>
 
+                    <!-- Sticky Category Buttons Container -->
                     <div class="category-bar-mobile-sticky lg:static lg:p-0">
                         <div class="flex space-x-2 mb-6 overflow-x-auto pb-2 
                                     lg:flex-row lg:space-x-2 lg:mb-6 lg:overflow-visible lg:pb-0">
@@ -191,9 +198,11 @@
                         </div>
                     </div>
                     
+                    <!-- Lista de Itens do Cardápio -->
                     <div id="pizza-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div id="tradicionais-section" class="pizza-category-section">
                             <h3 class="text-xl font-bold text-gray-800 mb-4">Pizzas Tradicionais</h3>
+                            <!-- Itens Tradicionais -->
                             <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                                 <div class="p-4">
                                     <h4 class="font-bold text-lg text-gray-800">Margherita</h4>
@@ -265,6 +274,7 @@
                         
                         <div id="especiais-section" class="pizza-category-section">
                             <h3 class="text-xl font-bold text-gray-800 mb-4">Pizzas Especiais</h3>
+                            <!-- Itens Especiais -->
                             <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                                 <div class="p-4">
                                     <h4 class="font-bold text-lg text-gray-800">Frango com Catupiry</h4>
@@ -336,6 +346,7 @@
                         
                         <div id="doces-section" class="pizza-category-section">
                             <h3 class="text-xl font-bold text-gray-800 mb-4">Pizzas Doces</h3>
+                            <!-- Itens Doces -->
                             <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                                 <div class="p-4">
                                     <h4 class="font-bold text-lg text-gray-800">Chocolate com Morango</h4>
@@ -390,6 +401,7 @@
                         
                         <div id="bebidas-section" class="pizza-category-section">
                             <h3 class="text-xl font-bold text-gray-800 mb-4">Bebidas</h3>
+                            <!-- Itens Bebidas (sem opção de meia por padrão) -->
                             <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                                 <div class="p-4">
                                     <h4 class="font-bold text-lg text-gray-800">Refrigerante 600ml</h4>
@@ -564,14 +576,32 @@
                 </div>
             </div>
             
+            <!-- Seção do Pedido (Carrinho) -->
             <div class="lg:w-1/3">
                 <div class="bg-white rounded-lg shadow-md p-6 sticky top-4">
                     <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-2">Seu Pedido</h2>
                     
+                    <!-- Opções de Retirada/Entrega -->
+                    <div class="mb-4">
+                        <h4 class="font-bold text-gray-800 mb-2">Opções de Entrega:</h4>
+                        <div class="flex items-center space-x-4">
+                            <label class="inline-flex items-center">
+                                <input type="radio" class="form-radio text-red-600" name="deliveryOption" value="pickup">
+                                <span class="ml-2 text-gray-700">Retirada (Grátis)</span>
+                            </label>
+                            <label class="inline-flex items-center">
+                                <input type="radio" class="form-radio text-red-600" name="deliveryOption" value="delivery" checked>
+                                <span class="ml-2 text-gray-700">Entrega (R$ 5,00)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Itens adicionados ao pedido -->
                     <div id="order-items" class="mb-6">
                         <p class="text-gray-500 text-center py-4">Seu pedido está vazio</p>
                     </div>
                     
+                    <!-- Resumo dos valores do pedido -->
                     <div class="border-t pt-4">
                         <div class="flex justify-between mb-2">
                             <span class="font-medium">Subtotal:</span>
@@ -587,6 +617,7 @@
                         </div>
                     </div>
                     
+                    <!-- Botão para finalizar o pedido -->
                     <button id="checkout-btn" class="w-full mt-6 py-3 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition flex items-center justify-center">
                         <i class="fas fa-shopping-cart mr-2"></i> Finalizar Pedido
                     </button>
@@ -595,20 +626,24 @@
         </div>
     </div>
 
+    <!-- Botão "Ver Pedido" para mobile, aparece quando há itens no carrinho -->
     <button id="view-order-mobile-btn" class="fixed bottom-4 right-4 bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg z-50 lg:hidden hidden flex items-center space-x-2">
         <i class="fas fa-receipt text-xl"></i> <span>Ver Pedido</span>
     </button>
 
+    <!-- Modal de Seleção de Pizza (Inteira/Meia) -->
     <div id="pizza-option-modal" class="modal">
         <div class="modal-content">
             <span class="close-button" id="close-pizza-option-modal">&times;</span>
             <h3 class="text-xl font-bold text-gray-800 mb-4" id="modal-pizza-name"></h3>
             <p class="text-gray-600 mb-6" id="modal-pizza-description"></p>
             <div id="pizza-size-options" class="grid grid-cols-1 sm:grid-cols-3 gap-4 justify-items-center">
-                </div>
+                <!-- Opções de tamanho e "meia a meia" serão inseridas aqui pelo JS -->
+            </div>
         </div>
     </div>
 
+    <!-- Modal de Mensagem (para feedback do usuário) -->
     <div id="message-modal" class="message-modal">
         <div class="modal-content">
             <span class="close-button" id="close-message-modal">&times;</span>
@@ -617,13 +652,15 @@
         </div>
     </div>
 
+    <!-- Modal de Sugestão de Bebidas -->
     <div id="drink-suggestion-modal" class="modal">
         <div class="modal-content">
             <span class="close-button" id="close-drink-suggestion-modal">&times;</span>
             <h3 class="text-xl font-bold text-gray-800 mb-4">Que tal adicionar uma bebida?</h3>
             <p class="text-gray-600 mb-6">Seu pedido não contém bebidas. Gostaria de adicionar alguma?</p>
             <div id="suggested-drinks-list" class="flex flex-col gap-3 mb-6">
-                </div>
+                <!-- Sugestões de bebidas serão inseridas aqui via JS -->
+            </div>
             <button id="proceed-without-drinks" class="px-6 py-3 bg-gray-500 text-white rounded-lg font-bold hover:bg-gray-600 transition w-full">
                 Continuar sem bebidas
             </button>
@@ -656,8 +693,12 @@
             const orderItemsEl = document.getElementById('order-items');
             const subtotalEl = document.getElementById('subtotal');
             const totalEl = document.getElementById('total');
-            const deliveryFee = 5.00; // Taxa de entrega fixa
+            const deliveryFeeEl = document.getElementById('delivery-fee'); // Elemento para exibir a taxa de entrega
+            let currentDeliveryFee = 5.00; // Taxa de entrega inicial
             const whatsappNumber = '5587996070638'; // Número de WhatsApp para envio do pedido
+
+            // Referências para os radio buttons de entrega
+            const deliveryOptionRadios = document.querySelectorAll('input[name="deliveryOption"]');
 
             // Referências para o modal de seleção de pizza
             const pizzaOptionModal = document.getElementById('pizza-option-modal');
@@ -796,6 +837,18 @@
             // Initial active category
             setActiveCategoryButton('tradicionais');
 
+            // Event listener for delivery option radio buttons
+            deliveryOptionRadios.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (this.value === 'delivery') {
+                        currentDeliveryFee = 5.00;
+                    } else {
+                        currentDeliveryFee = 0.00;
+                    }
+                    updateOrderDisplay(); // Recalcula o total com a nova taxa
+                });
+            });
+
 
             // Função para enviar o pedido para o WhatsApp
             function sendOrderToWhatsapp() {
@@ -817,11 +870,11 @@
                 });
 
                 const subtotal = order.reduce((sum, item) => sum + item.price, 0);
-                const total = subtotal + deliveryFee;
+                const total = subtotal + currentDeliveryFee; // Usa a taxa de entrega atual
 
                 orderMessage += `\n*Resumo:*\n`;
                 orderMessage += `Subtotal: R$ ${subtotal.toFixed(2).replace('.', ',')}\n`;
-                orderMessage += `Taxa de entrega: R$ ${deliveryFee.toFixed(2).replace('.', ',')}\n`;
+                orderMessage += `Taxa de entrega: R$ ${currentDeliveryFee.toFixed(2).replace('.', ',')}\n`; // Exibe a taxa de entrega atual
                 orderMessage += `Total: R$ ${total.toFixed(2).replace('.', ',')}`;
                 // Removido: orderMessage += `\n\nPedido enviado! Aguardando confirmação.`;
 
@@ -1075,9 +1128,10 @@
                 
                 // Calcula e atualiza os totais
                 const subtotal = order.reduce((sum, item) => sum + item.price, 0);
-                const total = subtotal + deliveryFee;
+                const total = subtotal + currentDeliveryFee; // Usa a taxa de entrega atual
                 
                 subtotalEl.textContent = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
+                deliveryFeeEl.textContent = `R$ ${currentDeliveryFee.toFixed(2).replace('.', ',')}`; // Atualiza a exibição da taxa
                 totalEl.textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
             }
             
@@ -1117,6 +1171,9 @@
             viewOrderMobileBtn.addEventListener('click', function() {
                 document.getElementById('order-items').scrollIntoView({ behavior: 'smooth' });
             });
+
+            // Initial display update to reflect default delivery option
+            updateOrderDisplay();
         });
     </script>
 </body>
