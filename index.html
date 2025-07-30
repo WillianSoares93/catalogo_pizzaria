@@ -685,11 +685,20 @@
                     const category = this.dataset.category;
                     const targetId = this.dataset.targetId;
                     
-                    // Set active button
+                    // Define o botão ativo imediatamente no clique
                     setActiveCategoryButton(category);
 
-                    // Scroll to the target section with smooth behavior
+                    // Define a flag para ignorar temporariamente o IntersectionObserver
+                    isScrollingFromClick = true;
+
+                    // Rola para a seção de destino com comportamento suave
                     document.getElementById(targetId).scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                    // Após um pequeno atraso, redefine a flag e reavalia a categoria ativa
+                    setTimeout(() => {
+                        isScrollingFromClick = false;
+                        updateActiveCategoryFromScroll(); // Reavalia a categoria ativa após a rolagem
+                    }, 700); // 700ms é um bom equilíbrio para rolagem suave
                 });
             });
             
@@ -788,7 +797,7 @@
                     if (btn.dataset.category === category) {
                         btn.classList.remove('bg-gray-200', 'text-gray-800');
                         btn.classList.add('bg-red-600', 'text-white');
-                        // Scroll the active button into view if it's in the scrollable area
+                        // Rola o botão ativo para a visualização se estiver na área rolável
                         btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
                     } else {
                         btn.classList.remove('bg-red-600', 'text-white');
@@ -797,64 +806,119 @@
                 });
             }
 
-            // Intersection Observer for scroll-based active category
+            // Flag para prevenir que o IntersectionObserver sobrescreva eventos de clique
+            let isScrollingFromClick = false; 
+            // Armazena a categoria ativa atual determinada pela rolagem para evitar cintilação
+            let currentActiveCategoryByScroll = 'tradicionais'; 
+
+            // Intersection Observer para destaque de categoria baseado na rolagem
             const categoryObserver = new IntersectionObserver((entries) => {
-                let activeCategory = null;
-                let maxRatio = 0;
+                if (isScrollingFromClick) {
+                    return; // Ignora eventos do observer se estivermos rolando devido a um clique
+                }
 
-                entries.forEach(entry => {
-                    // Only consider sections that are currently intersecting
-                    if (entry.isIntersecting) {
-                        // If this section has a higher intersection ratio than the current max,
-                        // or if it's the first intersecting section found
-                        if (entry.intersectionRatio > maxRatio) {
-                            maxRatio = entry.intersectionRatio;
-                            activeCategory = entry.target.id.replace('-section', '');
-                        }
+                let newActiveCategory = null;
+                const stickyHeaderHeight = document.querySelector('.category-bar-mobile-sticky').offsetHeight;
+
+                // Encontra a seção mais visível no topo da viewport, abaixo do cabeçalho fixo
+                for (let i = 0; i < categorySections.length; i++) {
+                    const section = categorySections[i];
+                    const rect = section.getBoundingClientRect();
+                    const category = section.id.replace('-section', '');
+
+                    // Se o topo da seção está no ou acima do final do cabeçalho fixo
+                    // E a parte inferior da seção está abaixo do cabeçalho fixo (ou seja, visível abaixo dele)
+                    // E a seção está pelo menos parcialmente visível na viewport
+                    if (rect.top <= stickyHeaderHeight && rect.bottom > stickyHeaderHeight && rect.top < window.innerHeight && rect.bottom > 0) {
+                        newActiveCategory = category;
+                        break; // Encontrou a seção mais ao topo visível abaixo do cabeçalho
                     }
-                });
+                }
 
-                if (activeCategory) {
-                    setActiveCategoryButton(activeCategory);
+                // Fallback: se nenhuma seção atendeu aos critérios (ex: no final da página),
+                // tenta ativar a última seção se estiver visível.
+                if (!newActiveCategory && categorySections.length > 0) {
+                    const lastSection = categorySections[categorySections.length - 1];
+                    const rect = lastSection.getBoundingClientRect();
+                    if (rect.bottom > 0 && rect.top < window.innerHeight) { // Se a última seção está visível
+                        newActiveCategory = lastSection.id.replace('-section', '');
+                    }
+                }
+
+                // Atualiza o botão de categoria ativo se houver uma nova categoria e for diferente da atual
+                if (newActiveCategory && newActiveCategory !== currentActiveCategoryByScroll) {
+                    setActiveCategoryButton(newActiveCategory);
+                    currentActiveCategoryByScroll = newActiveCategory;
                 }
             }, {
                 root: null, // viewport
                 rootMargin: '0px',
-                threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0] // Observe all visibility changes
+                threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0] // Observa todas as mudanças de visibilidade
             });
 
-            // Observe each category section
+            // Observa cada seção de categoria
             categorySections.forEach(section => {
                 categoryObserver.observe(section);
             });
 
-            // Intersection Observer for the "Ver Pedido" button
+            // Função auxiliar para atualizar manualmente a categoria ativa a partir da posição de rolagem
+            function updateActiveCategoryFromScroll() {
+                let activeCategoryFound = null;
+                const stickyHeaderHeight = document.querySelector('.category-bar-mobile-sticky').offsetHeight;
+                
+                for (let i = 0; i < categorySections.length; i++) {
+                    const section = categorySections[i];
+                    const rect = section.getBoundingClientRect();
+                    const category = section.id.replace('-section', '');
+
+                    if (rect.top <= stickyHeaderHeight && rect.bottom > stickyHeaderHeight && rect.top < window.innerHeight && rect.bottom > 0) {
+                        activeCategoryFound = category;
+                        break; 
+                    }
+                }
+
+                if (!activeCategoryFound && categorySections.length > 0) {
+                    const lastSection = categorySections[categorySections.length - 1];
+                    const rect = lastSection.getBoundingClientRect();
+                    if (rect.bottom > 0 && rect.top < window.innerHeight) { 
+                        activeCategoryFound = lastSection.id.replace('-section', '');
+                    }
+                }
+
+                if (activeCategoryFound && activeCategoryFound !== currentActiveCategoryByScroll) {
+                    setActiveCategoryButton(activeCategoryFound);
+                    currentActiveCategoryByScroll = activeCategoryFound;
+                }
+            }
+
+
+            // Intersection Observer para o botão "Ver Pedido"
             const orderSectionObserver = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
-                        // If the order section is visible, hide the mobile view order button
+                        // Se a seção do pedido está visível, oculta o botão "Ver Pedido" mobile
                         viewOrderMobileBtn.classList.add('hidden');
                     } else {
-                        // If the order section is not visible, show the mobile view order button
-                        // but only if there are items in the order
+                        // Se a seção do pedido não está visível, mostra o botão "Ver Pedido" mobile
+                        // mas apenas se houver itens no pedido
                         if (order.length > 0) {
                             viewOrderMobileBtn.classList.remove('hidden');
                         }
                     }
                 });
             }, {
-                root: null, // relative to the viewport
+                root: null, // relativo à viewport
                 rootMargin: '0px',
-                threshold: 0 // as soon as any part of the target enters/leaves
+                threshold: 0 // assim que qualquer parte do alvo entra/sai
             });
 
-            // Observe the order items element
+            // Observa o elemento de itens do pedido
             orderSectionObserver.observe(orderItemsEl);
 
-            // Initial active category
+            // Categoria ativa inicial
             setActiveCategoryButton('tradicionais');
 
-            // Event listener for delivery option radio buttons
+            // Listener de evento para os radio buttons de opção de entrega
             deliveryOptionRadios.forEach(radio => {
                 radio.addEventListener('change', function() {
                     if (this.value === 'delivery') {
@@ -869,7 +933,7 @@
 
             // Função para enviar o pedido para o WhatsApp
             function sendOrderToWhatsapp() {
-                let orderMessage = `Boa noite, esse será meu pedido!\n\n*Itens:*\n`; // Alterado aqui
+                let orderMessage = `Boa noite, esse será meu pedido!\n\n*Itens:*\n`;
                 order.forEach(item => {
                     let line = '';
                     if (item.selected_slices) { // Verifica se é um item de pizza pela presença de selected_slices
@@ -893,7 +957,6 @@
                 orderMessage += `Subtotal: R$ ${subtotal.toFixed(2).replace('.', ',')}\n`;
                 orderMessage += `Taxa de entrega: R$ ${currentDeliveryFee.toFixed(2).replace('.', ',')}\n`; // Exibe a taxa de entrega atual
                 orderMessage += `Total: R$ ${total.toFixed(2).replace('.', ',')}`;
-                // Removido: orderMessage += `\n\nPedido enviado! Aguardando confirmação.`;
 
                 const encodedMessage = encodeURIComponent(orderMessage);
                 const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
@@ -1189,7 +1252,7 @@
                 document.getElementById('order-items').scrollIntoView({ behavior: 'smooth' });
             });
 
-            // Initial display update to reflect default delivery option
+            // Atualização inicial da exibição para refletir a opção de entrega padrão
             updateOrderDisplay();
         });
     </script>
