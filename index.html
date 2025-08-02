@@ -339,99 +339,66 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Dados do cardápio centralizados em JavaScript
-            const pizzaMenuData = [
-                {
-                    name: "Margherita",
-                    description: "Molho de tomate, mussarela, manjericão fresco",
-                    basePrice: 45.90, // Preço para 8 fatias
-                    category: "tradicionais",
-                    isPizza: true
-                },
-                {
-                    name: "Calabresa",
-                    description: "Molho de tomate, mussarela, calabresa, cebola",
-                    basePrice: 48.90,
-                    category: "tradicionais",
-                    isPizza: true
-                },
-                {
-                    name: "Quatro Queijos",
-                    description: "Molho de tomate, mussarela, provolone, parmesão, gorgonzola",
-                    basePrice: 52.90,
-                    category: "tradicionais",
-                    isPizza: true
-                },
-                {
-                    name: "Portuguesa",
-                    description: "Molho de tomate, mussarela, presunto, ovos, cebola, azeitonas",
-                    basePrice: 54.90,
-                    category: "tradicionais",
-                    isPizza: true
-                },
-                {
-                    name: "Frango com Catupiry",
-                    description: "Molho de tomate, mussarela, frango desfiado, catupiry",
-                    basePrice: 56.90,
-                    category: "especiais",
-                    isPizza: true
-                },
-                {
-                    name: "Pepperoni",
-                    description: "Molho de tomate, mussarela, pepperoni, pimentão",
-                    basePrice: 58.90,
-                    category: "especiais",
-                    isPizza: true
-                },
-                {
-                    name: "Vegetariana",
-                    description: "Molho de tomate, mussarela, berinjela, abobrinha, pimentão, champignon",
-                    basePrice: 55.90,
-                    category: "especiais",
-                    isPizza: true
-                },
-                {
-                    name: "Bacon Supreme",
-                    description: "Molho de tomate, mussarela, bacon, milho, cebola caramelizada",
-                    basePrice: 59.90,
-                    category: "especiais",
-                    isPizza: true
-                },
-                {
-                    name: "Chocolate com Morango",
-                    description: "Chocolate ao leite, morangos frescos",
-                    basePrice: 49.90,
-                    category: "doces",
-                    isPizza: true
-                },
-                {
-                    name: "Romeu e Julieta",
-                    description: "Goiabada, mussarela, canela em pó",
-                    basePrice: 47.90,
-                    category: "doces",
-                    isPizza: true
-                },
-                {
-                    name: "Banana Caramelada",
-                    description: "Banana, doce de leite, canela",
-                    basePrice: 46.90,
-                    category: "doces",
-                    isPizza: true
-                },
-            ];
+            // URL da planilha Google Sheets publicada como CSV
+            const CARDAPIO_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=769547731&single=true&output=csv';
 
-            const drinkMenuData = [
-                { name: 'Refrigerante 600ml', price: 8.90, description: 'Coca-Cola, Guaraná, Fanta, Sprite', category: 'bebidas', isPizza: false },
-                { name: 'Suco Natural 500ml', price: 10.90, description: 'Laranja, Maracujá, Limão, Abacaxi', category: 'bebidas', isPizza: false },
-                { name: 'Cerveja Long Neck', price: 12.00, description: 'Heineken, Stella Artois, Budweiser', category: 'bebidas', isPizza: false },
-                { name: 'Água Mineral', price: 4.00, description: 'Garrafa 500ml, sem gás', category: 'bebidas', isPizza: false },
-                { name: 'Água Mineral com Gás', price: 5.00, description: 'Garrafa 500ml, com gás', category: 'bebidas', isPizza: false },
-                { name: 'H2OH! Limão', price: 7.50, description: 'Garrafa 500ml', category: 'bebidas', isPizza: false },
-                { name: 'Chá Gelado (Limoneto)', price: 6.00, description: 'Lipton Chá Gelado Limão 300ml', category: 'bebidas', isPizza: false },
-                { name: 'Energetico (250ml)', price: 13.00, description: 'Red Bull, Monster', category: 'bebidas', isPizza: false },
-                { name: 'Cerveja Artesanal (IPA)', price: 25.00, description: 'Cerveja India Pale Ale, 500ml', category: 'bebidas', isPizza: false },
-                { name: 'Vinho Tinto (Taça)', price: 18.00, description: 'Vinho da Casa, Taça 180ml', category: 'bebidas', isPizza: false }
-            ];
+            // Função para carregar os dados do cardápio da planilha Google
+            async function loadMenuFromSheet() {
+                try {
+                    const response = await fetch(CARDAPIO_CSV_URL);
+                    const csvText = await response.text();
+                    
+                    // Parse do CSV para um array de objetos
+                    const lines = csvText.split('\n');
+                    // Remove espaços em branco dos cabeçalhos e padroniza para camelCase
+                    const headers = lines[0].split(',').map(header => {
+                        let cleanedHeader = header.trim();
+                        // Mapeia nomes de cabeçalho para nomes de propriedade mais amigáveis
+                        switch (cleanedHeader) {
+                            case 'ID Item (único)': return 'id';
+                            case 'Nome do Item': return 'name';
+                            case 'Descrição': return 'description';
+                            case 'Preço Base (8 fatias p/ pizza)': return 'basePrice';
+                            case 'Categoria': return 'category';
+                            case 'É Pizza? (SIM/NÃO)': return 'isPizza';
+                            case 'Disponível (SIM/NÃO)': return 'available';
+                            default: return cleanedHeader.replace(/[^a-zA-Z0-9]+(.)?/g, (match, chr) => chr ? chr.toUpperCase() : '').replace(/^./, (match) => match.toLowerCase());
+                        }
+                    });
+                    
+                    const menuData = [];
+
+                    for (let i = 1; i < lines.length; i++) {
+                        const values = lines[i].split(',');
+                        if (values.length === headers.length) { // Garante que a linha tem o mesmo número de colunas
+                            let item = {};
+                            for (let j = 0; j < headers.length; j++) {
+                                let headerKey = headers[j];
+                                let value = values[j].trim(); // Remove espaços em branco
+                                
+                                // Converte tipos de dados
+                                if (headerKey === 'basePrice') {
+                                    item[headerKey] = parseFloat(value);
+                                } else if (headerKey === 'isPizza') {
+                                    item[headerKey] = value.toUpperCase() === 'SIM';
+                                } else if (headerKey === 'available') {
+                                    item[headerKey] = value.toUpperCase() === 'SIM';
+                                } else {
+                                    item[headerKey] = value;
+                                }
+                            }
+                            if (item.available) { // Apenas adiciona itens disponíveis
+                                 menuData.push(item);
+                            }
+                        }
+                    }
+                    return menuData;
+
+                } catch (error) {
+                    console.error('Erro ao carregar cardápio da planilha:', error);
+                    return []; // Retorna um array vazio em caso de erro
+                }
+            }
 
             // Seleciona todos os botões de categoria e todos os itens de pizza
             const categoryBtns = document.querySelectorAll('.category-btn');
@@ -735,12 +702,20 @@
                     // Limpa sugestões anteriores
                     suggestedDrinksList.innerHTML = '';
                     // Popula e mostra o modal de sugestão de bebidas
-                    drinkMenuData.forEach(drink => { // Usando drinkMenuData para sugestões
+                    // Filtra apenas as bebidas disponíveis
+                    const availableDrinks = allMenuData.filter(item => !item.isPizza && item.category === 'bebidas' && item.available);
+                    availableDrinks.forEach(drink => { 
                         const drinkBtn = document.createElement('button');
                         drinkBtn.className = 'px-4 py-2 bg-green-500 text-white rounded-lg font-bold hover:bg-green-600 transition w-full';
-                        drinkBtn.textContent = `Adicionar ${drink.name} (R$ ${drink.price.toFixed(2).replace('.', ',')})`;
+                        drinkBtn.textContent = `Adicionar ${drink.name} (R$ ${drink.basePrice.toFixed(2).replace('.', ',')})`; // Usa basePrice para bebidas
                         drinkBtn.addEventListener('click', () => {
-                            addToOrder(drink);
+                            addToOrder({
+                                type: 'full', // Bebidas são sempre adicionadas como "inteiras"
+                                name: drink.name,
+                                price: drink.basePrice,
+                                description: drink.description,
+                                category: drink.category
+                            });
                             drinkSuggestionModal.style.display = 'none';
                             sendOrderToWhatsapp(); // Envia para o WhatsApp após adicionar a bebida
                         });
@@ -812,13 +787,13 @@
                         optionDiv.className = 'pizza-size-option';
                         optionDiv.innerHTML = `
                             ${getGenericPizzaSliceImage()}
-                            <span class="font-bold text-lg text-gray-800">${size.label}</span>
-                            <span class="text-red-600 font-bold">R$ ${sizePrice.toFixed(2).replace('.', ',')}</span>
+                            <span class="font-bold text-base text-gray-800">${size.label}</span>
+                            <span class="text-red-600 font-bold text-lg">R$ ${sizePrice.toFixed(2).replace('.', ',')}</span>
                             <div class="flex flex-col gap-2 mt-2 w-full">
-                                <button class="add-full-size-pizza-btn px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition">
+                                <button class="add-full-size-pizza-btn px-4 py-2 bg-red-600 text-white rounded-md text-sm hover:bg-red-700 transition">
                                     Adicionar Inteira
                                 </button>
-                                <button class="add-half-size-pizza-btn px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition">
+                                <button class="add-half-size-pizza-btn px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition">
                                     Adicionar Meia Pizza
                                 </button>
                             </div>
@@ -882,75 +857,72 @@
                 });
             }
 
+            // Variável global para armazenar todos os dados do menu carregados
+            let allMenuData = [];
+
             // Função para popular o cardápio dinamicamente
-            function populateMenu() {
+            function populateMenu(menuItems) {
                 // Limpa as seções existentes antes de preencher
-                // Apenas os títulos das seções permanecem no HTML, os itens são adicionados aos seus respectivos grids internos
                 document.getElementById('tradicionais-items').innerHTML = '';
                 document.getElementById('especiais-items').innerHTML = '';
                 document.getElementById('doces-items').innerHTML = '';
                 document.getElementById('bebidas-items').innerHTML = '';
 
-                // Popula Pizzas
-                pizzaMenuData.forEach(item => {
+                menuItems.forEach(item => {
                     const sectionItemsEl = document.getElementById(`${item.category}-items`);
-                    if (sectionItemsEl) {
-                        const price4F = (item.basePrice * sizes.find(s => s.slices === 4).multiplier).toFixed(2).replace('.', ',');
-                        const price6F = (item.basePrice * sizes.find(s => s.slices === 6).multiplier).toFixed(2).replace('.', ',');
-                        const price8F = item.basePrice.toFixed(2).replace('.', ',');
-                        
-                        const itemHtml = `
-                            <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                                <div class="p-4 flex flex-col justify-between h-full">
-                                    <div class="flex justify-between items-start mb-2">
-                                        <div>
-                                            <h4 class="font-bold text-lg text-gray-800">${item.name}</h4>
-                                            <p class="text-gray-600 text-sm">${item.description}</p>
+                    if (sectionItemsEl && item.available) { // Garante que o item está disponível
+                        let itemHtml = '';
+                        if (item.isPizza) {
+                            const price4F = (item.basePrice * sizes.find(s => s.slices === 4).multiplier).toFixed(2).replace('.', ',');
+                            const price6F = (item.basePrice * sizes.find(s => s.slices === 6).multiplier).toFixed(2).replace('.', ',');
+                            const price8F = item.basePrice.toFixed(2).replace('.', ',');
+                            
+                            itemHtml = `
+                                <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                                    <div class="p-4 flex flex-col justify-between h-full">
+                                        <div class="flex justify-between items-start mb-2">
+                                            <div>
+                                                <h4 class="font-bold text-lg text-gray-800">${item.name}</h4>
+                                                <p class="text-gray-600 text-sm">${item.description}</p>
+                                            </div>
+                                            <div class="flex flex-col items-end text-right">
+                                                <span class="font-bold text-red-600 whitespace-nowrap">4F: R$ ${price4F}</span>
+                                                <span class="font-bold text-red-600 whitespace-nowrap">6F: R$ ${price6F}</span>
+                                                <span class="font-bold text-red-600 whitespace-nowrap">8F: R$ ${price8F}</span>
+                                            </div>
                                         </div>
-                                        <div class="flex flex-col items-end text-right">
-                                            <span class="font-bold text-red-600 whitespace-nowrap">4F: R$ ${price4F}</span>
-                                            <span class="font-bold text-red-600 whitespace-nowrap">6F: R$ ${price6F}</span>
-                                            <span class="font-bold text-red-600 whitespace-nowrap">8F: R$ ${price8F}</span>
+                                        <div class="flex justify-end mt-auto">
+                                            <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition"
+                                                    data-name="${item.name}"
+                                                    data-price="${item.basePrice}"
+                                                    data-description="${item.description}"
+                                                    data-is-pizza="${item.isPizza}">
+                                                Adicionar
+                                            </button>
                                         </div>
-                                    </div>
-                                    <div class="flex justify-end mt-auto">
-                                        <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition"
-                                                data-name="${item.name}"
-                                                data-price="${item.basePrice}"
-                                                data-description="${item.description}"
-                                                data-is-pizza="${item.isPizza}">
-                                            Adicionar
-                                        </button>
                                     </div>
                                 </div>
-                            </div>
-                        `;
-                        sectionItemsEl.insertAdjacentHTML('beforeend', itemHtml);
-                    }
-                });
-
-                // Popula Bebidas
-                drinkMenuData.forEach(item => {
-                    const sectionItemsEl = document.getElementById(`${item.category}-items`);
-                    if (sectionItemsEl) {
-                        const itemHtml = `
-                            <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                                <div class="p-4">
-                                    <h4 class="font-bold text-lg text-gray-800">${item.name}</h4>
-                                    <p class="text-gray-600 text-sm mb-3">${item.description}</p>
-                                    <div class="flex justify-between items-center">
-                                        <span class="font-bold text-red-600">R$ ${item.price.toFixed(2).replace('.', ',')}</span>
-                                        <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition"
-                                                data-name="${item.name}"
-                                                data-price="${item.price}"
-                                                data-description="${item.description}"
-                                                data-is-pizza="${item.isPizza}">
-                                            Adicionar
-                                        </button>
+                            `;
+                        } else { // Para bebidas ou outros itens não-pizza
+                            itemHtml = `
+                                <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                                    <div class="p-4">
+                                        <h4 class="font-bold text-lg text-gray-800">${item.name}</h4>
+                                        <p class="text-gray-600 text-sm mb-3">${item.description}</p>
+                                        <div class="flex justify-between items-center">
+                                            <span class="font-bold text-red-600">R$ ${item.basePrice.toFixed(2).replace('.', ',')}</span>
+                                            <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition"
+                                                    data-name="${item.name}"
+                                                    data-price="${item.basePrice}"
+                                                    data-description="${item.description}"
+                                                    data-is-pizza="${item.isPizza}">
+                                                Adicionar
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        `;
+                            `;
+                        }
                         sectionItemsEl.insertAdjacentHTML('beforeend', itemHtml);
                     }
                 });
@@ -1106,8 +1078,9 @@
             });
 
             // Chamada inicial para popular o cardápio e definir a categoria ativa correta no carregamento
-            window.addEventListener('load', () => {
-                populateMenu(); // Popula o cardápio dinamicamente
+            window.addEventListener('load', async () => {
+                allMenuData = await loadMenuFromSheet(); // Carrega todos os dados da planilha
+                populateMenu(allMenuData); // Popula o cardápio dinamicamente com os dados carregados
                 // Dispara um evento de rolagem após um curto atraso para garantir que o observer seja executado
                 // depois que todos os elementos forem renderizados e posicionados corretamente.
                 setTimeout(() => {
