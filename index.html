@@ -356,6 +356,13 @@
             pointer-events: none; /* Não interfere com cliques */
             animation: flyToCart 0.8s ease-in-out forwards;
             opacity: 1;
+            overflow: hidden; /* Garante que a imagem não saia do círculo */
+        }
+
+        .fly-to-cart-animation img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Garante que a imagem preencha o círculo */
         }
 
         @keyframes flyToCart {
@@ -592,6 +599,22 @@
         let allPromotionsData = [];
         let hasOrderSidebarOpenedAutomatically = false; // Nova flag para controlar a abertura automática
 
+        // Mapeamento de imagens para pizzas
+        const pizzaImages = {
+            "Margherita": "https://rossopizza.com.br/salao/wp-content/uploads/2019/09/istock-181175167-900x600.jpg",
+            "Calabresa": "https://www.sabornamesa.com.br/media/k2/items/cache/513d7a0ab11e38f7bd117d760146fed3_XL.jpg",
+            "Quatro Queijos": "https://www.portalumami.com.br/app/uploads/2021/07/Pizza-4-queijos.jpg",
+            "Portuguesa": "https://www.ogastronomo.com.br/upload/389528334-curiosidades-sobre-a-pizza-portuguesa.jpg",
+            "Frango com Catupiry": "https://www.minhareceita.com.br/app/uploads/2020/09/Pizza-de-Frango-com-Catupiry-Caseira-desktop.jpg",
+            "Pepperoni": "https://www.minhareceita.com.br/app/uploads/2022/12/Dpizza-de-pepperoni-caseira-portal-minha-receita.jpg",
+            "Vegetariana": "https://guiadacozinha.com.br/wp-content/uploads/2020/01/pizza-vegetariana.jpg",
+            "Chocolate com Morango": "https://s2-receitas.glbimg.com/YacK9Sp4MTG3CGZAHdeKGnbGSFk=/0x0:1200x675/984x0/smart/filters:strip_icc()/i.s3.glbimg.com/v1/AUTH_1f540e0b94d8437dbbc39d567a1dee68/internal_photos/bs/2024/K/Y/FxiVXpRfePdyZnSeHpKQ/pizza-de-chocolate-com-morango.jpg",
+            "Romeu e Julieta": "https://magiadosaromas.com.br/wp-content/uploads/2023/06/pizza-romeu-e-julieta.jpg.webp",
+            "Banana Caramelada": "https://s2-receitas.glbimg.com/gwhIG-mUpHKhYSg8Zl21Zj_OXjA=/0x0:1280x800/984x0/smart/filters:strip_icc()/i.s3.glbimg.com/v1/AUTH_1f540e0b94d8437dbbc39d567a1dee68/internal_photos/bs/2022/M/q/GHOy3ZT9GjPxMJH7FYmw/pizza-doce-banana-receita.jpg",
+            "Bacon Supreme": "https://i.imgur.com/mcnffmE.png" // Nova imagem adicionada
+        };
+        const defaultPizzaImage = 'https://placehold.co/150x100/FF0000/FFFFFF?text=Pizza'; // Imagem padrão para pizzas
+
         // Referências para os elementos DOM
         const orderSidebar = document.getElementById('orderSidebar');
         const cartCount = document.getElementById('cartCount');
@@ -789,6 +812,10 @@
                                 item[headerKey] = value;
                             }
                         }
+                        // Adiciona a URL da imagem ao objeto item se for uma pizza
+                        if (item.isPizza) {
+                            item.imageUrl = pizzaImages[item.name] || defaultPizzaImage;
+                        }
                         if (item.available) {
                             menuData.push(item);
                         }
@@ -914,8 +941,11 @@
                         const price6F = (item.price6Slices !== undefined && item.price6Slices !== null) ? item.price6Slices.toFixed(2).replace('.', ',') : '0,00';
                         const price8F = (item.basePrice !== undefined && item.basePrice !== null) ? item.basePrice.toFixed(2).replace('.', ',') : '0,00';
                         
+                        const imageUrl = item.imageUrl || defaultPizzaImage; // Usa a URL da imagem do item ou a padrão
+
                         itemHtml = `
                             <div class="flavor-card bg-white rounded-xl overflow-hidden shadow-lg transition duration-300">
+                                <img src="${imageUrl}" alt="Pizza de ${item.name}" class="w-full h-40 object-cover" onerror="this.onerror=null;this.src='${defaultPizzaImage}';">
                                 <div class="p-6">
                                     <h3 class="text-xl font-bold text-gray-800 mb-2">${item.name}</h3>
                                     <p class="text-gray-600 text-sm mb-4">${item.description}</p>
@@ -926,7 +956,7 @@
                                     </div>
                                     <div class="flex justify-end mt-auto">
                                         <button class="add-item-btn bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full text-sm font-medium transition duration-300"
-                                                data-item-id="${item.id}">
+                                                data-item-id="${item.id}" data-image-url="${imageUrl}">
                                             Adicionar
                                         </button>
                                     </div>
@@ -977,6 +1007,9 @@
                 return;
             }
 
+            // Obtém a URL da imagem do item, se for uma pizza
+            const itemImageUrl = item.isPizza ? item.imageUrl : null;
+
             if (isSelectingSecondHalf) {
                 if (!item.isPizza) {
                     showMessageModal('Por favor, escolha uma pizza para a segunda metade.');
@@ -1008,7 +1041,7 @@
                     description: combinedDescription,
                     category: 'pizzas', // Categoria genérica para pizzas meio a meio
                     selected_slices: firstHalfPizza.selected_slices
-                }, clickedButton); // Passa o botão clicado para a animação
+                }, clickedButton, itemImageUrl); // Passa o botão clicado e a URL da imagem para a animação
 
                 firstHalfPizza = null;
                 isSelectingSecondHalf = false;
@@ -1052,7 +1085,7 @@
                             description: currentPizzaData.description,
                             category: currentPizzaData.category,
                             selected_slices: selectedSlices
-                        }, this); // Passa o botão clicado para a animação
+                        }, this, currentPizzaData.imageUrl); // Passa o botão clicado e a URL da imagem para a animação
                         pizzaOptionModal.style.display = 'none';
                     });
 
@@ -1080,7 +1113,7 @@
                                 id: 'pending-half-pizza',
                                 category: currentPizzaData.category,
                                 selected_slices: selectedSlices
-                            }, this // Passa o botão clicado para a animação
+                            }, this, currentPizzaData.imageUrl // Passa o botão clicado e a URL da imagem para a animação
                         );
                         // Pequeno atraso antes de mostrar o modal para garantir que a sidebar atualize
                         setTimeout(() => {
@@ -1097,12 +1130,12 @@
                     price: item.basePrice, // Para bebidas, basePrice é o preço único
                     description: item.description,
                     category: item.category
-                }, clickedButton); // Passa o botão clicado para a animação
+                }, clickedButton, itemImageUrl); // Passa o botão clicado e a URL da imagem (será null) para a animação
             }
         }
         
         // Adicionar item ao array de pedidos (com abertura da sidebar e feedback)
-        function addToOrder(item, clickedButton = null) {
+        function addToOrder(item, clickedButton = null, itemImageUrl = null) {
             order.push(item);
             updateOrderDisplay();
             updateCartCount();
@@ -1117,7 +1150,7 @@
 
             // Animação de voo para o carrinho
             if (clickedButton) {
-                animateItemToCart(clickedButton);
+                animateItemToCart(clickedButton, itemImageUrl); // Passa a URL da imagem para a animação
             }
             
             // Feedback visual de adição
@@ -1125,26 +1158,31 @@
         }
 
         // Adicionar item ao array de pedidos (SEM abertura da sidebar e SEM feedback)
-        function addToOrderOnly(item, clickedButton = null) {
+        function addToOrderOnly(item, clickedButton = null, itemImageUrl = null) {
             order.push(item);
             updateOrderDisplay();
             updateCartCount();
             // Animação de voo para o carrinho
             if (clickedButton) {
-                animateItemToCart(clickedButton);
+                animateItemToCart(clickedButton, itemImageUrl); // Passa a URL da imagem para a animação
             }
             // Não chama toggleOrderSidebar() aqui
             // Não mostra showTemporaryFeedback() aqui
         }
 
         // Nova função para animar o item até o carrinho
-        function animateItemToCart(originElement) {
+        function animateItemToCart(originElement, imageUrl = null) {
             const cartButtonRect = cartButton.getBoundingClientRect();
             const originRect = originElement.getBoundingClientRect();
 
             const flyingEl = document.createElement('div');
             flyingEl.classList.add('fly-to-cart-animation');
-            flyingEl.innerHTML = '<i class="fas fa-plus"></i>'; // Ou um ícone representativo do item
+            
+            if (imageUrl) {
+                flyingEl.innerHTML = `<img src="${imageUrl}" alt="item" class="w-full h-full object-cover rounded-full">`;
+            } else {
+                flyingEl.innerHTML = '<i class="fas fa-plus"></i>'; // Ícone padrão se não houver imagem
+            }
 
             // Define as posições iniciais e finais como variáveis CSS
             flyingEl.style.setProperty('--start-x', `${originRect.left + originRect.width / 2 - 15}px`);
@@ -1339,12 +1377,17 @@
                 activePromotions.forEach(promo => {
                     const promoDiv = document.createElement('div');
                     promoDiv.className = 'promotion-item';
+                    
+                    // Tenta encontrar a imagem do item aplicável à promoção
+                    const applicableItem = allMenuData.find(item => item.id === promo.itemId);
+                    const promoImageUrl = applicableItem && applicableItem.isPizza ? applicableItem.imageUrl : null;
+
                     promoDiv.innerHTML = `
                         <h4>${promo.name}</h4>
                         <p>${promo.description}</p>
                         <span class="price">R$ ${promo.promoPrice.toFixed(2).replace('.', ',')}</span>
                         <button class="add-promo-to-order-btn px-3 py-1 bg-green-600 text-white rounded-full text-sm hover:bg-green-700 transition mt-2"
-                                data-promo-id="${promo.id}">
+                                data-promo-id="${promo.id}" data-image-url="${promoImageUrl || ''}">
                             Adicionar à Sacola
                         </button>
                     `;
@@ -1353,7 +1396,9 @@
                 document.querySelectorAll('.add-promo-to-order-btn').forEach(button => {
                     button.addEventListener('click', function() {
                         const promoId = this.dataset.promoId;
-                        addPromotionToOrder(promoId);
+                        const promoImageUrl = this.dataset.imageUrl || null; // Obtém a URL da imagem do dataset
+                        // Passa o botão clicado e a URL da imagem para a função addPromotionToOrder
+                        addPromotionToOrder(promoId, this, promoImageUrl); 
                     });
                 });
                 promotionPopup.style.display = 'flex';
@@ -1362,7 +1407,7 @@
             }
         }
 
-        function addPromotionToOrder(promoId) {
+        function addPromotionToOrder(promoId, clickedButton = null, itemImageUrl = null) { // Adicionado clickedButton e itemImageUrl como parâmetros
             const promotion = allPromotionsData.find(p => p.id === promoId);
             if (promotion) {
                 order.push({
@@ -1375,6 +1420,10 @@
                 updateOrderDisplay();
                 updateCartCount();
                 promotionPopup.style.display = 'none';
+                // Animação de voo para o carrinho
+                if (clickedButton) {
+                    animateItemToCart(clickedButton, itemImageUrl); // Passa a URL da imagem para a animação
+                }
                 showTemporaryFeedback(`Promoção "${promotion.name}" adicionada ao pedido!`, 'bg-green-500'); // Usar feedback temporário
             } else {
                 console.error('Promoção não encontrada:', promoId);
@@ -1440,7 +1489,7 @@
                                 price: item.basePrice,
                                 description: item.description,
                                 category: item.category
-                            }, this); // Passa o botão clicado para a animação
+                            }, this, null); // Passa o botão clicado e null para a imagem (bebidas não têm)
                             drinkSuggestionModal.style.display = 'none'; // Fecha o modal após adicionar
                             checkout(); // Chama o checkout imediatamente após adicionar a bebida
                         }
