@@ -1289,10 +1289,13 @@
             // Função para controlar a visibilidade do botão de promoção
             function updatePromotionButtonVisibility() {
                 const activePromotionsWithPrice = allPromotionsData.filter(promo => promo.active && promo.promoPrice !== null);
+                console.log('updatePromotionButtonVisibility: activePromotionsWithPrice.length =', activePromotionsWithPrice.length);
                 if (activePromotionsWithPrice.length > 0) {
                     promotionButton.style.display = 'flex'; // Mostra o botão
+                    console.log('updatePromotionButtonVisibility: Botão de promoção DEVE estar visível.');
                 } else {
                     promotionButton.style.display = 'none'; // Oculta o botão
+                    console.log('updatePromotionButtonVisibility: Botão de promoção DEVE estar oculto.');
                 }
             }
 
