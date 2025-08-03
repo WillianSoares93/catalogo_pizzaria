@@ -117,7 +117,7 @@
             padding: 20px;
         }
         .message-modal-content {
-            background-color: #fefefe;
+            background-color: #fefefe; /* Revertido para cor neutra */
             margin: auto;
             padding: 20px;
             border-radius: 8px;
@@ -305,6 +305,39 @@
         .pizza-category-section {
             scroll-margin-top: 6rem; /* Ajuste este valor se a altura da barra fixa mudar */
         }
+
+        /* Estilos para os itens de bebida sugeridos no modal */
+        .suggested-drink-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #f0fdf4; /* green-50 */
+            border: 1px solid #dcfce7; /* green-100 */
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .suggested-drink-item .drink-name {
+            font-weight: 600;
+            color: #16a34a; /* green-600 */
+        }
+        .suggested-drink-item .drink-price {
+            font-weight: 700;
+            color: #15803d; /* green-700 */
+        }
+        .suggested-drink-item button {
+            background-color: #22c55e; /* green-500 */
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        .suggested-drink-item button:hover {
+            background-color: #16a34a; /* green-600 */
+        }
     </style>
 </head>
 <body>
@@ -465,6 +498,21 @@
         </button>
     </div>
 
+    <!-- Modal de Sugestão de Bebidas -->
+    <div id="drink-suggestion-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="close-drink-suggestion-modal">&times;</span>
+            <h3 class="text-xl font-bold text-gray-800 mb-4">Que tal adicionar uma bebida?</h3>
+            <p class="text-gray-600 mb-6">Seu pedido não contém bebidas. Gostaria de adicionar alguma?</p>
+            <div id="suggested-drinks-list" class="flex flex-col gap-3 mb-6">
+                <!-- Sugestões de bebidas serão inseridas aqui via JS -->
+            </div>
+            <button id="proceed-without-drinks" class="px-6 py-3 bg-gray-500 text-white rounded-lg font-bold hover:bg-gray-600 transition w-full">
+                Continuar sem bebidas
+            </button>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="bg-gray-800 text-white py-8 px-4">
         <div class="max-w-6xl mx-auto">
@@ -531,6 +579,13 @@
         const modalPizzaDescription = document.getElementById('modal-pizza-description');
         const pizzaSizeOptions = document.getElementById('pizza-size-options');
 
+        // Referências para o novo modal de sugestão de bebidas
+        const drinkSuggestionModal = document.getElementById('drink-suggestion-modal');
+        const closeDrinkSuggestionModalBtn = document.getElementById('close-drink-suggestion-modal');
+        const suggestedDrinksList = document.getElementById('suggested-drinks-list');
+        const proceedWithoutDrinksBtn = document.getElementById('proceed-without-drinks');
+
+
         let currentPizzaData = {}; // Objeto para armazenar temporariamente os dados da pizza selecionada
         let firstHalfPizza = null; // Armazena os dados da primeira metade de uma pizza dividida
         let isSelectingSecondHalf = false; // Flag para indicar se o usuário está escolhendo a segunda metade
@@ -558,8 +613,17 @@
         }
         
         function showMessageModal(message) {
+            console.log("showMessageModal called with message:", message); // Debug log
             messageModalText.textContent = message;
             messageModal.style.display = 'flex';
+            console.log("messageModal display set to:", messageModal.style.display); // Debug log
+            // Also check if the element is actually found
+            if (!messageModal) {
+                console.error("messageModal element not found!"); // Debug error
+            }
+            if (!messageModalText) {
+                console.error("messageModalText element not found!"); // Debug error
+            }
         }
 
         function hideMessageModal() {
@@ -897,8 +961,8 @@
 
                 firstHalfPizza = null;
                 isSelectingSecondHalf = false;
-                showMessageModal('Pizza meio a meio adicionada ao pedido!');
-
+                showTemporaryFeedback('Pizza meio a meio adicionada ao pedido!', 'bg-green-500'); // Usar feedback temporário
+                
             } else if (item.isPizza) {
                 currentPizzaData = { ...item }; // Copia o objeto item completo
                 modalPizzaName.textContent = item.name;
@@ -955,16 +1019,22 @@
                         };
                         isSelectingSecondHalf = true;
                         pizzaOptionModal.style.display = 'none';
-                        addToOrder({
-                            type: 'half_pending',
-                            name: `½ ${currentPizzaData.name}`,
-                            price: currentPizzaData[selectedPriceKey] / 2,
-                            description: `Primeira metade: ${currentPizzaData.description}`,
-                            id: 'pending-half-pizza',
-                            category: currentPizzaData.category,
-                            selected_slices: selectedSlices
-                        });
-                        showMessageModal('Agora, escolha a segunda metade da sua pizza.');
+                        // Adiciona a meia pizza pendente ao pedido IMEDIATAMENTE
+                        addToOrderOnly(
+                            {
+                                type: 'half_pending',
+                                name: `½ ${currentPizzaData.name}`,
+                                price: currentPizzaData[selectedPriceKey] / 2,
+                                description: `Primeira metade: ${currentPizzaData.description}`,
+                                id: 'pending-half-pizza',
+                                category: currentPizzaData.category,
+                                selected_slices: selectedSlices
+                            }
+                        );
+                        // Pequeno atraso antes de mostrar o modal para garantir que a sidebar atualize
+                        setTimeout(() => {
+                            showMessageModal('Agora, escolha a segunda metade da sua pizza.'); 
+                        }, 100);
                     });
                 });
 
@@ -980,16 +1050,30 @@
             }
         }
         
-        // Adicionar item ao array de pedidos
+        // Adicionar item ao array de pedidos (com abertura da sidebar e feedback)
         function addToOrder(item) {
             order.push(item);
             updateOrderDisplay();
             updateCartCount();
-            toggleOrderSidebar();
+            toggleOrderSidebar(); // Abre a sidebar
             // Feedback visual de adição
+            showTemporaryFeedback('✔️ Adicionado ao pedido!', 'bg-green-500');
+        }
+
+        // Adicionar item ao array de pedidos (SEM abertura da sidebar e SEM feedback)
+        function addToOrderOnly(item) {
+            order.push(item);
+            updateOrderDisplay();
+            updateCartCount();
+            // Não chama toggleOrderSidebar() aqui
+            // Não mostra showTemporaryFeedback() aqui
+        }
+
+        // Função genérica para exibir feedback temporário
+        function showTemporaryFeedback(message, bgColorClass) {
             const feedback = document.createElement('div');
-            feedback.textContent = '✔️ Adicionado ao pedido!';
-            feedback.className = 'fixed right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg slide-in';
+            feedback.textContent = message;
+            feedback.className = `fixed right-4 ${bgColorClass} text-white px-4 py-2 rounded-lg shadow-lg slide-in`;
             feedback.style.zIndex = '100';
 
             const cartButton = document.querySelector('.fixed.bottom-6.right-6 button'); // Seleciona o botão do carrinho
@@ -1027,6 +1111,10 @@
 
                     if (item.type === 'promotion') {
                         itemName = `<i class="fas fa-tags text-red-600 mr-2"></i> ${item.name}`; // Ícone vermelho para promoções
+                    } else if (item.type === 'half_pending') { // Explicitamente trata a meia pizza pendente
+                        const sizeLabel = `${item.selected_slices} FATIAS`.toUpperCase();
+                        itemName = `<b>${sizeLabel}</b>: ${item.name} (1ª Metade)`; // Indicador claro
+                        itemDescription = `Aguardando 2ª metade`; // Descrição mais clara
                     } else if (item.selected_slices) {
                         const sizeLabel = `${item.selected_slices} FATIAS`.toUpperCase();
                         itemName = `<b>${sizeLabel}</b>: ${item.name}`;
@@ -1059,9 +1147,17 @@
         
         // Remover item do pedido
         function removeItem(index) {
+            const removedItem = order[index];
             order.splice(index, 1);
             updateOrderDisplay();
             updateCartCount();
+
+            // Se a meia pizza pendente for removida, reseta o estado
+            if (removedItem && removedItem.id === 'pending-half-pizza') {
+                firstHalfPizza = null;
+                isSelectingSecondHalf = false;
+                showTemporaryFeedback('Seleção de meia pizza cancelada.', 'bg-red-600'); // Mensagem e cor alteradas
+            }
         }
         
         // Limpar todo o pedido
@@ -1069,6 +1165,9 @@
             order = [];
             updateOrderDisplay();
             updateCartCount();
+            // Reseta o estado da meia pizza ao limpar o pedido
+            firstHalfPizza = null;
+            isSelectingSecondHalf = false;
         }
         
         // Atualizar contagem do carrinho
@@ -1083,8 +1182,10 @@
         
         // Função de finalização do pedido
         function checkout() {
+            console.log("Checkout function called. Current order length:", order.length); // Debug log
             if (order.length === 0) {
-                showMessageModal('Seu pedido está vazio. Adicione itens antes de finalizar.');
+                console.log("Order is empty. Showing message modal."); // Debug log
+                showMessageModal('O seu pedido está vazio. Adicione itens antes de finalizar.');
                 return;
             }
             
@@ -1092,6 +1193,13 @@
             if (isSelectingSecondHalf) {
                 showMessageModal('Por favor, escolha a segunda metade da sua pizza antes de finalizar o pedido.');
                 return;
+            }
+
+            // NOVA LÓGICA: Verifica se há alguma bebida no pedido
+            const hasDrinks = order.some(item => item.category === 'bebidas');
+            if (!hasDrinks) {
+                displayDrinkSuggestionModal(); // Chama o novo modal de sugestão de bebidas
+                return; // Interrompe o checkout para que o usuário possa escolher uma bebida
             }
 
             const phoneNumber = '5587996070638'; 
@@ -1176,7 +1284,7 @@
                 updateOrderDisplay();
                 updateCartCount();
                 promotionPopup.style.display = 'none';
-                showMessageModal(`Promoção "${promotion.name}" adicionada ao pedido!`);
+                showTemporaryFeedback(`Promoção "${promotion.name}" adicionada ao pedido!`, 'bg-green-500'); // Usar feedback temporário
             } else {
                 console.error('Promoção não encontrada:', promoId);
                 showMessageModal('Erro ao adicionar promoção. Por favor, tente novamente.');
@@ -1210,6 +1318,101 @@
             displayPromotionsPopup();
         });
 
+        // Funções do novo modal de sugestão de bebidas
+        function displayDrinkSuggestionModal() {
+            suggestedDrinksList.innerHTML = ''; // Limpa a lista antes de preencher
+            const availableDrinks = allMenuData.filter(item => item.category === 'bebidas' && item.available);
+
+            if (availableDrinks.length > 0) {
+                // Pega as 3 primeiras bebidas disponíveis ou menos, se não houver 3
+                const drinksToSuggest = availableDrinks.slice(0, 3); 
+                drinksToSuggest.forEach(drink => {
+                    const drinkItemHtml = `
+                        <div class="suggested-drink-item">
+                            <span class="drink-name">${drink.name}</span>
+                            <span class="drink-price">R$ ${drink.basePrice.toFixed(2).replace('.', ',')}</span>
+                            <button class="add-suggested-drink-btn" data-item-id="${drink.id}">Adicionar</button>
+                        </div>
+                    `;
+                    suggestedDrinksList.insertAdjacentHTML('beforeend', drinkItemHtml);
+                });
+
+                // Adiciona listeners aos botões de adicionar bebida sugerida
+                document.querySelectorAll('.add-suggested-drink-btn').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const itemId = this.dataset.itemId;
+                        const item = allMenuData.find(i => i.id === itemId);
+                        if (item) {
+                            addToOrder({
+                                type: 'full',
+                                name: item.name,
+                                price: item.basePrice,
+                                description: item.description,
+                                category: item.category
+                            });
+                            drinkSuggestionModal.style.display = 'none'; // Fecha o modal após adicionar
+                            // O checkout será revalidado na próxima tentativa, ou você pode chamar checkout() novamente aqui
+                            // Se chamar checkout() aqui, remova o return no checkout() principal
+                            // Para este caso, vamos deixar o usuário tentar finalizar novamente
+                        }
+                    });
+                });
+            } else {
+                // Se não houver bebidas para sugerir, pode exibir uma mensagem diferente ou apenas o botão de continuar
+                suggestedDrinksList.innerHTML = '<p class="text-gray-500">Nenhuma bebida disponível para sugestão no momento.</p>';
+            }
+            drinkSuggestionModal.style.display = 'flex'; // Exibe o modal
+        }
+
+        // Listener para fechar o modal de sugestão de bebidas
+        closeDrinkSuggestionModalBtn.addEventListener('click', function() {
+            drinkSuggestionModal.style.display = 'none';
+        });
+
+        // Listener para o botão "Continuar sem bebidas"
+        proceedWithoutDrinksBtn.addEventListener('click', function() {
+            drinkSuggestionModal.style.display = 'none';
+            // Se o usuário optar por continuar sem bebidas, chamamos o checkout novamente
+            // mas desta vez a condição `!hasDrinks` será ignorada (ou podemos adicionar uma flag)
+            // Para simplificar, vamos permitir que o checkout original continue.
+            // A forma mais robusta seria ter uma flag ou um parâmetro para checkout()
+            // que indica que a verificação de bebidas deve ser ignorada para esta chamada.
+            // Por enquanto, vamos chamar o checkout novamente.
+            // ATENÇÃO: Isso pode levar a um loop se o usuário continuar clicando e não houver bebidas.
+            // Uma solução melhor seria ter uma função `finalizeOrder()` separada.
+            // Por simplicidade, para este exemplo, vamos chamar o checkout() novamente.
+            const phoneNumber = '5587996070638'; 
+            let message = 'Olá! Gostaria de fazer o seguinte pedido:\n\n';
+            let subtotal = 0;
+
+            order.forEach(item => {
+                let itemName = item.name;
+                if (item.type === 'promotion') {
+                    itemName = item.name.replace('<i class="fas fa-tags text-red-600 mr-2"></i> ', ''); // Remove o ícone para o WhatsApp
+                } else if (item.selected_slices) {
+                    itemName = `${item.selected_slices} FATIAS: ${item.name}`;
+                }
+                message += `- ${itemName}: R$ ${item.price.toFixed(2).replace('.', ',')}\n`;
+                subtotal += item.price;
+            });
+
+            const total = subtotal + deliveryFee;
+
+            message += `\nSubtotal: R$ ${subtotal.toFixed(2).replace('.', ',')}`;
+            message += `\nTaxa de entrega: R$ ${deliveryFee.toFixed(2).replace('.', ',')}`;
+            message += `\nTotal: R$ ${total.toFixed(2).replace('.', ',')}`;
+            message += '\n\nObrigado!';
+
+            const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+            
+            order = [];
+            updateOrderDisplay();
+            updateCartCount();
+            closeOrderSidebar();
+        });
+
+
         // Sticky category bar logic (re-implemented for pizza categories)
         const categoryBtns = document.querySelectorAll('.category-btn');
         const categorySections = document.querySelectorAll('.pizza-category-section');
@@ -1228,10 +1431,10 @@
                 setActiveCategoryButton(category);
                 isScrollingFromClick = true;
                 document.getElementById(targetId).scrollIntoView({ behavior: 'smooth', block: 'start' });
+                // Reseta a flag após um pequeno atraso para permitir que o IntersectionObserver funcione novamente
                 setTimeout(() => {
                     isScrollingFromClick = false;
-                    window.dispatchEvent(new Event('scroll'));
-                }, 700);
+                }, 700); // Ajuste este tempo se o scroll for muito rápido/lento
             });
         });
 
@@ -1254,41 +1457,45 @@
             }
             let newActiveCategory = null;
             const stickyHeaderHeight = getStickyHeaderHeight();
-            let bestMatchTop = Infinity;
+            let bestMatchCategory = null;
+            let smallestDistanceToTop = Infinity;
 
-            categorySections.forEach(section => {
-                const rect = section.getBoundingClientRect();
+            entries.forEach(entry => {
+                const section = entry.target;
                 const category = section.id.replace('-section', '');
-                const h3 = section.querySelector('h3');
-                if (!h3) return;
+                const rect = section.getBoundingClientRect();
 
-                const h3Rect = h3.getBoundingClientRect();
-                const detectionLine = stickyHeaderHeight + 10;
+                // Calcula o topo da secção em relação à parte inferior do cabeçalho fixo.
+                const sectionTopRelativeToStickyBottom = rect.top - stickyHeaderHeight;
 
-                if (h3Rect.top <= detectionLine && h3Rect.bottom > 0) {
-                    if (h3Rect.top < bestMatchTop) {
-                        bestMatchTop = h3Rect.top;
-                        newActiveCategory = category;
+                // Procuramos a secção cujo topo está exatamente ou ligeiramente acima da parte inferior do cabeçalho fixo.
+                // Priorizamos as secções que estão atualmente visíveis e cujo topo está mais próximo de 0 ou ligeiramente negativo.
+                if (entry.isIntersecting && sectionTopRelativeToStickyBottom <= 10) { // Pequeno buffer para precisão
+                    // Se estiver no ou acima do cabeçalho fixo, e estiver mais próximo do que a melhor correspondência anterior
+                    if (Math.abs(sectionTopRelativeToStickyBottom) < smallestDistanceToTop) {
+                        smallestDistanceToTop = Math.abs(sectionTopRelativeToStickyBottom);
+                        bestMatchCategory = category;
                     }
                 }
             });
 
-            if (!newActiveCategory && categorySections.length > 0) {
-                if (window.scrollY <= stickyHeaderHeight + 20) {
-                    newActiveCategory = 'tradicionais';
-                } else {
-                    let closestToTop = Infinity;
-                    for (let i = 0; i < categorySections.length; i++) {
-                        const section = categorySections[i];
-                        const rect = section.getBoundingClientRect();
-                        const category = section.id.replace('-section', '');
-                        if (rect.bottom > 0 && rect.top < window.innerHeight) {
-                            if (Math.abs(rect.top - stickyHeaderHeight) < closestToTop) {
-                                closestToTop = Math.abs(rect.top - stickyHeaderHeight);
-                                newActiveCategory = category;
-                            }
-                        }
+            // Se uma melhor correspondência foi encontrada, use-a.
+            if (bestMatchCategory) {
+                newActiveCategory = bestMatchCategory;
+            } else {
+                // Fallback: Se não houver interseção perfeita, encontre a secção mais acima que esteja pelo menos parcialmente visível.
+                // Isso lida com casos em que a rolagem é muito rápida ou no topo/fundo da página.
+                for (let i = 0; i < categorySections.length; i++) {
+                    const section = categorySections[i];
+                    const rect = section.getBoundingClientRect();
+                    if (rect.bottom > 0 && rect.top < window.innerHeight) { // Se a secção estiver visível
+                        newActiveCategory = section.id.replace('-section', '');
+                        break; // Pega a primeira (mais acima visível)
                     }
+                }
+                // Se ainda não houver categoria e estiver no topo da página, assume 'tradicionais'
+                if (!newActiveCategory && window.scrollY <= stickyHeaderHeight + 20 && categorySections.length > 0) {
+                    newActiveCategory = 'tradicionais';
                 }
             }
             
@@ -1298,21 +1505,22 @@
             }
         }, {
             root: null,
-            rootMargin: `-${getStickyHeaderHeight()}px 0px 0px 0px`,
-            threshold: 0.1
+            rootMargin: `-${getStickyHeaderHeight()}px 0px -50% 0px`, // Ajusta a margem da raiz para alinhar com o cabeçalho fixo
+            threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1] // Observa todos os limiares para deteção mais granular
         });
 
         categorySections.forEach(section => {
             categoryObserver.observe(section);
         });
 
-        let scrollTimeout;
-        window.addEventListener('scroll', () => {
-            clearTimeout(scrollTimeout);
-            scrollTimeout = setTimeout(() => {
-                // Isso fará com que os IntersectionObservers reavaliem suas interseções.
-            }, 50);
-        });
+        // Removido o listener de scroll explícito, pois o IntersectionObserver já lida com a deteção de rolagem.
+        // let scrollTimeout;
+        // window.addEventListener('scroll', () => {
+        //     clearTimeout(scrollTimeout);
+        //     scrollTimeout = setTimeout(() => {
+        //         // Isso fará com que os IntersectionObservers reavaliem suas interseções.
+        //     }, 50);
+        // });
         // Fim da lógica da barra de categorias
 
         // Inicialização
