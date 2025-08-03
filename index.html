@@ -340,7 +340,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // URL da planilha Google Sheets publicada como CSV
-            const CARDAPIO_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=1155669310&single=true&output=csv';
+            const CARDAPIO_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=664943668&single=true&output=csv';
 
             // Função para carregar os dados do cardápio da planilha Google
             async function loadMenuFromSheet() {
@@ -398,7 +398,9 @@
                             case 'ID Item (único)': return 'id';
                             case 'Nome do Item': return 'name';
                             case 'Descrição': return 'description';
-                            case 'Preço Base (8 fatias p/ pizza)': return 'basePrice';
+                            case 'Preço 8 fatias': return 'basePrice';
+                            case 'Preço 6 fatias': return 'price6Slices'; // Nova coluna
+                            case 'Preço 4 fatias': return 'price4Slices'; // Nova coluna
                             case 'Categoria': return 'category';
                             case 'É Pizza? (SIM/NÃO)': return 'isPizza';
                             case 'Disponível (SIM/NÃO)': return 'available';
@@ -418,13 +420,25 @@
                         console.log(`rowValues.length: ${rowValues.length}, mappedHeaders.length: ${mappedHeaders.length}`); // Log dos comprimentos
 
                         if (rowValues.length === mappedHeaders.length) {
-                            let item = {};
+                            let item = { // Initialize with default values to ensure properties exist
+                                id: '',
+                                name: '',
+                                description: '',
+                                basePrice: 0,
+                                price6Slices: 0,
+                                price4Slices: 0,
+                                category: '',
+                                isPizza: false,
+                                available: false
+                            };
                             for (let j = 0; j < mappedHeaders.length; j++) {
                                 let headerKey = mappedHeaders[j];
                                 let value = rowValues[j];
                                 
-                                if (headerKey === 'basePrice') {
-                                    item[headerKey] = parseFloat(value.replace(',', '.'));
+                                if (headerKey === 'basePrice' || headerKey === 'price6Slices' || headerKey === 'price4Slices') {
+                                    // Ensure value is a string before replace and check for NaN after parseFloat
+                                    const parsedValue = parseFloat(String(value).replace(',', '.'));
+                                    item[headerKey] = isNaN(parsedValue) ? 0 : parsedValue; // Default to 0 if NaN
                                 } else if (headerKey === 'isPizza') {
                                     item[headerKey] = value.toUpperCase() === 'SIM';
                                 } else if (headerKey === 'available') {
@@ -518,10 +532,11 @@
             let isSelectingSecondHalf = false; // Flag para indicar se o usuário está escolhendo a segunda metade
 
             // Define tamanhos e seus multiplicadores de preço em relação ao preço de 8 fatias
+            // Agora, os "multiplicadores" são mais como chaves para aceder aos preços diretos
             const sizes = [
-                { slices: 4, label: '4 Fatias', multiplier: 0.7 },
-                { slices: 6, label: '6 Fatias', multiplier: 0.85 },
-                { slices: 8, label: '8 Fatias', multiplier: 1.0 }
+                { slices: 4, label: '4 Fatias', priceKey: 'price4Slices' },
+                { slices: 6, label: '6 Fatias', priceKey: 'price6Slices' },
+                { slices: 8, label: '8 Fatias', priceKey: 'basePrice' } // basePrice é o preço de 8 fatias
             ];
 
             // Função para gerar a imagem de uma fatia de pizza (agora vazia)
@@ -780,43 +795,42 @@
 
             // Função para lidar com o clique no botão "Adicionar"
             function handleAddButtonClick(e) {
-                const name = e.target.dataset.name;
-                const price = parseFloat(e.target.dataset.price); // Este é o preço base (8 fatias)
-                const description = e.target.dataset.description;
-                const isPizza = e.target.dataset.isPizza === 'true';
+                const itemId = e.target.dataset.itemId; // Obtém o ID do item
+                const item = allMenuData.find(i => i.id === itemId); // Encontra o item completo
 
-                const categorySection = e.target.closest('.pizza-category-section');
-                let category = 'outros';
-                if (categorySection) {
-                    category = categorySection.id.replace('-section', '');
+                if (!item) {
+                    console.error('Item não encontrado:', itemId);
+                    return;
                 }
 
                 if (isSelectingSecondHalf) {
-                    if (!isPizza) {
+                    if (!item.isPizza) {
                         showMessageModal('Por favor, escolha uma pizza para a segunda metade.');
                         return;
                     }
 
-                    const pendingHalfIndex = order.findIndex(item => item.id === 'pending-half-pizza');
+                    const pendingHalfIndex = order.findIndex(orderItem => orderItem.id === 'pending-half-pizza');
                     if (pendingHalfIndex > -1) {
                         order.splice(pendingHalfIndex, 1);
                     }
 
                     const cleanFirstName = firstHalfPizza.name;
-                    const combinedName = `Meia ${cleanFirstName} & Meia ${name}`;
+                    const combinedName = `Meia ${cleanFirstName} & Meia ${item.name}`;
                     
-                    const multiplierForTargetSlices = sizes.find(s => s.slices === firstHalfPizza.selected_slices).multiplier;
-                    const selectedSecondHalfPrice = price * multiplierForTargetSlices; 
+                    // Obtém o preço da primeira metade com base nas fatias selecionadas
+                    const priceFirstHalf = firstHalfPizza[firstHalfPizza.priceKeyForSlices];
+                    // Obtém o preço da segunda metade com base nas fatias selecionadas
+                    const priceSecondHalf = item[firstHalfPizza.priceKeyForSlices]; 
 
-                    const combinedPrice = (firstHalfPizza.original_full_price / 2) + (selectedSecondHalfPrice / 2);
-                    const combinedDescription = `${firstHalfPizza.description.replace('Primeira metade: ', '')} e ${description}`;
+                    const combinedPrice = (priceFirstHalf / 2) + (priceSecondHalf / 2);
+                    const combinedDescription = `${firstHalfPizza.description.replace('Primeira metade: ', '')} e ${item.description}`;
 
                     addToOrder({
                         type: 'split',
                         name: combinedName,
                         price: combinedPrice,
                         description: combinedDescription,
-                        category: 'tradicionais',
+                        category: 'tradicionais', // Assumindo que pizzas meio a meio são tradicionais
                         selected_slices: firstHalfPizza.selected_slices
                     });
 
@@ -824,15 +838,15 @@
                     isSelectingSecondHalf = false;
                     showMessageModal('Pizza meio a meio adicionada ao pedido!');
 
-                } else if (isPizza) {
-                    currentPizzaData = { name, price, description, category };
-                    modalPizzaName.textContent = name;
-                    modalPizzaDescription.textContent = description;
+                } else if (item.isPizza) {
+                    currentPizzaData = { ...item }; // Copia o objeto item completo
+                    modalPizzaName.textContent = item.name;
+                    modalPizzaDescription.textContent = item.description;
 
                     pizzaSizeOptions.innerHTML = '';
                     
                     sizes.forEach(size => {
-                        const sizePrice = currentPizzaData.price * size.multiplier;
+                        const sizePrice = currentPizzaData[size.priceKey]; // Usa a chave de preço direta
                         const optionDiv = document.createElement('div');
                         optionDiv.className = 'pizza-size-option';
                         optionDiv.innerHTML = `
@@ -840,10 +854,12 @@
                             <span class="font-bold text-base text-gray-800">${size.label}</span>
                             <span class="text-red-600 font-bold text-lg">R$ ${sizePrice.toFixed(2).replace('.', ',')}</span>
                             <div class="flex flex-col gap-2 mt-2 w-full">
-                                <button class="add-full-size-pizza-btn px-4 py-2 bg-red-600 text-white rounded-md text-sm hover:bg-red-700 transition">
+                                <button class="add-full-size-pizza-btn px-4 py-2 bg-red-600 text-white rounded-md text-sm hover:bg-red-700 transition"
+                                        data-slices="${size.slices}" data-price-key="${size.priceKey}">
                                     Adicionar Inteira
                                 </button>
-                                <button class="add-half-size-pizza-btn px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition">
+                                <button class="add-half-size-pizza-btn px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition"
+                                        data-slices="${size.slices}" data-price-key="${size.priceKey}">
                                     Adicionar Meia Pizza
                                 </button>
                             </div>
@@ -851,24 +867,29 @@
                         pizzaSizeOptions.appendChild(optionDiv);
 
                         optionDiv.querySelector('.add-full-size-pizza-btn').addEventListener('click', function() {
+                            const selectedSlices = parseInt(this.dataset.slices);
+                            const selectedPriceKey = this.dataset.priceKey;
                             addToOrder({
                                 type: 'full',
                                 name: currentPizzaData.name,
-                                price: sizePrice,
+                                price: currentPizzaData[selectedPriceKey], // Usa o preço direto da chave
                                 description: currentPizzaData.description,
                                 category: currentPizzaData.category,
-                                selected_slices: size.slices
+                                selected_slices: selectedSlices
                             });
                             pizzaOptionModal.style.display = 'none';
                         });
 
                         optionDiv.querySelector('.add-half-size-pizza-btn').addEventListener('click', function() {
+                            const selectedSlices = parseInt(this.dataset.slices);
+                            const selectedPriceKey = this.dataset.priceKey;
                             firstHalfPizza = {
                                 name: currentPizzaData.name,
-                                price: sizePrice / 2,
+                                price: currentPizzaData[selectedPriceKey] / 2, // Preço da metade
                                 description: currentPizzaData.description,
-                                original_full_price: sizePrice,
-                                selected_slices: size.slices,
+                                original_full_price: currentPizzaData[selectedPriceKey], // Preço total da primeira metade
+                                selected_slices: selectedSlices,
+                                priceKeyForSlices: selectedPriceKey, // Armazena a chave de preço para a segunda metade
                                 category: currentPizzaData.category
                             };
                             isSelectingSecondHalf = true;
@@ -876,24 +897,24 @@
                             addToOrder({
                                 type: 'half_pending',
                                 name: `½ ${currentPizzaData.name}`,
-                                price: sizePrice / 2,
+                                price: currentPizzaData[selectedPriceKey] / 2,
                                 description: `Primeira metade: ${currentPizzaData.description}`,
                                 id: 'pending-half-pizza',
                                 category: currentPizzaData.category,
-                                selected_slices: size.slices
+                                selected_slices: selectedSlices
                             });
                             showMessageModal('Agora, escolha a segunda metade da sua pizza.');
                         });
                     });
 
                     pizzaOptionModal.style.display = 'flex';
-                } else {
+                } else { // Para itens não-pizza (bebidas)
                     addToOrder({
                         type: 'full',
-                        name,
-                        price,
-                        description,
-                        category
+                        name: item.name,
+                        price: item.basePrice, // Para bebidas, basePrice é o preço único
+                        description: item.description,
+                        category: item.category
                     });
                 }
             }
@@ -923,9 +944,11 @@
                     if (sectionItemsEl && item.available) { // Garante que o item está disponível
                         let itemHtml = '';
                         if (item.isPizza) {
-                            const price4F = (item.basePrice * sizes.find(s => s.slices === 4).multiplier).toFixed(2).replace('.', ',');
-                            const price6F = (item.basePrice * sizes.find(s => s.slices === 6).multiplier).toFixed(2).replace('.', ',');
-                            const price8F = item.basePrice.toFixed(2).replace('.', ',');
+                            // Usa os preços diretamente das propriedades do item
+                            // Adicionado verificação para garantir que as propriedades existem antes de chamar toFixed
+                            const price4F = (item.price4Slices !== undefined && item.price4Slices !== null) ? item.price4Slices.toFixed(2).replace('.', ',') : '0,00';
+                            const price6F = (item.price6Slices !== undefined && item.price6Slices !== null) ? item.price6Slices.toFixed(2).replace('.', ',') : '0,00';
+                            const price8F = (item.basePrice !== undefined && item.basePrice !== null) ? item.basePrice.toFixed(2).replace('.', ',') : '0,00';
                             
                             itemHtml = `
                                 <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
@@ -943,10 +966,7 @@
                                         </div>
                                         <div class="flex justify-end mt-auto">
                                             <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition"
-                                                    data-name="${item.name}"
-                                                    data-price="${item.basePrice}"
-                                                    data-description="${item.description}"
-                                                    data-is-pizza="${item.isPizza}">
+                                                    data-item-id="${item.id}">
                                                 Adicionar
                                             </button>
                                         </div>
@@ -962,10 +982,7 @@
                                         <div class="flex justify-between items-center">
                                             <span class="font-bold text-red-600">R$ ${item.basePrice.toFixed(2).replace('.', ',')}</span>
                                             <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition"
-                                                    data-name="${item.name}"
-                                                    data-price="${item.basePrice}"
-                                                    data-description="${item.description}"
-                                                    data-is-pizza="${item.isPizza}">
+                                                    data-item-id="${item.id}">
                                                 Adicionar
                                             </button>
                                         </div>
@@ -1043,7 +1060,7 @@
                         itemEl.className = `flex justify-between items-start py-3 border-b ${item.type === 'half_pending' ? 'bg-yellow-50 border-yellow-300' : ''}`;
                         
                         let displayName = item.name;
-                        if (item.selected_slices) { // Para pizzas, adiciona o tamanho em negrito no início
+                        if (item.selected_slices) { // Verifica se é um item de pizza pela presença de selected_slices
                             const sizeLabel = `${item.selected_slices} FATIAS`.toUpperCase();
                             displayName = `<b>${sizeLabel}</b>: ${item.name}`;
                         }
