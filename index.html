@@ -558,6 +558,18 @@
         </div>
     </div>
 
+    <!-- NOVO: Modal de Confirmação para Pedido sem Bebida -->
+    <div id="confirm-no-drink-modal" class="message-modal">
+        <div class="modal-content">
+            <span class="close-button" id="close-confirm-no-drink-modal">&times;</span>
+            <p class="text-lg font-semibold text-gray-800 mb-4">Pedir sem uma bebida?</p>
+            <div class="flex justify-center space-x-4">
+                <button id="confirm-no-drink-yes" class="px-6 py-2 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition">Sim!</button>
+                <button id="confirm-no-drink-no" class="px-6 py-2 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition">Não!</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="bg-gray-800 text-white py-8 px-4">
         <div class="max-w-6xl mx-auto">
@@ -647,6 +659,12 @@
         const closeDrinkSuggestionModalBtn = document.getElementById('close-drink-suggestion-modal');
         const suggestedDrinksList = document.getElementById('suggested-drinks-list');
         const proceedWithoutDrinksBtn = document.getElementById('proceed-without-drinks');
+
+        // NOVO: Referências para o modal de confirmação de pedido sem bebida
+        const confirmNoDrinkModal = document.getElementById('confirm-no-drink-modal');
+        const closeConfirmNoDrinkModalBtn = document.getElementById('close-confirm-no-drink-modal');
+        const confirmNoDrinkYesBtn = document.getElementById('confirm-no-drink-yes');
+        const confirmNoDrinkNoBtn = document.getElementById('confirm-no-drink-no');
 
 
         let currentPizzaData = {}; // Objeto para armazenar temporariamente os dados da pizza selecionada
@@ -1308,29 +1326,9 @@
             }
         }
         
-        // Função de finalização do pedido
-        function checkout() {
-            console.log("Checkout function called. Current order length:", order.length); // Debug log
-            if (order.length === 0) {
-                console.log("Order is empty. Showing message modal."); // Debug log
-                showMessageModal('O seu pedido está vazio. Adicione itens antes de finalizar.');
-                return;
-            }
-            
-            // Verifica se há uma pizza meio a meio pendente
-            if (isSelectingSecondHalf) {
-                showMessageModal('Por favor, escolha a segunda metade da sua pizza antes de finalizar o pedido.');
-                return;
-            }
-
-            // NOVA LÓGICA: Verifica se há alguma bebida no pedido
-            const hasDrinks = order.some(item => item.category === 'bebidas');
-            if (!hasDrinks) {
-                displayDrinkSuggestionModal(); // Chama o novo modal de sugestão de bebidas
-                return; // Interrompe o checkout para que o usuário possa escolher uma bebida
-            }
-
-            const phoneNumber = '5587996070638'; 
+        // Função de finalização do pedido para o WhatsApp
+        function proceedToWhatsappCheckout() {
+            const phoneNumber = whatsappNumber; 
             let message = 'Olá! Gostaria de fazer o seguinte pedido:\n\n';
             let subtotal = 0;
 
@@ -1360,6 +1358,32 @@
             updateCartCount();
             closeOrderSidebar();
             hasOrderSidebarOpenedAutomatically = false; // Reseta a flag após finalizar o pedido
+        }
+
+        // Função de finalização do pedido (chamada pelo botão "Finalizar Pedido")
+        function checkout() {
+            console.log("Checkout function called. Current order length:", order.length); // Debug log
+            if (order.length === 0) {
+                console.log("Order is empty. Showing message modal."); // Debug log
+                showMessageModal('O seu pedido está vazio. Adicione itens antes de finalizar.');
+                return;
+            }
+            
+            // Verifica se há uma pizza meio a meio pendente
+            if (isSelectingSecondHalf) {
+                showMessageModal('Por favor, escolha a segunda metade da sua pizza antes de finalizar o pedido.');
+                return;
+            }
+
+            // NOVA LÓGICA: Verifica se há alguma bebida no pedido
+            const hasDrinks = order.some(item => item.category === 'bebidas');
+            if (!hasDrinks) {
+                displayDrinkSuggestionModal(); // Chama o novo modal de sugestão de bebidas
+                return; // Interrompe o checkout para que o usuário possa escolher uma bebida
+            }
+
+            // Se tudo estiver OK, prossegue para o WhatsApp
+            proceedToWhatsappCheckout();
         }
 
         // Função para voltar ao menu
@@ -1502,47 +1526,39 @@
             drinkSuggestionModal.style.display = 'flex'; // Exibe o modal
         }
 
-        // Listener para fechar o modal de sugestão de bebidas
+        // Listener para fechar o modal de sugestão de bebidas (X)
         closeDrinkSuggestionModalBtn.addEventListener('click', function() {
             drinkSuggestionModal.style.display = 'none';
+            confirmNoDrinkModal.style.display = 'flex'; // Mostra o modal de confirmação
         });
 
         // Listener para o botão "Continuar sem bebidas"
         proceedWithoutDrinksBtn.addEventListener('click', function() {
             drinkSuggestionModal.style.display = 'none';
-            // Se o usuário optar por continuar sem bebidas, chamamos o checkout novamente
-            // A lógica original do checkout já irá prosseguir para o WhatsApp se não houver bebidas
-            // e o modal de sugestão não for mais exibido.
-            const phoneNumber = '5587996070638'; 
-            let message = 'Olá! Gostaria de fazer o seguinte pedido:\n\n';
-            let subtotal = 0;
+            confirmNoDrinkModal.style.display = 'flex'; // Mostra o modal de confirmação
+        });
 
-            order.forEach(item => {
-                let itemName = item.name;
-                if (item.type === 'promotion') {
-                    itemName = item.name.replace('<i class="fas fa-tags text-red-600 mr-2"></i> ', ''); // Remove o ícone para o WhatsApp
-                } else if (item.selected_slices) {
-                    itemName = `${item.selected_slices} FATIAS: ${item.name}`;
-                }
-                message += `- ${itemName}: R$ ${item.price.toFixed(2).replace('.', ',')}\n`;
-                subtotal += item.price;
-            });
+        // NOVO: Listeners para o modal de confirmação de pedido sem bebida
+        closeConfirmNoDrinkModalBtn.addEventListener('click', function() {
+            confirmNoDrinkModal.style.display = 'none';
+            drinkSuggestionModal.style.display = 'flex'; // Volta para o modal de sugestão de bebida
+        });
 
-            const total = subtotal + deliveryFee;
+        confirmNoDrinkYesBtn.addEventListener('click', function() {
+            confirmNoDrinkModal.style.display = 'none';
+            proceedToWhatsappCheckout(); // Prossegue com o pedido para o WhatsApp
+        });
 
-            message += `\nSubtotal: R$ ${subtotal.toFixed(2).replace('.', ',')}`;
-            message += `\nTaxa de entrega: R$ ${deliveryFee.toFixed(2).replace('.', ',')}`;
-            message += `\nTotal: R$ ${total.toFixed(2).replace('.', ',')}`;
-            message += '\n\nObrigado!';
+        confirmNoDrinkNoBtn.addEventListener('click', function() {
+            confirmNoDrinkModal.style.display = 'none';
+            drinkSuggestionModal.style.display = 'flex'; // Volta para o modal de sugestão de bebida
+        });
 
-            const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-            window.open(whatsappUrl, '_blank');
-            
-            order = [];
-            updateOrderDisplay();
-            updateCartCount();
-            closeOrderSidebar();
-            hasOrderSidebarOpenedAutomatically = false; // Reseta a flag após finalizar o pedido
+        window.addEventListener('click', function(event) {
+            if (event.target == confirmNoDrinkModal) {
+                confirmNoDrinkModal.style.display = 'none';
+                drinkSuggestionModal.style.display = 'flex'; // Volta para o modal de sugestão de bebida
+            }
         });
 
 
@@ -1554,6 +1570,7 @@
 
         function getStickyHeaderHeight() {
             const stickyHeader = document.querySelector('.category-bar-mobile-sticky');
+            // Ensure the element exists before trying to get its offsetHeight
             return stickyHeader ? stickyHeader.offsetHeight : 0;
         }
 
@@ -1576,6 +1593,7 @@
                 if (btn.dataset.category === category) {
                     btn.classList.remove('bg-gray-200', 'text-gray-800');
                     btn.classList.add('bg-red-600', 'text-white');
+                    // Ensure the active button is visible in the scrollable category bar
                     btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
                 } else {
                     btn.classList.remove('bg-red-600', 'text-white');
@@ -1588,75 +1606,74 @@
             if (isScrollingFromClick) {
                 return;
             }
-            let newActiveCategory = null;
-            const stickyHeaderHeight = getStickyHeaderHeight();
-            let bestMatchCategory = null;
-            let smallestDistanceToTop = Infinity;
 
-            entries.forEach(entry => {
+            const stickyHeaderHeight = getStickyHeaderHeight();
+            let activeCategory = null;
+
+            // Sort entries by their top position to prioritize sections higher on the screen
+            // This is crucial because IntersectionObserver entries might not come in order.
+            entries.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+
+            for (let i = 0; i < entries.length; i++) {
+                const entry = entries[i];
                 const section = entry.target;
                 const category = section.id.replace('-section', '');
                 const rect = section.getBoundingClientRect();
 
-                // Calcula o topo da secção em relação à parte inferior do cabeçalho fixo.
-                const sectionTopRelativeToStickyBottom = rect.top - stickyHeaderHeight;
-
-                // Procuramos a secção cujo topo está exatamente ou ligeiramente acima da parte inferior do cabeçalho fixo.
-                // Priorizamos as secções que estão atualmente visíveis e cujo topo está mais próximo de 0 ou ligeiramente negativo.
-                if (entry.isIntersecting && sectionTopRelativeToStickyBottom <= 10) { // Pequeno buffer para precisão
-                    // Se estiver no ou acima do cabeçalho fixo, e estiver mais próximo do que a melhor correspondência anterior
-                    if (Math.abs(sectionTopRelativeToStickyBottom) < smallestDistanceToTop) {
-                        smallestDistanceToTop = Math.abs(sectionTopRelativeToStickyBottom);
-                        bestMatchCategory = category;
-                    }
+                // A section is considered "active" if its top edge is at or above the bottom of the sticky header,
+                // and it's still visible within the viewport (isIntersecting).
+                // We add a small buffer (e.g., 5px) to account for slight variations in scrolling and element rendering.
+                if (entry.isIntersecting && rect.top <= stickyHeaderHeight + 5) {
+                    activeCategory = category;
+                    break; // Found the topmost active section, no need to check further
                 }
-            });
+            }
 
-            // Se uma melhor correspondência foi encontrada, use-a.
-            if (bestMatchCategory) {
-                newActiveCategory = bestMatchCategory;
-            } else {
-                // Fallback: Se não houver interseção perfeita, encontre a secção mais acima que esteja pelo menos parcialmente visível.
-                // Isso lida com casos em que a rolagem é muito rápida ou no topo/fundo da página.
-                for (let i = 0; i < categorySections.length; i++) {
-                    const section = categorySections[i];
-                    const rect = section.getBoundingClientRect();
-                    if (rect.bottom > 0 && rect.top < window.innerHeight) { // Se a secção estiver visível
-                        newActiveCategory = section.id.replace('-section', '');
-                        break; // Pega a primeira (mais acima visível)
+            // Fallback for when no section perfectly meets the criteria (e.g., at the very top or bottom of page, or during fast scrolls)
+            if (!activeCategory && categorySections.length > 0) {
+                // If scrolled to the very top, default to the first category ('tradicionais')
+                // A small buffer (20px) is added to window.scrollY to ensure it triggers near the absolute top.
+                if (window.scrollY <= stickyHeaderHeight + 20) { 
+                    activeCategory = 'tradicionais';
+                } else {
+                    // As a last resort, find the first visible section in the viewport
+                    // This handles cases where no section's top is precisely aligned with the sticky header,
+                    // but a section is clearly the dominant one on screen.
+                    for (let i = 0; i < categorySections.length; i++) {
+                        const section = categorySections[i];
+                        const rect = section.getBoundingClientRect();
+                        // If any part of the section is visible in the viewport
+                        if (rect.bottom > 0 && rect.top < window.innerHeight) {
+                            activeCategory = section.id.replace('-section', '');
+                            break; // Take the first visible one (which is typically the topmost)
+                        }
                     }
-                }
-                // Se ainda não houver categoria e estiver no topo da página, assume 'tradicionais'
-                if (!newActiveCategory && window.scrollY <= stickyHeaderHeight + 20 && categorySections.length > 0) {
-                    newActiveCategory = 'tradicionais';
                 }
             }
             
-            if (newActiveCategory && newActiveCategory !== currentActiveCategoryByScroll) {
-                setActiveCategoryButton(newActiveCategory);
-                currentActiveCategoryByScroll = newActiveCategory;
+            // Only update the active button if a new active category is determined and it's different from the current one
+            if (activeCategory && activeCategory !== currentActiveCategoryByScroll) {
+                setActiveCategoryButton(activeCategory);
+                currentActiveCategoryByScroll = activeCategory;
             }
         }, {
-            root: null,
-            rootMargin: `-${getStickyHeaderHeight()}px 0px -50% 0px`, // Ajusta a margem da raiz para alinhar com o cabeçalho fixo
-            threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1] // Observa todos os limiares para deteção mais granular
+            root: null, // The viewport is the root
+            // The rootMargin defines the area within the root (viewport) that is used to check for intersection.
+            // By setting the top margin to -stickyHeaderHeight, the intersection area effectively starts
+            // at the bottom edge of your sticky header.
+            rootMargin: `-${getStickyHeaderHeight()}px 0px 0px 0px`, 
+            // Thresholds at 0 means the callback will fire as soon as any part of the target element
+            // enters or leaves the intersection root. Using multiple thresholds provides more granular
+            // detection, though the primary logic relies on `rect.top` relative to `stickyHeaderHeight`.
+            threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1] 
         });
 
+        // Observe each category section
         categorySections.forEach(section => {
             categoryObserver.observe(section);
         });
 
-        // Removido o listener de scroll explícito, pois o IntersectionObserver já lida com a deteção de rolagem.
-        // let scrollTimeout;
-        // window.addEventListener('scroll', () => {
-        //     clearTimeout(scrollTimeout);
-        //     scrollTimeout = setTimeout(() => {
-        //         // Isso fará com que os IntersectionObservers reavaliem suas interseções.
-        //     }, 50);
-        // });
-        // Fim da lógica da barra de categorias
-
-        // Inicialização
+        // Initial setup and data loading
         document.addEventListener('DOMContentLoaded', async function() {
             allMenuData = await loadMenuFromSheet(); // Carrega todos os itens do cardápio (pizzas e bebidas)
             allPromotionsData = await loadPromotionsFromSheet(); // Carrega promoções
@@ -1667,6 +1684,7 @@
             updateOrderDisplay(); // Garante que o pedido esteja correto ao carregar
 
             // Dispara um evento de rolagem após um curto atraso para garantir que o observer seja executado
+            // This is important to set the initial active category button correctly on page load.
             setTimeout(() => {
                 window.dispatchEvent(new Event('scroll'));
             }, 100);
