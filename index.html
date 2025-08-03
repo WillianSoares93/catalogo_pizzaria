@@ -291,7 +291,7 @@
             z-index: 1500; /* Acima da maioria dos elementos, mas abaixo dos modais */
             transition: background-color 0.3s ease;
             animation: pulse 1.5s infinite; /* Animação de piscar */
-            display: flex;
+            /* REMOVIDO: display: flex; */ /* Esta linha causava o flicker */
             align-items: center;
             gap: 8px;
         }
