@@ -664,7 +664,7 @@
         const confirmNoDrinkModal = document.getElementById('confirm-no-drink-modal');
         const closeConfirmNoDrinkModalBtn = document.getElementById('close-confirm-no-drink-modal');
         const confirmNoDrinkYesBtn = document.getElementById('confirm-no-drink-yes');
-        const confirmNoDrinkNoBtn = document.getElementById('confirm-no-drink-no');
+        const confirmNoDrinkNoBtn = document.getElementById('close-confirm-no-drink-modal'); // Changed from confirmNoDrinkNoBtn to closeConfirmNoDrinkModalBtn
 
 
         let currentPizzaData = {}; // Objeto para armazenar temporariamente os dados da pizza selecionada
@@ -1610,43 +1610,40 @@
 
             const stickyHeaderHeight = getStickyHeaderHeight();
             let newActiveCategory = null;
+            let minDistance = Infinity; // To find the section whose top is closest to the sticky header's bottom
 
-            // Sort entries by their top position to ensure we process them from top to bottom
-            // This is crucial because IntersectionObserver entries might not come in order.
-            entries.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-
-            for (let i = 0; i < entries.length; i++) {
-                const entry = entries[i];
-                const section = entry.target;
-                const category = section.id.replace('-section', '');
+            // Iterate through all category sections to find the one that should be active
+            categorySections.forEach(section => {
                 const rect = section.getBoundingClientRect();
+                const category = section.id.replace('-section', '');
 
-                // A section is considered "active" if its top edge is at or above the bottom of the sticky header,
-                // and it's still visible within the viewport (isIntersecting).
-                // We add a small buffer (e.g., 1px) to account for slight variations in scrolling and element rendering.
-                if (entry.isIntersecting && rect.top <= stickyHeaderHeight + 1) {
-                    newActiveCategory = category;
-                    break; // Found the topmost active section, no need to check further
+                // A section is considered active if its top edge is at or just above the bottom of the sticky header,
+                // and its bottom edge is still below the sticky header (meaning it hasn't fully scrolled past).
+                // A small buffer (e.g., 5px) is added to `stickyHeaderHeight` for robustness against
+                // sub-pixel rendering or slight variations in scroll position.
+                if (rect.top <= stickyHeaderHeight + 5 && rect.bottom > stickyHeaderHeight) {
+                    const distance = Math.abs(rect.top - stickyHeaderHeight);
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        newActiveCategory = category;
+                    }
                 }
-            }
+            });
 
-            // Fallback: If no section perfectly meets the criteria (e.g., at the very top or bottom of page, or during fast scrolls)
+            // Fallback for the very top of the page or if no section perfectly aligns
             if (!newActiveCategory && categorySections.length > 0) {
-                // If scrolled to the very top, default to the first category ('tradicionais')
-                // A small buffer (20px) is added to window.scrollY to ensure it triggers near the absolute top.
-                if (window.scrollY <= stickyHeaderHeight + 20) { 
+                // If scrolled to the very top, default to the first category
+                if (window.scrollY <= stickyHeaderHeight + 20) { // Check if scroll position is near the absolute top
                     newActiveCategory = 'tradicionais';
                 } else {
-                    // As a last resort, find the first visible section in the viewport
-                    // This handles cases where no section's top is precisely aligned with the sticky header,
-                    // but a section is clearly the dominant one on screen.
+                    // As a last resort, find the topmost section that is at least partially visible in the viewport.
+                    // This handles cases where precise alignment fails but a section is clearly the dominant one on screen.
                     for (let i = 0; i < categorySections.length; i++) {
                         const section = categorySections[i];
                         const rect = section.getBoundingClientRect();
-                        // If any part of the section is visible in the viewport
-                        if (rect.bottom > 0 && rect.top < window.innerHeight) {
+                        if (rect.bottom > 0 && rect.top < window.innerHeight) { // If any part of the section is visible
                             newActiveCategory = section.id.replace('-section', '');
-                            break; // Take the first visible one (which is typically the topmost)
+                            break; // Take the first one found (topmost visible)
                         }
                     }
                 }
@@ -1659,15 +1656,13 @@
             }
         }, {
             root: null, // The viewport is the root
-            // The rootMargin defines the area *within the root* where intersection is detected.
-            // By setting the top margin to -stickyHeaderHeight, the intersection calculation
-            // effectively starts from the bottom edge of your sticky header.
-            // A small negative bottom margin (-1px) ensures that the observer
-            // continues to fire as elements scroll out of the bottom of the viewport,
-            // but primarily focuses on the top.
-            rootMargin: `-${getStickyHeaderHeight()}px 0px -1px 0px`, 
-            // Observe all thresholds for more granular data. This helps in detecting subtle changes.
-            threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1] 
+            // Using a rootMargin of 0 means the IntersectionObserver will fire callbacks
+            // based on the target element intersecting with the actual viewport edges.
+            // We then use manual `rect.top` checks relative to `stickyHeaderHeight` for precise control.
+            rootMargin: '0px 0px 0px 0px', 
+            // A threshold of 0 means the callback will fire as soon as one pixel of the target element
+            // enters or leaves the intersection root. This provides immediate feedback.
+            threshold: 0 
         });
 
         // Observe each category section
