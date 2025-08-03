@@ -510,7 +510,7 @@
                             case 'Preço 4 fatias': return 'price4Slices'; // Nova coluna
                             case 'Categoria': return 'category';
                             case 'É Pizza? (SIM/NÃO)': return 'isPizza';
-                            case 'Disponível (SIM/NAO)': return 'available'; // Corrigido para corresponder à planilha
+                            case 'Disponível (SIM/NÃO)': return 'available'; // CORRIGIDO: Retornou para "SIM/NÃO"
                             default: return cleanedHeader.replace(/[^a-zA-Z0-9]+(.)?/g, (match, chr) => chr ? chr.toUpperCase() : '').replace(/^./, (match) => match.toLowerCase());
                         }
                     });
