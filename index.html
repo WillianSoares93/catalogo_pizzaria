@@ -2,54 +2,58 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sua Pizzaria - Cardápio Online</title>
     <!-- Inclui a biblioteca Tailwind CSS para estilização rápida e responsiva -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Inclui a biblioteca Font Awesome para ícones -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Estilos personalizados para efeitos visuais */
-        .pizza-half {
-            position: relative;
-            overflow: hidden;
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8f4e9; /* Cor de fundo suave */
         }
-        /* Pseudo-elementos para um leve efeito visual em metades de pizza (não usados diretamente na lógica atual) */
-        .pizza-half::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 50%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.03);
-            z-index: -1;
+        
+        /* Estilos para os cartões de sabor (pizza/bebida) */
+        .flavor-card {
+            transition: all 0.3s ease;
         }
-        .pizza-half::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 50%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.03);
-            z-index: -1;
+        .flavor-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
         }
-        /* Animação para "virar" elementos ao aparecer */
-        .flip-in {
-            animation: flipIn 0.5s ease-out;
+        
+        /* Estilos para os botões de pedido */
+        .btn-order {
+            /* Mantido o gradiente laranja para vermelho para um toque vibrante */
+            background: linear-gradient(135deg, #f59e0b, #ef4444); 
+            transition: all 0.3s ease;
         }
-        @keyframes flipIn {
-            from { transform: rotateY(90deg); opacity: 0; }
-            to { transform: rotateY(0); opacity: 1; }
+        .btn-order:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
         }
-        /* Animação para "deslizar" elementos ao aparecer */
-        @keyframes slideIn {
-            from { transform: translateY(20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+        
+        /* Estilo para o botão "Adicionar mais" (mantido em tom amarelo/laranja para contraste) */
+        .btn-add-more {
+            background: linear-gradient(135deg, #fbbf24, #fcd34d); 
+            transition: all 0.3s ease;
+        }
+        .btn-add-more:hover {
+            transform: scale(1.02);
+            box-shadow: 0 3px 10px rgba(251, 191, 36, 0.4);
         }
 
-        /* Estilos para o modal principal */
+        /* Estilo para o cabeçalho com imagem de fundo (overlay vermelho já presente) */
+        .header-bg {
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://invexo.com.br/blog/wp-content/uploads/2022/12/pizza-pizzaria-gavea-rio-de-janeiro.jpg');
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* Estilos para o modal principal (usado para seleção de pizza) */
         .modal {
             display: none; /* Oculto por padrão */
             position: fixed; /* Posição fixa na tela */
@@ -67,11 +71,11 @@
         .modal-content {
             background-color: #fefefe;
             margin: auto;
-            padding: 30px; /* Aumentado o padding */
-            border-radius: 12px; /* Mais arredondado */
+            padding: 30px;
+            border-radius: 12px;
             width: 90%;
             max-width: 500px;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Sombra mais proeminente */
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
             position: relative;
             animation: fadeIn 0.3s ease-out;
             border: 2px solid #ef4444; /* Borda vermelha */
@@ -94,7 +98,7 @@
         }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
+            to { transform: translateY(0); }
         }
 
         /* Estilos para o modal de mensagem */
@@ -125,6 +129,124 @@
             animation: fadeIn 0.3s ease-out;
         }
 
+        /* Estilos para o popup de promoção */
+        .promotion-popup {
+            display: none; /* Oculto por padrão */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .promotion-popup-content {
+            background-color: #fff;
+            padding: 40px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 550px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            position: relative;
+            animation: popIn 0.4s ease-out;
+            border: 3px solid #dc2626; /* Borda vermelha para promoções */
+            overflow-y: auto;
+            max-height: 90vh;
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .promotion-popup-content h3 {
+            font-size: 2.25rem;
+            font-weight: bold;
+            color: #dc2626;
+            margin-bottom: 15px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .promotion-popup-content p {
+            font-size: 1.125rem;
+            color: #374151;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        .promotion-popup-content .close-button {
+            top: 15px;
+            right: 25px;
+            font-size: 32px;
+            color: #6b7280;
+        }
+
+        .promotion-popup-content .close-button:hover {
+            color: #1f2937;
+        }
+
+        .promotion-item {
+            background-color: #fee2e2; /* Fundo vermelho claro para itens de promoção */
+            border: 1px solid #ef4444; /* Borda vermelha */
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            text-align: left;
+        }
+
+        .promotion-item h4 {
+            font-weight: bold;
+            color: #dc2626; /* Título vermelho */
+            margin-bottom: 5px;
+        }
+
+        .promotion-item p {
+            font-size: 0.95rem;
+            color: #4b5563;
+            margin-bottom: 5px;
+        }
+
+        .promotion-item .price {
+            font-weight: bold;
+            color: #dc2626; /* Preço vermelho */
+            font-size: 1.1rem;
+        }
+
+        /* Estilos para o botão flutuante de promoção */
+        #promotion-button {
+            display: none; /* Oculto por padrão, será exibido via JS */
+            position: fixed;
+            bottom: 20px;
+            left: 20px; /* Posição à esquerda */
+            background-color: #dc2626; /* Vermelho vibrante */
+            color: white;
+            padding: 15px 20px;
+            border-radius: 50px; /* Formato de pílula */
+            font-weight: bold;
+            font-size: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+            cursor: pointer;
+            z-index: 1500; /* Acima da maioria dos elementos, mas abaixo dos modais */
+            transition: background-color 0.3s ease;
+            animation: pulse 1.5s infinite; /* Animação de piscar */
+            align-items: center;
+            gap: 8px;
+        }
+
+        #promotion-button:hover {
+            background-color: #b91c1c; /* Vermelho mais escuro no hover */
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); } /* Usando rgba do red-600 */
+            70% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(220, 38, 38, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+        }
+
         /* Estilos para os desenhos de pizza no modal de seleção */
         .pizza-size-option {
             display: flex;
@@ -138,7 +260,6 @@
             cursor: pointer;
             transition: all 0.3s ease-in-out; /* Transição mais suave */
             text-align: center;
-            /* min-width: 120px; */ /* Removido min-width */
             flex-shrink: 0; /* Prevents items from shrinking */
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08); /* Sombra sutil */
         }
@@ -147,24 +268,24 @@
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); /* Sombra mais intensa no hover */
             transform: translateY(-4px); /* Efeito de elevação maior */
         }
-        .pizza-size-option img { /* Alterado de svg para img */
+        .pizza-size-option img {
             margin-bottom: 8px;
-            width: 100px; /* Largura ajustada para retangular */
-            height: 70px; /* Altura ajustada para retangular */
-            object-fit: contain; /* Garante que a imagem se ajuste sem distorção */
+            width: 100px;
+            height: 70px;
+            object-fit: contain;
         }
         .pizza-size-option .font-bold.text-lg {
-            font-size: 1rem; /* text-base */ /* Reduzido o tamanho da fonte */
-            color: #1f2937; /* gray-900 */
+            font-size: 1rem;
+            color: #1f2937;
         }
         .pizza-size-option .text-red-600.font-bold {
-            font-size: 1.125rem; /* text-lg */ /* Reduzido o tamanho da fonte */
-            color: #dc2626; /* red-600 */
+            font-size: 1.125rem;
+            color: #dc2626;
         }
         .pizza-size-option button {
-            padding: 0.4rem 0.8rem; /* Ajuste do padding dos botões internos */
-            border-radius: 0.375rem; /* rounded-md */
-            font-size: 0.875rem; /* text-sm */
+            padding: 0.4rem 0.8rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
         }
 
         /* Custom styles for sticky category bar on mobile */
@@ -178,247 +299,121 @@
                 padding-bottom: 0.5rem; /* pb-2 */
                 box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* subtle shadow */
             }
-            /* Removed flex-direction: column and gap for horizontal layout on mobile */
-            /* Removed overflow-x: hidden for horizontal scroll on mobile */
         }
 
         /* Adicionado para ajustar a rolagem para as seções, considerando a barra fixa */
         .pizza-category-section {
             scroll-margin-top: 6rem; /* Ajuste este valor se a altura da barra fixa mudar */
         }
-
-        /* Estilos para o popup de promoção */
-        .promotion-popup {
-            display: none; /* Oculto por padrão, agora sem o display:flex redundante */
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            z-index: 2000; /* Acima de todos os outros modais */
-            justify-content: center; /* Mantido para centralização quando visível */
-            align-items: center; /* Mantido para centralização quando visível */
-        }
-
-        .promotion-popup-content {
-            background-color: #fff;
-            padding: 40px; /* Aumentado o padding */
-            border-radius: 15px; /* Mais arredondado */
-            width: 90%;
-            max-width: 550px; /* Maior largura máxima */
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3); /* Sombra mais intensa */
-            text-align: center;
-            position: relative;
-            animation: popIn 0.4s ease-out;
-            border: 3px solid #f97316; /* Cor laranja para destaque */
-            overflow-y: auto; /* Adiciona scroll se conteúdo for grande */
-            max-height: 90vh; /* Limita a altura para caber na tela */
-        }
-
-        @keyframes popIn {
-            from { transform: scale(0.8); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
-        }
-
-        .promotion-popup-content h3 {
-            font-size: 2.25rem; /* text-4xl */
-            font-weight: bold;
-            color: #dc2626; /* red-600 */
-            margin-bottom: 15px;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
-        }
-
-        .promotion-popup-content p {
-            font-size: 1.125rem; /* text-lg */
-            color: #374151; /* gray-700 */
-            margin-bottom: 25px;
-            line-height: 1.6;
-        }
-
-        .promotion-popup-content .close-button {
-            top: 15px;
-            right: 25px;
-            font-size: 32px; /* Maior para facilitar o clique */
-            color: #6b7280; /* gray-500 */
-        }
-
-        .promotion-popup-content .close-button:hover {
-            color: #1f2937; /* gray-900 */
-        }
-
-        .promotion-item {
-            background-color: #fff7ed; /* orange-50 */
-            border: 1px solid #fed7aa; /* orange-200 */
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 10px;
-            text-align: left;
-        }
-
-        .promotion-item h4 {
-            font-weight: bold;
-            color: #f97316; /* orange-500 */
-            margin-bottom: 5px;
-        }
-
-        .promotion-item p {
-            font-size: 0.95rem;
-            color: #4b5563; /* gray-600 */
-            margin-bottom: 5px;
-        }
-
-        .promotion-item .price {
-            font-weight: bold;
-            color: #dc2626; /* red-600 */
-            font-size: 1.1rem;
-        }
-
-        /* Estilos para o botão flutuante de promoção */
-        #promotion-button {
-            display: none; /* Oculto por padrão, será exibido via JS */
-            position: fixed;
-            bottom: 20px;
-            left: 20px; /* Posição à esquerda */
-            background-color: #f97316; /* Laranja vibrante */
-            color: white;
-            padding: 15px 20px;
-            border-radius: 50px; /* Formato de pílula */
-            font-weight: bold;
-            font-size: 1rem;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-            cursor: pointer;
-            z-index: 1500; /* Acima da maioria dos elementos, mas abaixo dos modais */
-            transition: background-color 0.3s ease;
-            animation: pulse 1.5s infinite; /* Animação de piscar */
-            /* REMOVIDO: display: flex; */ /* Esta linha causava o flicker */
-            align-items: center;
-            gap: 8px;
-        }
-
-        #promotion-button:hover {
-            background-color: #ea580c; /* Laranja mais escuro no hover */
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.7); }
-            70% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(249, 115, 22, 0); }
-            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); }
-        }
     </style>
 </head>
-<body class="bg-gray-50 font-sans">
-    <div class="container mx-auto px-4 py-8 max-w-6xl">
-        <!-- Cabeçalho da página -->
-        <header class="text-center mb-12">
-            <h1 class="text-5xl font-bold text-red-600 mb-2">Sua Logo Aqui</h1>
-            <p class="text-xl text-gray-600">Pizzaria Artesanal</p>
-            <div class="w-24 h-1 bg-red-500 mx-auto mt-4"></div>
-        </header>
+<body>
+    <!-- Header -->
+    <header class="header-bg text-white py-16 px-4 text-center">
+        <div class="max-w-4xl mx-auto">
+            <!-- Logotipo da Sua Pizzaria -->
+            <img src="https://i.imgur.com/HQiEKNy.png" alt="Logotipo Sua Pizzaria" class="h-64 mx-auto mb-4 object-contain">
+            <p class="text-2xl mb-8">Pizzaria Artesanal</p>
+            <div class="flex justify-center space-x-4">
+                <a href="#menu" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-full transition duration-300">
+                    Ver Cardápio
+                </a>
+            </div>
+        </div>
+    </header>
 
-        <!-- Conteúdo principal: Menu e Pedido -->
-        <div class="flex flex-col lg:flex-row gap-8">
-            <!-- Seção do Menu -->
-            <div class="lg:w-2/3">
-                <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-2">Cardápio</h2>
-                    
-                    <!-- Mensagem "Arrasta para o lado" para mobile -->
-                    <div class="text-gray-500 text-sm text-center mb-4 lg:hidden">
-                        <i class="fas fa-hand-point-right mr-1"></i> Arraste para o lado para ver outras opções
-                    </div>
+    <!-- Menu Section -->
+    <section id="menu" class="py-8 px-4 max-w-6xl mx-auto">
+        <div class="text-center mb-8">
+            <h2 class="text-4xl font-bold text-gray-800 mb-4">Nosso Cardápio</h2>
+            <p class="text-gray-600 text-lg mx-auto">Escolha sua pizza favorita ou uma bebida refrescante!</p>
+        </div>
 
-                    <!-- Sticky Category Buttons Container -->
-                    <div class="category-bar-mobile-sticky lg:static lg:p-0">
-                        <div class="flex space-x-2 mb-6 overflow-x-auto pb-2 
-                                    lg:flex-row lg:space-x-2 lg:mb-6 lg:overflow-visible lg:pb-0">
-                            <button class="category-btn px-4 py-2 rounded-full bg-red-600 text-white whitespace-nowrap lg:flex-grow-0 lg:flex-shrink-0" data-category="tradicionais" data-target-id="tradicionais-section">Pizzas Tradicionais</button>
-                            <button class="category-btn px-4 py-2 rounded-full bg-gray-200 text-gray-800 whitespace-nowrap lg:flex-grow-0 lg:flex-shrink-0" data-category="especiais" data-target-id="especiais-section">Pizzas Especiais</button>
-                            <button class="category-btn px-4 py-2 rounded-full bg-gray-200 text-gray-800 whitespace-nowrap lg:flex-grow-0 lg:flex-shrink-0" data-category="doces" data-target-id="doces-section">Pizzas Doces</button>
-                            <button class="category-btn px-4 py-2 rounded-full bg-gray-200 text-gray-800 whitespace-nowrap lg:flex-grow-0 lg:flex-shrink-0" data-category="bebidas" data-target-id="bebidas-section">Bebidas</button>
-                        </div>
-                    </div>
-                    
-                    <!-- Lista de Itens do Cardápio -->
-                    <div id="pizza-list">
-                        <!-- Conteúdo do cardápio será preenchido dinamicamente por JavaScript -->
-                        <div id="tradicionais-section" class="pizza-category-section mb-8">
-                            <h3 class="text-xl font-bold text-gray-800 mb-4">Pizzas Tradicionais</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="tradicionais-items"></div>
-                        </div>
-                        
-                        <div id="especiais-section" class="pizza-category-section mb-8">
-                            <h3 class="text-xl font-bold text-gray-800 mb-4">Pizzas Especiais</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="especiais-items"></div>
-                        </div>
-                        
-                        <div id="doces-section" class="pizza-category-section mb-8">
-                            <h3 class="text-xl font-bold text-gray-800 mb-4">Pizzas Doces</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="doces-items"></div>
-                        </div>
-                        
-                        <div id="bebidas-section" class="pizza-category-section mb-8">
-                            <h3 class="text-xl font-bold text-gray-800 mb-4">Bebidas</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="bebidas-items"></div>
-                        </div>
-                    </div>
+        <!-- Mensagem "Arrasta para o lado" para mobile -->
+        <div class="text-gray-500 text-sm text-center mb-4 lg:hidden">
+            <i class="fas fa-hand-point-right mr-1"></i> Arraste para o lado para ver outras opções
+        </div>
+
+        <!-- Sticky Category Buttons Container -->
+        <div class="category-bar-mobile-sticky lg:static lg:p-0">
+            <div class="flex space-x-2 mb-6 overflow-x-auto pb-2 
+                        lg:flex-row lg:space-x-2 lg:mb-6 lg:overflow-visible lg:pb-0">
+                <button class="category-btn px-4 py-2 rounded-full bg-red-600 text-white whitespace-nowrap lg:flex-grow-0 lg:flex-shrink-0" data-category="tradicionais" data-target-id="tradicionais-section">Pizzas Tradicionais</button>
+                <button class="category-btn px-4 py-2 rounded-full bg-gray-200 text-gray-800 whitespace-nowrap lg:flex-grow-0 lg:flex-shrink-0" data-category="especiais" data-target-id="especiais-section">Pizzas Especiais</button>
+                <button class="category-btn px-4 py-2 rounded-full bg-gray-200 text-gray-800 whitespace-nowrap lg:flex-grow-0 lg:flex-shrink-0" data-category="doces" data-target-id="doces-section">Pizzas Doces</button>
+                <button class="category-btn px-4 py-2 rounded-full bg-gray-200 text-gray-800 whitespace-nowrap lg:flex-grow-0 lg:flex-shrink-0" data-category="bebidas" data-target-id="bebidas-section">Bebidas</button>
+            </div>
+        </div>
+        
+        <!-- Lista de Itens do Cardápio -->
+        <div id="pizza-list">
+            <div id="tradicionais-section" class="pizza-category-section mb-8">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">Pizzas Tradicionais</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="tradicionais-items"></div>
+            </div>
+            
+            <div id="especiais-section" class="pizza-category-section mb-8">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">Pizzas Especiais</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="especiais-items"></div>
+            </div>
+            
+            <div id="doces-section" class="pizza-category-section mb-8">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">Pizzas Doces</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="doces-items"></div>
+            </div>
+            
+            <div id="bebidas-section" class="pizza-category-section mb-8">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">Bebidas</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="bebidas-items"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Order Summary Sidebar -->
+    <div id="orderSidebar" class="fixed top-0 right-0 h-full w-full bg-white shadow-xl z-50 transform translate-x-full transition-transform duration-300 overflow-y-auto">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-gray-800">Seu Pedido</h3>
+                <button onclick="closeOrderSidebar()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div id="orderItems" class="mb-6">
+                <!-- Itens do pedido serão adicionados dinamicamente -->
+                <p class="text-gray-500 text-center py-8" id="emptyOrderMessage">Seu pedido está vazio</p>
+            </div>
+            
+            <div class="border-t border-gray-200 pt-4 mb-6">
+                <div class="flex justify-between mb-2">
+                    <span class="text-gray-600">Subtotal:</span>
+                    <span id="subtotal" class="font-bold">R$ 0,00</span>
+                </div>
+                <div class="flex justify-between mb-2">
+                    <span class="text-gray-600">Taxa de entrega:</span>
+                    <span id="deliveryFee" class="font-bold">R$ 5,00</span>
+                </div>
+                <div class="flex justify-between text-lg font-bold">
+                    <span>Total:</span>
+                    <span id="total">R$ 5,00</span>
                 </div>
             </div>
             
-            <!-- Seção do Pedido (Carrinho) -->
-            <div class="lg:w-1/3">
-                <div class="bg-white rounded-lg shadow-md p-6 sticky top-4">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-2">Seu Pedido</h2>
-                    
-                    <!-- Opções de Retirada/Entrega -->
-                    <div class="mb-4">
-                        <h4 class="font-bold text-gray-800 mb-2">Opções de Entrega:</h4>
-                        <div class="flex items-center space-x-4">
-                            <label class="inline-flex items-center">
-                                <input type="radio" class="form-radio text-red-600" name="deliveryOption" value="pickup">
-                                <span class="ml-2 text-gray-700">Retirada (Grátis)</span>
-                            </label>
-                            <label class="inline-flex items-center">
-                                <input type="radio" class="form-radio text-red-600" name="deliveryOption" value="delivery" checked>
-                                <span class="ml-2 text-gray-700">Entrega (R$ 5,00)</span>
-                            </label>
-                        </div>
-                    </div>
+            <!-- Botão "Adicionar mais" -->
+            <button onclick="backToMenu()" class="btn-add-more w-full py-3 text-white font-bold rounded-full mb-4">
+                Adicionar mais
+            </button>
 
-                    <!-- Itens adicionados ao pedido -->
-                    <div id="order-items" class="mb-6">
-                        <p class="text-gray-500 text-center py-4">Seu pedido está vazio</p>
-                    </div>
-                    
-                    <!-- Resumo dos valores do pedido -->
-                    <div class="border-t pt-4">
-                        <div class="flex justify-between mb-2">
-                            <span class="font-medium">Subtotal:</span>
-                            <span id="subtotal" class="font-bold">R$ 0,00</span>
-                        </div>
-                        <div class="flex justify-between mb-2">
-                            <span class="font-medium">Taxa de entrega:</span>
-                            <span id="delivery-fee" class="font-bold">R$ 5,00</span>
-                        </div>
-                        <div class="flex justify-between text-lg font-bold border-t pt-2 mt-2">
-                            <span>Total:</span>
-                            <span id="total">R$ 5,00</span>
-                        </div>
-                    </div>
-                    
-                    <!-- Botão para finalizar o pedido -->
-                    <button id="checkout-btn" class="w-full mt-6 py-3 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition flex items-center justify-center">
-                        <i class="fas fa-shopping-cart mr-2"></i> Finalizar Pedido
-                    </button>
-                </div>
-            </div>
+            <button onclick="checkout()" class="btn-order w-full py-3 text-white font-bold rounded-full mb-4">
+                Finalizar Pedido
+            </button>
+            
+            <!-- Botão "Limpar Pedido" -->
+            <button onclick="clearOrder()" class="w-full py-2 bg-gray-200 text-gray-700 font-medium rounded-full hover:bg-gray-300 transition duration-300">
+                Limpar Pedido
+            </button>
         </div>
     </div>
-
-    <!-- Botão "Ver Pedido" para mobile, aparece quando há itens no carrinho -->
-    <button id="view-order-mobile-btn" class="fixed bottom-4 right-4 bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg z-50 lg:hidden hidden flex items-center space-x-2">
-        <i class="fas fa-receipt text-xl"></i> <span>Ver Pedido</span>
-    </button>
 
     <!-- Modal de Seleção de Pizza (Inteira/Meia) -->
     <div id="pizza-option-modal" class="modal">
@@ -438,21 +433,6 @@
             <span class="close-button" id="close-message-modal">&times;</span>
             <p class="text-lg font-semibold text-gray-800 mb-4" id="message-modal-text"></p>
             <button id="ok-message-modal" class="px-4 py-2 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition">OK</button>
-        </div>
-    </div>
-
-    <!-- Modal de Sugestão de Bebidas -->
-    <div id="drink-suggestion-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-button" id="close-drink-suggestion-modal">&times;</span>
-            <h3 class="text-xl font-bold text-gray-800 mb-4">Que tal adicionar uma bebida?</h3>
-            <p class="text-gray-600 mb-6">Seu pedido não contém bebidas. Gostaria de adicionar alguma?</p>
-            <div id="suggested-drinks-list" class="flex flex-col gap-3 mb-6">
-                <!-- Sugestões de bebidas serão inseridas aqui via JS -->
-            </div>
-            <button id="proceed-without-drinks" class="px-6 py-3 bg-gray-500 text-white rounded-lg font-bold hover:bg-gray-600 transition w-full">
-                Continuar sem bebidas
-            </button>
         </div>
     </div>
 
@@ -477,1006 +457,878 @@
         <span>Promoções!</span>
     </button>
 
+    <!-- Floating Order Button -->
+    <div class="fixed bottom-6 right-6 z-40">
+        <button onclick="toggleOrderSidebar()" class="bg-red-600 hover:bg-red-700 text-white rounded-full p-5 shadow-lg relative transition duration-300 transform hover:scale-110">
+            <i class="fas fa-shopping-cart text-2xl"></i>
+            <span id="cartCount" class="absolute -top-2 -right-2 bg-red-500 text-white text-sm font-bold rounded-full h-7 w-7 flex items-center justify-center hidden">0</span>
+        </button>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8 px-4">
+        <div class="max-w-6xl mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
+                <div>
+                    <h3 class="text-xl font-bold mb-4">Sua Pizzaria</h3>
+                    <p class="text-gray-400">As melhores pizzas artesanais da cidade, feitas com ingredientes frescos e muito carinho.</p>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold mb-4">Horário de Funcionamento</h3>
+                    <p class="text-gray-400">Segunda a Sábado: 18:00 - 23:00</p>
+                    <p class="text-gray-400">Domingo: 17:00 - 22:00</p>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold mb-4">Contato</h3>
+                    <p class="text-gray-400"><i class="fas fa-phone mr-2"></i> (85) 98765-4321</p>
+                    <p class="text-gray-400"><i class="fas fa-envelope mr-2"></i> contato@suapizzaria.com</p>
+                    <div class="flex justify-center md:justify-start space-x-4 mt-2">
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-instagram text-xl"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-facebook text-xl"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-whatsapp text-xl"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-6 text-center text-gray-400">
+                <p>&copy; 2023 Sua Pizzaria. Todos os direitos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // URL da planilha Google Sheets publicada como CSV para o cardápio
-            const CARDAPIO_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=664943668&single=true&output=csv';
-            // URL da planilha Google Sheets publicada como CSV para promoções
-            const PROMOCOES_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=600393470&single=true&output=csv'; 
+        // URLs das planilhas Google Sheets publicadas como CSV
+        const CARDAPIO_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=664943668&single=true&output=csv';
+        const PROMOCOES_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=600393470&single=true&output=csv'; 
 
-            // Função para carregar os dados do cardápio da planilha Google
-            async function loadMenuFromSheet() {
-                try {
-                    // Adiciona um timestamp para tentar forçar o recarregamento do CSV
-                    const urlWithCacheBuster = `${CARDAPIO_CSV_URL}&_=${new Date().getTime()}`;
-                    const response = await fetch(urlWithCacheBuster);
-                    const csvText = await response.text();
-                    console.log("CSV Bruto recebido (Cardápio):", csvText); // Log para depuração
+        // Variáveis globais
+        let order = [];
+        let allMenuData = []; // Armazenará todos os itens do cardápio (pizzas e bebidas)
+        let allPromotionsData = [];
 
-                    const lines = csvText.split('\n').filter(line => line.trim() !== '');
+        // Referências para os elementos DOM
+        const orderSidebar = document.getElementById('orderSidebar');
+        const cartCount = document.getElementById('cartCount');
+        const emptyOrderMessage = document.getElementById('emptyOrderMessage');
+        const messageModal = document.getElementById('message-modal');
+        const closeMessageModalBtn = document.getElementById('close-message-modal');
+        const okMessageModalBtn = document.getElementById('ok-message-modal');
+        const messageModalText = document.getElementById('message-modal-text');
+        const promotionPopup = document.getElementById('promotion-popup');
+        const closePromotionPopupBtn = document.getElementById('close-promotion-popup');
+        const closePromotionPopupBtnBottom = document.getElementById('close-promotion-popup-btn');
+        const promotionsListEl = document.getElementById('promotions-list');
+        const promotionButton = document.getElementById('promotion-button');
+        const cuscuzListEl = document.getElementById('cuscuz-list'); // Este será o container principal para pizzas agora
+        const bebidasListEl = document.getElementById('bebidas-items'); // Container para bebidas
+        const subtotalEl = document.getElementById('subtotal');
+        const deliveryFeeEl = document.getElementById('deliveryFee');
+        const totalEl = document.getElementById('total');
 
-                    if (lines.length === 0) {
-                        console.warn("Nenhuma linha válida encontrada no CSV do Cardápio.");
-                        return [];
-                    }
+        // Referências para o modal de seleção de pizza
+        const pizzaOptionModal = document.getElementById('pizza-option-modal');
+        const closePizzaOptionModalBtn = document.getElementById('close-pizza-option-modal');
+        const modalPizzaName = document.getElementById('modal-pizza-name');
+        const modalPizzaDescription = document.getElementById('modal-pizza-description');
+        const pizzaSizeOptions = document.getElementById('pizza-size-options');
 
-                    // Função auxiliar para analisar uma única linha CSV
-                    function parseCsvLine(line) {
-                        const values = [];
-                        let inQuote = false;
-                        let currentField = '';
-                        for (let i = 0; i < line.length; i++) {
-                            const char = line[i];
-                            if (char === '"') {
-                                // Lida com aspas duplas escapadas (ex: "" dentro de um campo entre aspas)
-                                if (inQuote && i + 1 < line.length && line[i + 1] === '"') {
-                                    currentField += '"';
-                                    i++; // Pula a próxima aspa
-                                } else {
-                                    inQuote = !inQuote; // Alterna o estado de aspas
-                                }
-                            } else if (char === ',' && !inQuote) {
-                                values.push(currentField); // Adiciona sem trim inicialmente
-                                currentField = '';
-                            } else {
-                                currentField += char;
-                            }
-                        }
-                        values.push(currentField); // Adiciona o último campo
+        let currentPizzaData = {}; // Objeto para armazenar temporariamente os dados da pizza selecionada
+        let firstHalfPizza = null; // Armazena os dados da primeira metade de uma pizza dividida
+        let isSelectingSecondHalf = false; // Flag para indicar se o usuário está escolhendo a segunda metade
 
-                        // Processa cada valor: remove aspas externas e desescapa aspas internas duplas
-                        return values.map(v => {
-                            if (v === undefined || v === null) return ''; // Lida com valores indefinidos/nulos
-                            let processed = v;
-                            if (processed.startsWith('"') && processed.endsWith('"')) {
-                                processed = processed.substring(1, processed.length - 1);
-                            }
-                            return processed.replace(/""/g, '"').trim(); // Trim no final
-                        });
-                    }
+        // Define tamanhos e seus multiplicadores de preço em relação ao preço de 8 fatias
+        const sizes = [
+            { slices: 4, label: '4 Fatias', priceKey: 'price4Slices' },
+            { slices: 6, label: '6 Fatias', priceKey: 'price6Slices' },
+            { slices: 8, label: '8 Fatias', priceKey: 'basePrice' } // basePrice é o preço de 8 fatias
+        ];
 
-                    const headersRaw = parseCsvLine(lines[0]); // Usa a função auxiliar para analisar os cabeçalhos
-                    const mappedHeaders = headersRaw.map(header => {
-                        let cleanedHeader = header.trim();
-                        switch (cleanedHeader) {
-                            case 'ID Item (único)': return 'id';
-                            case 'Nome do Item': return 'name';
-                            case 'Descrição': return 'description';
-                            case 'Preço 8 fatias': return 'basePrice';
-                            case 'Preço 6 fatias': return 'price6Slices'; // Nova coluna
-                            case 'Preço 4 fatias': return 'price4Slices'; // Nova coluna
-                            case 'Categoria': return 'category';
-                            case 'É Pizza? (SIM/NÃO)': return 'isPizza';
-                            case 'Disponível (SIM/NÃO)': return 'available'; 
-                            default: return cleanedHeader.replace(/[^a-zA-Z0-9]+(.)?/g, (match, chr) => chr ? chr.toUpperCase() : '').replace(/^./, (match) => match.toLowerCase());
-                        }
-                    });
-                    console.log("Cabeçalhos parseados e mapeados (Cardápio):", mappedHeaders); // Log para depuração
-                    
-                    const menuData = [];
+        // Taxa de entrega fixa
+        const deliveryFee = 5.00; 
+        const whatsappNumber = '5587996070638'; 
 
-                    for (let i = 1; i < lines.length; i++) {
-                        const line = lines[i];
-                        const rowValues = parseCsvLine(line); // Usa a função auxiliar para analisar cada linha
-                        
-                        console.log(`Linha ${i + 1} original (Cardápio): "${line}"`); // Log da linha original
-                        console.log(`Linha ${i + 1} parseada (Cardápio - rowValues):`, rowValues); // Log dos valores parseados
-                        console.log(`rowValues.length: ${rowValues.length}, mappedHeaders.length: ${mappedHeaders.length}`); // Log dos comprimentos
+        // Funções de controle de modais e sidebar
+        function toggleOrderSidebar() {
+            orderSidebar.classList.toggle('translate-x-full');
+            orderSidebar.classList.toggle('translate-x-0');
+        }
+        
+        function closeOrderSidebar() {
+            orderSidebar.classList.add('translate-x-full');
+            orderSidebar.classList.remove('translate-x-0');
+        }
+        
+        function showMessageModal(message) {
+            messageModalText.textContent = message;
+            messageModal.style.display = 'flex';
+        }
 
-                        if (rowValues.length === mappedHeaders.length) {
-                            let item = { // Initialize with default values to ensure properties exist
-                                id: '',
-                                name: '',
-                                description: '',
-                                basePrice: 0,
-                                price6Slices: 0,
-                                price4Slices: 0,
-                                category: '',
-                                isPizza: false,
-                                available: false
-                            };
-                            for (let j = 0; j < mappedHeaders.length; j++) {
-                                let headerKey = mappedHeaders[j];
-                                let value = rowValues[j];
-                                
-                                if (headerKey === 'basePrice' || headerKey === 'price6Slices' || headerKey === 'price4Slices') {
-                                    // Ensure value is a string before replace and check for NaN after parseFloat
-                                    const parsedValue = parseFloat(String(value).replace(',', '.'));
-                                    item[headerKey] = isNaN(parsedValue) ? 0 : parsedValue; // Default to 0 if NaN
-                                } else if (headerKey === 'isPizza') {
-                                    item[headerKey] = value.toUpperCase() === 'SIM';
-                                } else if (headerKey === 'available') {
-                                    item[headerKey] = value.toUpperCase() === 'SIM';
-                                } else {
-                                    item[headerKey] = value;
-                                }
-                            }
-                            if (item.available) {
-                                 menuData.push(item);
-                                 console.log("Item parseado (Cardápio):", item); // Log de cada item
-                            }
-                        } else {
-                            console.warn(`Linha ${i + 1} ignorada ou malformada (Cardápio - esperado ${mappedHeaders.length} colunas, encontrado ${rowValues.length}): "${line}"`);
-                            console.warn("Valores da linha (Cardápio):", rowValues);
-                        }
-                    }
-                    return menuData;
+        function hideMessageModal() {
+            messageModal.style.display = 'none';
+        }
 
-                } catch (error) {
-                    console.error('Erro ao carregar cardápio da planilha:', error);
+        // Listeners para fechar o modal de mensagem
+        closeMessageModalBtn.addEventListener('click', hideMessageModal);
+        okMessageModalBtn.addEventListener('click', hideMessageModal);
+        window.addEventListener('click', function(event) {
+            if (event.target == messageModal) {
+                hideMessageModal();
+            }
+        });
+
+        // Listeners para fechar o modal de seleção de pizza
+        closePizzaOptionModalBtn.addEventListener('click', function() {
+            pizzaOptionModal.style.display = 'none';
+        });
+
+        // Fecha o modal se clicar fora do conteúdo do modal
+        window.addEventListener('click', function(event) {
+            if (event.target == pizzaOptionModal) {
+                pizzaOptionModal.style.display = 'none';
+            }
+        });
+
+        // Função para gerar a imagem de uma fatia de pizza (vazia, apenas para estrutura)
+        function getGenericPizzaSliceImage() {
+            return ''; // Retorna uma string vazia para remover a imagem
+        }
+
+        // Funções para carregar dados das planilhas
+        async function loadMenuFromSheet() {
+            try {
+                const urlWithCacheBuster = `${CARDAPIO_CSV_URL}&_=${new Date().getTime()}`;
+                const response = await fetch(urlWithCacheBuster);
+                const csvText = await response.text();
+                const lines = csvText.split('\n').filter(line => line.trim() !== '');
+
+                if (lines.length === 0) {
+                    console.warn("Nenhuma linha válida encontrada no CSV do Cardápio.");
                     return [];
                 }
-            }
 
-            // Função para carregar os dados das promoções da planilha Google
-            async function loadPromotionsFromSheet() {
-                try {
-                    // Adiciona um timestamp para tentar forçar o recarregamento do CSV
-                    const urlWithCacheBuster = `${PROMOCOES_CSV_URL}&_=${new Date().getTime()}`;
-                    const response = await fetch(urlWithCacheBuster);
-                    const csvText = await response.text();
-                    console.log("CSV Bruto recebido (Promoções):", csvText); // Log para depuração
-
-                    const lines = csvText.split('\n').filter(line => line.trim() !== '');
-
-                    if (lines.length === 0) {
-                        console.warn("Nenhuma linha válida encontrada no CSV de Promoções.");
-                        return [];
-                    }
-
-                    function parseCsvLine(line) {
-                        const values = [];
-                        let inQuote = false;
-                        let currentField = '';
-                        for (let i = 0; i < line.length; i++) {
-                            const char = line[i];
-                            if (char === '"') {
-                                if (inQuote && i + 1 < line.length && line[i + 1] === '"') {
-                                    currentField += '"';
-                                    i++;
-                                } else {
-                                    inQuote = !inQuote;
-                                }
-                            } else if (char === ',' && !inQuote) {
-                                values.push(currentField);
-                                currentField = '';
+                function parseCsvLine(line) {
+                    const values = [];
+                    let inQuote = false;
+                    let currentField = '';
+                    for (let i = 0; i < line.length; i++) {
+                        const char = line[i];
+                        if (char === '"') {
+                            if (inQuote && i + 1 < line.length && line[i + 1] === '"') {
+                                currentField += '"';
+                                i++;
                             } else {
-                                currentField += char;
+                                inQuote = !inQuote;
                             }
-                        }
-                        values.push(currentField);
-                        return values.map(v => {
-                            if (v === undefined || v === null) return '';
-                            let processed = v;
-                            if (processed.startsWith('"') && processed.endsWith('"')) {
-                                processed = processed.substring(1, processed.length - 1);
-                            }
-                            return processed.replace(/""/g, '"').trim();
-                        });
-                    }
-
-                    const headersRaw = parseCsvLine(lines[0]);
-                    const mappedHeaders = headersRaw.map(header => {
-                        let cleanedHeader = header.trim();
-                        switch (cleanedHeader) {
-                            case 'ID Promocao': return 'id';
-                            case 'Nome da Promocao': return 'name';
-                            case 'Descricao': return 'description';
-                            case 'Preco Promocional': return 'promoPrice';
-                            case 'ID Item Aplicavel': return 'itemId';
-                            case 'Ativo (SIM/NAO)': return 'active';
-                            default: return cleanedHeader.replace(/[^a-zA-Z0-9]+(.)?/g, (match, chr) => chr ? chr.toUpperCase() : '').replace(/^./, (match) => match.toLowerCase());
-                        }
-                    });
-                    console.log("Cabeçalhos parseados e mapeados (Promoções):", mappedHeaders);
-                    
-                    const promotionsData = [];
-
-                    for (let i = 1; i < lines.length; i++) {
-                        const line = lines[i];
-                        const rowValues = parseCsvLine(line);
-                        
-                        console.log(`Linha ${i + 1} original (Promoções): "${line}"`);
-                        console.log(`Linha ${i + 1} parseada (Promoções - rowValues):`, rowValues);
-                        console.log(`rowValues.length: ${rowValues.length}, mappedHeaders.length: ${mappedHeaders.length}`);
-
-                        if (rowValues.length === mappedHeaders.length) {
-                            let promo = {
-                                id: '',
-                                name: '',
-                                description: '',
-                                promoPrice: null, // Pode ser null se não houver preço
-                                itemId: '',
-                                active: false
-                            };
-                            for (let j = 0; j < mappedHeaders.length; j++) {
-                                let headerKey = mappedHeaders[j];
-                                let value = rowValues[j];
-                                
-                                if (headerKey === 'promoPrice') {
-                                    const parsedValue = parseFloat(String(value).replace(',', '.'));
-                                    promo[headerKey] = isNaN(parsedValue) ? null : parsedValue; // Null if NaN
-                                } else if (headerKey === 'active') {
-                                    promo[headerKey] = value.toUpperCase() === 'SIM';
-                                } else {
-                                    promo[headerKey] = value;
-                                }
-                            }
-                            if (promo.active) { // Apenas adiciona promoções ativas
-                                promotionsData.push(promo);
-                                console.log("Promoção parseada:", promo);
-                            }
+                        } else if (char === ',' && !inQuote) {
+                            values.push(currentField);
+                            currentField = '';
                         } else {
-                            console.warn(`Linha ${i + 1} ignorada ou malformada (Promoções - esperado ${mappedHeaders.length} colunas, encontrado ${rowValues.length}): "${line}"`);
-                            console.warn("Valores da linha (Promoções):", rowValues);
+                            currentField += char;
                         }
                     }
-                    return promotionsData;
-
-                } catch (error) {
-                    console.error('Erro ao carregar promoções da planilha:', error);
-                    return [];
-                }
-            }
-
-            // Seleciona todos os botões de categoria e todos os itens de pizza
-            const categoryBtns = document.querySelectorAll('.category-btn');
-            const categorySections = document.querySelectorAll('.pizza-category-section');
-            
-            // Adiciona um listener de clique para cada botão de categoria
-            categoryBtns.forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const category = this.dataset.category;
-                    const targetId = this.dataset.targetId;
-                    
-                    // Define o botão ativo imediatamente no clique
-                    setActiveCategoryButton(category);
-
-                    // Define a flag para ignorar temporariamente o IntersectionObserver
-                    isScrollingFromClick = true;
-
-                    // Rola para a seção de destino com comportamento suave
-                    document.getElementById(targetId).scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-                    // Após um pequeno atraso, redefine a flag e reavalia a categoria ativa
-                    setTimeout(() => {
-                        isScrollingFromClick = false;
-                        // Força uma reavaliação da categoria ativa após a rolagem, garantindo o estado correto
-                        // Disparar um evento de rolagem fará com que o IntersectionObserver reavalie.
-                        window.dispatchEvent(new Event('scroll'));
-                    }, 700); // 700ms é um bom equilíbrio para rolagem suave
-                });
-            });
-            
-            // Funcionalidade do Carrinho de Pedidos
-            let order = []; // Array para armazenar os itens do pedido
-            const orderItemsEl = document.getElementById('order-items');
-            const subtotalEl = document.getElementById('subtotal');
-            const totalEl = document.getElementById('total');
-            const deliveryFeeEl = document.getElementById('delivery-fee'); // Elemento para exibir a taxa de entrega
-            let currentDeliveryFee = 5.00; // Taxa de entrega inicial
-            const whatsappNumber = '5587996070638'; // Número de WhatsApp para envio do pedido
-
-            // Referências para os radio buttons de entrega
-            const deliveryOptionRadios = document.querySelectorAll('input[name="deliveryOption"]');
-
-            // Referências para o modal de seleção de pizza
-            const pizzaOptionModal = document.getElementById('pizza-option-modal');
-            const closePizzaOptionModalBtn = document.getElementById('close-pizza-option-modal');
-            const modalPizzaName = document.getElementById('modal-pizza-name');
-            const modalPizzaDescription = document.getElementById('modal-pizza-description');
-            const pizzaSizeOptions = document.getElementById('pizza-size-options'); // Referência para o contêiner de opções de tamanho
-
-            // Referências para o modal de mensagem
-            const messageModal = document.getElementById('message-modal');
-            const closeMessageModalBtn = document.getElementById('close-message-modal');
-            const okMessageModalBtn = document.getElementById('ok-message-modal');
-            const messageModalText = document.getElementById('message-modal-text');
-
-            // Referências para o modal de sugestão de bebidas
-            const drinkSuggestionModal = document.getElementById('drink-suggestion-modal');
-            const closeDrinkSuggestionModalBtn = document.getElementById('close-drink-suggestion-modal');
-            const suggestedDrinksList = document.getElementById('suggested-drinks-list');
-            const proceedWithoutDrinksBtn = document.getElementById('proceed-without-drinks');
-
-            // Referência para o botão "Ver Pedido" mobile
-            const viewOrderMobileBtn = document.getElementById('view-order-mobile-btn');
-
-            // Referências para o modal de promoção
-            const promotionPopup = document.getElementById('promotion-popup');
-            const closePromotionPopupBtn = document.getElementById('close-promotion-popup');
-            const closePromotionPopupBtnBottom = document.getElementById('close-promotion-popup-btn');
-            const promotionsListEl = document.getElementById('promotions-list');
-            // Referência para o novo botão de promoção
-            const promotionButton = document.getElementById('promotion-button');
-
-            let currentPizzaData = {}; // Objeto para armazenar temporariamente os dados da pizza selecionada
-            let firstHalfPizza = null; // Armazena os dados da primeira metade de uma pizza dividida
-            let isSelectingSecondHalf = false; // Flag para indicar se o usuário está escolhendo a segunda metade
-
-            // Define tamanhos e seus multiplicadores de preço em relação ao preço de 8 fatias
-            // Agora, os "multiplicadores" são mais como chaves para aceder aos preços diretos
-            const sizes = [
-                { slices: 4, label: '4 Fatias', priceKey: 'price4Slices' },
-                { slices: 6, label: '6 Fatias', priceKey: 'price6Slices' },
-                { slices: 8, label: '8 Fatias', priceKey: 'basePrice' } // basePrice é o preço de 8 fatias
-            ];
-
-            // Função para gerar a imagem de uma fatia de pizza (agora vazia)
-            function getGenericPizzaSliceImage() {
-                return ''; // Retorna uma string vazia para remover a imagem
-            }
-
-            // Função para exibir o modal de mensagem
-            function showMessageModal(message) {
-                messageModalText.textContent = message;
-                messageModal.style.display = 'flex'; // Usa flexbox para centralizar
-            }
-
-            // Função para ocultar o modal de mensagem
-            function hideMessageModal() {
-                messageModal.style.display = 'none';
-            }
-
-            // Listeners para fechar o modal de mensagem
-            closeMessageModalBtn.addEventListener('click', hideMessageModal);
-            okMessageModalBtn.addEventListener('click', hideMessageModal);
-            window.addEventListener('click', function(event) {
-                if (event.target == messageModal) {
-                    hideMessageModal();
-                }
-            });
-
-            // Function to set active category button
-            function setActiveCategoryButton(category) {
-                categoryBtns.forEach(btn => {
-                    if (btn.dataset.category === category) {
-                        btn.classList.remove('bg-gray-200', 'text-gray-800');
-                        btn.classList.add('bg-red-600', 'text-white');
-                        // Rola o botão ativo para a visualização se estiver na área rolável
-                        btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-                    } else {
-                        btn.classList.remove('bg-red-600', 'text-white');
-                        btn.classList.add('bg-gray-200', 'text-gray-800');
-                    }
-                });
-            }
-
-            // Flag para prevenir que o IntersectionObserver sobrescreva eventos de clique
-            let isScrollingFromClick = false; 
-            // Armazena a categoria ativa atual determinada pela rolagem para evitar cintilação
-            let currentActiveCategoryByScroll = 'tradicionais'; 
-
-            // Function to get the current sticky header height dynamically
-            function getStickyHeaderHeight() {
-                const stickyHeader = document.querySelector('.category-bar-mobile-sticky');
-                // Use offsetHeight for accurate height including padding and border
-                return stickyHeader ? stickyHeader.offsetHeight : 0;
-            }
-
-            // O IntersectionObserver para destaque de categoria
-            const categoryObserver = new IntersectionObserver((entries) => {
-                if (isScrollingFromClick) {
-                    return; // Ignora eventos do observer se estivermos rolando devido a um clique
-                }
-
-                let newActiveCategory = null;
-                const stickyHeaderHeight = getStickyHeaderHeight();
-                let bestMatchTop = Infinity; // Para encontrar a seção cujo topo está mais próximo do cabeçalho fixo
-
-                // Itera sobre todas as seções para encontrar a que está atualmente mais visível no topo
-                categorySections.forEach(section => {
-                    const rect = section.getBoundingClientRect();
-                    const category = section.id.replace('-section', '');
-                    const h3 = section.querySelector('h3'); // Pega o título da seção
-                    if (!h3) return; // Se não h3, ignora
-
-                    const h3Rect = h3.getBoundingClientRect();
-
-                    // Queremos a seção cujo título (h3) está no topo da área visível,
-                    // logo abaixo da barra de categorias fixa.
-                    // Adiciona um pequeno buffer para a detecção ser mais suave.
-                    const detectionLine = stickyHeaderHeight + 10; // 10px abaixo do cabeçalho fixo
-
-                    // Se o título da seção está cruzando a linha de detecção ou está logo acima dela
-                    // e ainda visível, e é o mais alto (menor valor de top) até agora.
-                    if (h3Rect.top <= detectionLine && h3Rect.bottom > 0) {
-                        if (h3Rect.top < bestMatchTop) {
-                            bestMatchTop = h3Rect.top;
-                            newActiveCategory = category;
+                    values.push(currentField);
+                    return values.map(v => {
+                        if (v === undefined || v === null) return '';
+                        let processed = v;
+                        if (processed.startsWith('"') && processed.endsWith('"')) {
+                            processed = processed.substring(1, processed.length - 1);
                         }
+                        return processed.replace(/""/g, '"').trim();
+                    });
+                }
+
+                const headersRaw = parseCsvLine(lines[0]);
+                const mappedHeaders = headersRaw.map(header => {
+                    let cleanedHeader = header.trim();
+                    switch (cleanedHeader) {
+                        case 'ID Item (único)': return 'id';
+                        case 'Nome do Item': return 'name';
+                        case 'Descrição': return 'description';
+                        case 'Preço 8 fatias': return 'basePrice';
+                        case 'Preço 6 fatias': return 'price6Slices';
+                        case 'Preço 4 fatias': return 'price4Slices';
+                        case 'Categoria': return 'category';
+                        case 'É Pizza? (SIM/NÃO)': return 'isPizza';
+                        case 'Disponível (SIM/NÃO)': return 'available'; 
+                        default: return cleanedHeader.replace(/[^a-zA-Z0-9]+(.)?/g, (match, chr) => chr ? chr.toUpperCase() : '').replace(/^./, (match) => match.toLowerCase());
                     }
                 });
-
-                // Fallback para o caso de nenhuma seção estar perfeitamente alinhada ou no topo da página
-                if (!newActiveCategory && categorySections.length > 0) {
-                    // Se estiver no topo da página, ative a primeira categoria
-                    if (window.scrollY <= stickyHeaderHeight + 20) { // Um pouco mais de buffer para o topo
-                        newActiveCategory = 'tradicionais';
-                    } else {
-                        // Se não encontrou uma categoria ativa pelo h3, procura a seção que está mais ao topo
-                        // e ainda visível, para o caso de rolagem rápida ou no final da página.
-                        let closestToTop = Infinity;
-                        for (let i = 0; i < categorySections.length; i++) {
-                            const section = categorySections[i];
-                            const rect = section.getBoundingClientRect();
-                            const category = section.id.replace('-section', '');
-                            
-                            // Se a seção está visível
-                            if (rect.bottom > 0 && rect.top < window.innerHeight) {
-                                // E o seu topo está mais próximo do topo da viewport (ajustado pelo stickyHeaderHeight)
-                                if (Math.abs(rect.top - stickyHeaderHeight) < closestToTop) {
-                                    closestToTop = Math.abs(rect.top - stickyHeaderHeight);
-                                    newActiveCategory = category;
-                                }
-                            }
-                        }
-                    }
-                }
                 
-                if (newActiveCategory && newActiveCategory !== currentActiveCategoryByScroll) {
-                    setActiveCategoryButton(newActiveCategory);
-                    currentActiveCategoryByScroll = newActiveCategory;
-                }
-            }, {
-                root: null, // O viewport
-                rootMargin: `-${getStickyHeaderHeight()}px 0px 0px 0px`,
-                threshold: 0.1 // Um pequeno limite para acionar a observação
-            });
-
-            // Observa cada seção de categoria
-            categorySections.forEach(section => {
-                categoryObserver.observe(section);
-            });
-
-            // IntersectionObserver para o botão "Ver Pedido"
-            const orderSectionObserver = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    // Se a seção do pedido está visível na tela e há itens no pedido, esconde o botão
-                    if (entry.isIntersecting && order.length > 0) {
-                        viewOrderMobileBtn.classList.add('hidden');
-                    } else if (!entry.isIntersecting && order.length > 0) {
-                        // Se a seção do pedido não está visível e há itens no pedido, mostra o botão
-                        viewOrderMobileBtn.classList.remove('hidden');
-                    } else if (order.length === 0) {
-                        // Se o pedido está vazio, sempre esconde o botão
-                        viewOrderMobileBtn.classList.add('hidden');
-                    }
-                });
-            }, {
-                root: null, // O viewport
-                threshold: 0.1 // Dispara quando 10% do elemento está visível
-            });
-
-            // Observa a seção do pedido (o elemento pai que contém os itens do pedido)
-            const orderSectionContainer = document.querySelector('.lg\\:w-1\\/3'); // Seleciona a div que contém o carrinho
-            if (orderSectionContainer) {
-                orderSectionObserver.observe(orderSectionContainer);
-            }
-
-            // Adiciona um listener de rolagem para atualizações mais imediatas,
-            // embora o IntersectionObserver deva lidar com a maioria dos casos.
-            let scrollTimeout;
-            window.addEventListener('scroll', () => {
-                clearTimeout(scrollTimeout);
-                scrollTimeout = setTimeout(() => {
-                    // Isso fará com que os IntersectionObservers reavaliem suas interseções.
-                }, 50); // Debounce eventos de rolagem
-            });
-
-            // Listener de evento para os radio buttons de opção de entrega
-            deliveryOptionRadios.forEach(radio => {
-                radio.addEventListener('change', function() {
-                    if (this.value === 'delivery') {
-                        currentDeliveryFee = 5.00;
-                    } else {
-                        currentDeliveryFee = 0.00;
-                    }
-                    updateOrderDisplay(); // Recalcula o total com a nova taxa
-                });
-            });
-
-
-            // Função para enviar o pedido para o WhatsApp
-            function sendOrderToWhatsapp() {
-                let orderMessage = `Boa noite, esse será meu pedido!\n\n*Itens:*\n`;
-                order.forEach(item => {
-                    let line = '';
-                    if (item.selected_slices) { // Verifica se é um item de pizza pela presença de selected_slices
-                        const sizeLabel = `${item.selected_slices} FATIAS`.toUpperCase();
-                        if (item.type === 'half_pending') {
-                            line = `- *${sizeLabel}*: ${item.name} (Aguardando 2ª metade) - R$ ${item.price.toFixed(2).replace('.', ',')}`;
-                        } else {
-                            line = `- *${sizeLabel}*: ${item.name} - R$ ${item.price.toFixed(2).replace('.', ',')}`; // Incluindo o preço
+                const menuData = [];
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i];
+                    const rowValues = parseCsvLine(line);
+                    if (rowValues.length === mappedHeaders.length) {
+                        let item = {
+                            id: '', name: '', description: '', basePrice: 0, price6Slices: 0, price4Slices: 0, category: '', isPizza: false, available: false
+                        };
+                        for (let j = 0; j < mappedHeaders.length; j++) {
+                            let headerKey = mappedHeaders[j];
+                            let value = rowValues[j];
+                            if (headerKey === 'basePrice' || headerKey === 'price6Slices' || headerKey === 'price4Slices') {
+                                const parsedValue = parseFloat(String(value).replace(',', '.'));
+                                item[headerKey] = isNaN(parsedValue) ? 0 : parsedValue;
+                            } else if (headerKey === 'isPizza') {
+                                item[headerKey] = value.toUpperCase() === 'SIM';
+                            } else if (headerKey === 'available') {
+                                item[headerKey] = value.toUpperCase() === 'SIM';
+                            } else {
+                                item[headerKey] = value;
+                            }
+                        }
+                        if (item.available) {
+                            menuData.push(item);
                         }
                     } else {
-                        // Para outros itens (como bebidas), usa o formato original
-                        line = `- ${item.name}: R$ ${item.price.toFixed(2).replace('.', ',')}`;
+                        console.warn(`Linha ${i + 1} ignorada ou malformada (Cardápio - esperado ${mappedHeaders.length} colunas, encontrado ${rowValues.length}): "${line}"`);
                     }
-                    orderMessage += `${line}\n`;
+                }
+                return menuData;
+
+            } catch (error) {
+                console.error('Erro ao carregar cardápio da planilha:', error);
+                return [];
+            }
+        }
+
+        async function loadPromotionsFromSheet() {
+            try {
+                const urlWithCacheBuster = `${PROMOCOES_CSV_URL}&_=${new Date().getTime()}`;
+                const response = await fetch(urlWithCacheBuster);
+                const csvText = await response.text();
+                const lines = csvText.split('\n').filter(line => line.trim() !== '');
+
+                if (lines.length === 0) {
+                    console.warn("Nenhuma linha válida encontrada no CSV de Promoções.");
+                    return [];
+                }
+
+                function parseCsvLine(line) {
+                    const values = [];
+                    let inQuote = false;
+                    let currentField = '';
+                    for (let i = 0; i < line.length; i++) {
+                        const char = line[i];
+                        if (char === '"') {
+                            if (inQuote && i + 1 < line.length && line[i + 1] === '"') {
+                                currentField += '"';
+                                i++;
+                            } else {
+                                inQuote = !inQuote;
+                            }
+                        } else if (char === ',' && !inQuote) {
+                            values.push(currentField);
+                            currentField = '';
+                        } else {
+                            currentField += char;
+                        }
+                    }
+                    values.push(currentField);
+                    return values.map(v => {
+                        if (v === undefined || v === null) return '';
+                        let processed = v;
+                        if (processed.startsWith('"') && processed.endsWith('"')) {
+                            processed = processed.substring(1, processed.length - 1);
+                        }
+                        return processed.replace(/""/g, '"').trim();
+                    });
+                }
+
+                const headersRaw = parseCsvLine(lines[0]);
+                const mappedHeaders = headersRaw.map(header => {
+                    let cleanedHeader = header.trim();
+                    switch (cleanedHeader) {
+                        case 'ID Promocao': return 'id';
+                        case 'Nome da Promocao': return 'name';
+                        case 'Descricao': return 'description';
+                        case 'Preco Promocional': return 'promoPrice';
+                        case 'ID Item Aplicavel': return 'itemId';
+                        case 'Ativo (SIM/NAO)': return 'active';
+                        default: return cleanedHeader.replace(/[^a-zA-Z0-9]+(.)?/g, (match, chr) => chr ? chr.toUpperCase() : '').replace(/^./, (match) => match.toLowerCase());
+                    }
                 });
-
-                const subtotal = order.reduce((sum, item) => sum + item.price, 0);
-                const total = subtotal + currentDeliveryFee; // Usa a taxa de entrega atual
-
-                orderMessage += `\n*Resumo:*\n`;
-                orderMessage += `Subtotal: R$ ${subtotal.toFixed(2).replace('.', ',')}\n`;
-                orderMessage += `Taxa de entrega: R$ ${currentDeliveryFee.toFixed(2).replace('.', ',')}\n`; // Exibe a taxa de entrega atual
-                orderMessage += `Total: R$ ${total.toFixed(2).replace('.', ',')}`;
-
-                const encodedMessage = encodeURIComponent(orderMessage);
-                const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
-                window.open(whatsappUrl, '_blank'); // Abre o WhatsApp em uma nova aba
-
-                // Reseta o pedido após o envio
-                order = [];
-                updateOrderDisplay();
-            }
-
-            // Função para verificar bebidas e sugerir
-            function checkAndSuggestDrinks() {
-                if (isSelectingSecondHalf) {
-                    showMessageModal('Por favor, escolha a segunda metade da sua pizza antes de finalizar o pedido.');
-                    return;
-                }
-                if (order.length === 0) {
-                    showMessageModal('Seu pedido está vazio. Adicione itens antes de finalizar.');
-                    return;
-                }
-
-                const hasDrinks = order.some(item => item.category === 'bebidas');
-
-                if (!hasDrinks) {
-                    // Limpa sugestões anteriores
-                    suggestedDrinksList.innerHTML = '';
-                    // Popula e mostra o modal de sugestão de bebidas
-                    // Filtra apenas as bebidas disponíveis
-                    const availableDrinks = allMenuData.filter(item => !item.isPizza && item.category === 'bebidas' && item.available);
-                    availableDrinks.forEach(drink => { 
-                        const drinkBtn = document.createElement('button');
-                        drinkBtn.className = 'px-4 py-2 bg-green-500 text-white rounded-lg font-bold hover:bg-green-600 transition w-full';
-                        drinkBtn.textContent = `Adicionar ${drink.name} (R$ ${drink.basePrice.toFixed(2).replace('.', ',')})`; // Usa basePrice para bebidas
-                        drinkBtn.addEventListener('click', () => {
-                            addToOrder({
-                                type: 'full', // Bebidas são sempre adicionadas como "inteiras"
-                                name: drink.name,
-                                price: drink.basePrice,
-                                description: drink.description,
-                                category: drink.category
-                            });
-                            drinkSuggestionModal.style.display = 'none';
-                            sendOrderToWhatsapp(); // Envia para o WhatsApp após adicionar a bebida
-                        });
-                        suggestedDrinksList.appendChild(drinkBtn);
-                    });
-                    drinkSuggestionModal.style.display = 'flex';
-                } else {
-                    // Se houver bebidas, prossegue com a finalização do pedido
-                    sendOrderToWhatsapp(); // Envia para o WhatsApp
-                }
-            }
-
-            // Função para lidar com o clique no botão "Adicionar"
-            function handleAddButtonClick(e) {
-                const itemId = e.target.dataset.itemId; // Obtém o ID do item
-                const item = allMenuData.find(i => i.id === itemId); // Encontra o item completo
-
-                if (!item) {
-                    console.error('Item não encontrado:', itemId);
-                    return;
-                }
-
-                if (isSelectingSecondHalf) {
-                    if (!item.isPizza) {
-                        showMessageModal('Por favor, escolha uma pizza para a segunda metade.');
-                        return;
+                
+                const promotionsData = [];
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i];
+                    const rowValues = parseCsvLine(line);
+                    if (rowValues.length === mappedHeaders.length) {
+                        let promo = {
+                            id: '', name: '', description: '', promoPrice: null, itemId: '', active: false
+                        };
+                        for (let j = 0; j < mappedHeaders.length; j++) {
+                            let headerKey = mappedHeaders[j];
+                            let value = rowValues[j];
+                            if (headerKey === 'promoPrice') {
+                                const parsedValue = parseFloat(String(value).replace(',', '.'));
+                                promo[headerKey] = isNaN(parsedValue) ? null : parsedValue;
+                            } else if (headerKey === 'active') {
+                                promo[headerKey] = value.toUpperCase() === 'SIM';
+                            } else {
+                                promo[headerKey] = value;
+                            }
+                        }
+                        if (promo.active) {
+                            promotionsData.push(promo);
+                        }
+                    } else {
+                        console.warn(`Linha ${i + 1} ignorada ou malformada (Promoções - esperado ${mappedHeaders.length} colunas, encontrado ${rowValues.length}): "${line}"`);
                     }
+                }
+                return promotionsData;
 
-                    const pendingHalfIndex = order.findIndex(orderItem => orderItem.id === 'pending-half-pizza');
-                    if (pendingHalfIndex > -1) {
-                        order.splice(pendingHalfIndex, 1);
-                    }
+            } catch (error) {
+                console.error('Erro ao carregar promoções da planilha:', error);
+                return [];
+            }
+        }
 
-                    const cleanFirstName = firstHalfPizza.name;
-                    const combinedName = `Meia ${cleanFirstName} & Meia ${item.name}`;
-                    
-                    // Obtém o preço da primeira metade com base nas fatias selecionadas
-                    // Usar original_full_price que já contém o preço da primeira metade no tamanho selecionado
-                    const priceFirstHalfFullSize = firstHalfPizza.original_full_price; 
-                    // Obtém o preço da segunda metade com base nas fatias selecionadas (mesmo tamanho da primeira metade)
-                    const priceSecondHalfFullSize = item[firstHalfPizza.priceKeyForSlices]; 
+        // Função para popular o cardápio dinamicamente
+        function populateMenu(menuItems) {
+            // Limpa as seções existentes antes de preencher
+            document.getElementById('tradicionais-items').innerHTML = '';
+            document.getElementById('especiais-items').innerHTML = '';
+            document.getElementById('doces-items').innerHTML = '';
+            document.getElementById('bebidas-items').innerHTML = '';
 
-                    // Garante que os valores são números antes da operação
-                    const combinedPrice = ((priceFirstHalfFullSize || 0) / 2) + ((priceSecondHalfFullSize || 0) / 2);
-                    const combinedDescription = `${firstHalfPizza.description.replace('Primeira metade: ', '')} e ${item.description}`;
-
-                    addToOrder({
-                        type: 'split',
-                        name: combinedName,
-                        price: combinedPrice,
-                        description: combinedDescription,
-                        category: 'tradicionais', // Assumindo que pizzas meio a meio são tradicionais
-                        selected_slices: firstHalfPizza.selected_slices
-                    });
-
-                    firstHalfPizza = null;
-                    isSelectingSecondHalf = false;
-                    showMessageModal('Pizza meio a meio adicionada ao pedido!');
-
-                } else if (item.isPizza) {
-                    currentPizzaData = { ...item }; // Copia o objeto item completo
-                    modalPizzaName.textContent = item.name;
-                    modalPizzaDescription.textContent = item.description;
-
-                    pizzaSizeOptions.innerHTML = '';
-                    
-                    sizes.forEach(size => {
-                        const sizePrice = currentPizzaData[size.priceKey]; // Usa a chave de preço direta
-                        const optionDiv = document.createElement('div');
-                        optionDiv.className = 'pizza-size-option';
-                        optionDiv.innerHTML = `
-                            ${getGenericPizzaSliceImage()}
-                            <span class="font-bold text-base text-gray-800">${size.label}</span>
-                            <span class="text-red-600 font-bold text-lg">R$ ${sizePrice.toFixed(2).replace('.', ',')}</span>
-                            <div class="flex flex-col gap-2 mt-2 w-full">
-                                <button class="add-full-size-pizza-btn px-4 py-2 bg-red-600 text-white rounded-md text-sm hover:bg-red-700 transition"
-                                        data-slices="${size.slices}" data-price-key="${size.priceKey}">
-                                    Adicionar Inteira
-                                </button>
-                                <button class="add-half-size-pizza-btn px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition"
-                                        data-slices="${size.slices}" data-price-key="${size.priceKey}">
-                                    Adicionar Meia Pizza
-                                </button>
+            menuItems.forEach(item => {
+                const sectionItemsEl = document.getElementById(`${item.category}-items`);
+                if (sectionItemsEl && item.available) { // Garante que o item está disponível
+                    let itemHtml = '';
+                    if (item.isPizza) {
+                        // Usa os preços diretamente das propriedades do item
+                        const price4F = (item.price4Slices !== undefined && item.price4Slices !== null) ? item.price4Slices.toFixed(2).replace('.', ',') : '0,00';
+                        const price6F = (item.price6Slices !== undefined && item.price6Slices !== null) ? item.price6Slices.toFixed(2).replace('.', ',') : '0,00';
+                        const price8F = (item.basePrice !== undefined && item.basePrice !== null) ? item.basePrice.toFixed(2).replace('.', ',') : '0,00';
+                        
+                        itemHtml = `
+                            <div class="flavor-card bg-white rounded-xl overflow-hidden shadow-lg transition duration-300">
+                                <div class="p-6">
+                                    <h3 class="text-xl font-bold text-gray-800 mb-2">${item.name}</h3>
+                                    <p class="text-gray-600 text-sm mb-4">${item.description}</p>
+                                    <div class="flex flex-col items-end text-right mb-4">
+                                        <span class="font-bold text-red-600 whitespace-nowrap">4F: R$ ${price4F}</span>
+                                        <span class="font-bold text-red-600 whitespace-nowrap">6F: R$ ${price6F}</span>
+                                        <span class="font-bold text-red-600 whitespace-nowrap">8F: R$ ${price8F}</span>
+                                    </div>
+                                    <div class="flex justify-end mt-auto">
+                                        <button class="add-item-btn bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full text-sm font-medium transition duration-300"
+                                                data-item-id="${item.id}">
+                                            Adicionar
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         `;
-                        pizzaSizeOptions.appendChild(optionDiv);
-
-                        optionDiv.querySelector('.add-full-size-pizza-btn').addEventListener('click', function() {
-                            const selectedSlices = parseInt(this.dataset.slices);
-                            const selectedPriceKey = this.dataset.priceKey;
-                            addToOrder({
-                                type: 'full',
-                                name: currentPizzaData.name,
-                                price: currentPizzaData[selectedPriceKey], // Usa o preço direto da chave
-                                description: currentPizzaData.description,
-                                category: currentPizzaData.category,
-                                selected_slices: selectedSlices
-                            });
-                            pizzaOptionModal.style.display = 'none';
-                        });
-
-                        optionDiv.querySelector('.add-half-size-pizza-btn').addEventListener('click', function() {
-                            const selectedSlices = parseInt(this.dataset.slices);
-                            const selectedPriceKey = this.dataset.priceKey;
-                            firstHalfPizza = {
-                                name: currentPizzaData.name,
-                                price: currentPizzaData[selectedPriceKey] / 2, // Preço da metade
-                                description: currentPizzaData.description,
-                                original_full_price: currentPizzaData[selectedPriceKey], // Preço total da primeira metade
-                                selected_slices: selectedSlices,
-                                priceKeyForSlices: selectedPriceKey, // Armazena a chave de preço para a segunda metade
-                                category: currentPizzaData.category
-                            };
-                            isSelectingSecondHalf = true;
-                            pizzaOptionModal.style.display = 'none';
-                            addToOrder({
-                                type: 'half_pending',
-                                name: `½ ${currentPizzaData.name}`,
-                                price: currentPizzaData[selectedPriceKey] / 2,
-                                description: `Primeira metade: ${currentPizzaData.description}`,
-                                id: 'pending-half-pizza',
-                                category: currentPizzaData.category,
-                                selected_slices: selectedSlices
-                            });
-                            showMessageModal('Agora, escolha a segunda metade da sua pizza.');
-                        });
-                    });
-
-                    pizzaOptionModal.style.display = 'flex';
-                } else { // Para itens não-pizza (bebidas)
-                    addToOrder({
-                        type: 'full',
-                        name: item.name,
-                        price: item.basePrice, // Para bebidas, basePrice é o preço único
-                        description: item.description,
-                        category: item.category
-                    });
-                }
-            }
-
-            // Função para anexar os event listeners aos botões "Adicionar"
-            function attachAddButtonListeners() {
-                document.querySelectorAll('.add-pizza-btn').forEach(button => {
-                    // Remove o listener anterior para evitar duplicações
-                    button.removeEventListener('click', handleAddButtonClick); 
-                    button.addEventListener('click', handleAddButtonClick);
-                });
-            }
-
-            // Variável global para armazenar todos os dados do menu carregados
-            let allMenuData = [];
-            let allPromotionsData = []; // Nova variável para armazenar dados de promoções
-
-            // Função para popular o cardápio dinamicamente
-            function populateMenu(menuItems) {
-                // Limpa as seções existentes antes de preencher
-                document.getElementById('tradicionais-items').innerHTML = '';
-                document.getElementById('especiais-items').innerHTML = '';
-                document.getElementById('doces-items').innerHTML = '';
-                document.getElementById('bebidas-items').innerHTML = '';
-
-                menuItems.forEach(item => {
-                    const sectionItemsEl = document.getElementById(`${item.category}-items`);
-                    if (sectionItemsEl && item.available) { // Garante que o item está disponível
-                        let itemHtml = '';
-                        if (item.isPizza) {
-                            // Usa os preços diretamente das propriedades do item
-                            // Adicionado verificação para garantir que as propriedades existem antes de chamar toFixed
-                            const price4F = (item.price4Slices !== undefined && item.price4Slices !== null) ? item.price4Slices.toFixed(2).replace('.', ',') : '0,00';
-                            const price6F = (item.price6Slices !== undefined && item.price6Slices !== null) ? item.price6Slices.toFixed(2).replace('.', ',') : '0,00';
-                            const price8F = (item.basePrice !== undefined && item.basePrice !== null) ? item.basePrice.toFixed(2).replace('.', ',') : '0,00';
-                            
-                            itemHtml = `
-                                <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                                    <div class="p-4 flex flex-col justify-between h-full">
-                                        <div class="flex justify-between items-start mb-2">
-                                            <div>
-                                                <h4 class="font-bold text-lg text-gray-800">${item.name}</h4>
-                                                <p class="text-gray-600 text-sm">${item.description}</p>
-                                            </div>
-                                            <div class="flex flex-col items-end text-right">
-                                                <span class="font-bold text-red-600 whitespace-nowrap">4F: R$ ${price4F}</span>
-                                                <span class="font-bold text-red-600 whitespace-nowrap">6F: R$ ${price6F}</span>
-                                                <span class="font-bold text-red-600 whitespace-nowrap">8F: R$ ${price8F}</span>
-                                            </div>
-                                        </div>
-                                        <div class="flex justify-end mt-auto">
-                                            <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition"
-                                                    data-item-id="${item.id}">
-                                                Adicionar
-                                            </button>
-                                        </div>
+                    } else { // Para bebidas
+                        itemHtml = `
+                            <div class="flavor-card bg-white rounded-xl overflow-hidden shadow-lg transition duration-300">
+                                <div class="p-6">
+                                    <h3 class="text-xl font-bold text-gray-800 mb-2">${item.name}</h3>
+                                    <p class="text-gray-600 text-sm mb-4">${item.description}</p>
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-bold text-red-600 text-lg">R$ ${item.basePrice.toFixed(2).replace('.', ',')}</span>
+                                        <button class="add-item-btn bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full text-sm font-medium transition duration-300"
+                                                data-item-id="${item.id}">
+                                            Adicionar
+                                        </button>
                                     </div>
                                 </div>
-                            `;
-                        } else { // Para bebidas ou outros itens não-pizza
-                            itemHtml = `
-                                <div class="pizza-item bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                                    <div class="p-4">
-                                        <h4 class="font-bold text-lg text-gray-800">${item.name}</h4>
-                                        <p class="text-gray-600 text-sm mb-3">${item.description}</p>
-                                        <div class="flex justify-between items-center">
-                                            <span class="font-bold text-red-600">R$ ${item.basePrice.toFixed(2).replace('.', ',')}</span>
-                                            <button class="add-pizza-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition"
-                                                    data-item-id="${item.id}">
-                                                Adicionar
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            `;
-                        }
-                        sectionItemsEl.insertAdjacentHTML('beforeend', itemHtml);
-                    }
-                });
-
-                // Reanexa os event listeners após popular o cardápio
-                attachAddButtonListeners();
-            }
-
-            // Função para exibir o popup de promoções
-            function displayPromotionsPopup() {
-                promotionsListEl.innerHTML = ''; // Limpa a lista de promoções
-                const activePromotions = allPromotionsData.filter(promo => promo.active && promo.promoPrice !== null);
-
-                if (activePromotions.length > 0) {
-                    activePromotions.forEach(promo => {
-                        const promoDiv = document.createElement('div');
-                        promoDiv.className = 'promotion-item';
-                        promoDiv.innerHTML = `
-                            <h4>${promo.name}</h4>
-                            <p>${promo.description}</p>
-                            <span class="price">R$ ${promo.promoPrice.toFixed(2).replace('.', ',')}</span>
+                            </div>
                         `;
-                        promotionsListEl.appendChild(promoDiv);
+                    }
+                    sectionItemsEl.insertAdjacentHTML('beforeend', itemHtml);
+                }
+            });
+
+            // Reanexa os event listeners após popular o cardápio
+            attachAddButtonListeners();
+        }
+
+        // Função para anexar os event listeners aos botões "Adicionar"
+        function attachAddButtonListeners() {
+            document.querySelectorAll('.add-item-btn').forEach(button => {
+                button.removeEventListener('click', handleAddButtonClick); // Evita duplicações
+                button.addEventListener('click', handleAddButtonClick);
+            });
+        }
+
+        // Função para lidar com o clique no botão "Adicionar" (para pizzas e bebidas)
+        function handleAddButtonClick(e) {
+            const itemId = e.target.dataset.itemId;
+            const item = allMenuData.find(i => i.id === itemId);
+
+            if (!item) {
+                console.error('Item não encontrado:', itemId);
+                return;
+            }
+
+            if (isSelectingSecondHalf) {
+                if (!item.isPizza) {
+                    showMessageModal('Por favor, escolha uma pizza para a segunda metade.');
+                    return;
+                }
+
+                // Remove o item "pending-half-pizza" do pedido
+                const pendingHalfIndex = order.findIndex(orderItem => orderItem.id === 'pending-half-pizza');
+                if (pendingHalfIndex > -1) {
+                    order.splice(pendingHalfIndex, 1);
+                }
+
+                const cleanFirstName = firstHalfPizza.name;
+                const combinedName = `Meia ${cleanFirstName} & Meia ${item.name}`;
+                
+                // Obtém o preço da primeira metade com base nas fatias selecionadas
+                const priceFirstHalfFullSize = firstHalfPizza.original_full_price; 
+                // Obtém o preço da segunda metade com base nas fatias selecionadas (mesmo tamanho da primeira metade)
+                const priceSecondHalfFullSize = item[firstHalfPizza.priceKeyForSlices]; 
+
+                // Garante que os valores são números antes da operação
+                const combinedPrice = ((priceFirstHalfFullSize || 0) / 2) + ((priceSecondHalfFullSize || 0) / 2);
+                const combinedDescription = `${firstHalfPizza.description.replace('Primeira metade: ', '')} e ${item.description}`;
+
+                addToOrder({
+                    type: 'split',
+                    name: combinedName,
+                    price: combinedPrice,
+                    description: combinedDescription,
+                    category: 'pizzas', // Categoria genérica para pizzas meio a meio
+                    selected_slices: firstHalfPizza.selected_slices
+                });
+
+                firstHalfPizza = null;
+                isSelectingSecondHalf = false;
+                showMessageModal('Pizza meio a meio adicionada ao pedido!');
+
+            } else if (item.isPizza) {
+                currentPizzaData = { ...item }; // Copia o objeto item completo
+                modalPizzaName.textContent = item.name;
+                modalPizzaDescription.textContent = item.description;
+
+                pizzaSizeOptions.innerHTML = '';
+                
+                sizes.forEach(size => {
+                    const sizePrice = currentPizzaData[size.priceKey]; // Usa a chave de preço direta
+                    const optionDiv = document.createElement('div');
+                    optionDiv.className = 'pizza-size-option';
+                    optionDiv.innerHTML = `
+                        ${getGenericPizzaSliceImage()}
+                        <span class="font-bold text-base text-gray-800">${size.label}</span>
+                        <span class="text-red-600 font-bold text-lg">R$ ${sizePrice.toFixed(2).replace('.', ',')}</span>
+                        <div class="flex flex-col gap-2 mt-2 w-full">
+                            <button class="add-full-size-pizza-btn px-4 py-2 bg-red-600 text-white rounded-md text-sm hover:bg-red-700 transition"
+                                    data-slices="${size.slices}" data-price-key="${size.priceKey}">
+                                Adicionar Inteira
+                            </button>
+                            <button class="add-half-size-pizza-btn px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition"
+                                    data-slices="${size.slices}" data-price-key="${size.priceKey}">
+                                Adicionar Meia Pizza
+                            </button>
+                        </div>
+                    `;
+                    pizzaSizeOptions.appendChild(optionDiv);
+
+                    optionDiv.querySelector('.add-full-size-pizza-btn').addEventListener('click', function() {
+                        const selectedSlices = parseInt(this.dataset.slices);
+                        const selectedPriceKey = this.dataset.priceKey;
+                        addToOrder({
+                            type: 'full',
+                            name: currentPizzaData.name,
+                            price: currentPizzaData[selectedPriceKey], // Usa o preço direto da chave
+                            description: currentPizzaData.description,
+                            category: currentPizzaData.category,
+                            selected_slices: selectedSlices
+                        });
+                        pizzaOptionModal.style.display = 'none';
                     });
-                    promotionPopup.style.display = 'flex'; // Exibe o popup
-                } else {
-                    promotionPopup.style.display = 'none'; // Oculta se não houver promoções ativas com preço
-                }
+
+                    optionDiv.querySelector('.add-half-size-pizza-btn').addEventListener('click', function() {
+                        const selectedSlices = parseInt(this.dataset.slices);
+                        const selectedPriceKey = this.dataset.priceKey;
+                        firstHalfPizza = {
+                            name: currentPizzaData.name,
+                            price: currentPizzaData[selectedPriceKey] / 2, // Preço da metade
+                            description: currentPizzaData.description,
+                            original_full_price: currentPizzaData[selectedPriceKey], // Preço total da primeira metade
+                            selected_slices: selectedSlices,
+                            priceKeyForSlices: selectedPriceKey, // Armazena a chave de preço para a segunda metade
+                            category: currentPizzaData.category
+                        };
+                        isSelectingSecondHalf = true;
+                        pizzaOptionModal.style.display = 'none';
+                        addToOrder({
+                            type: 'half_pending',
+                            name: `½ ${currentPizzaData.name}`,
+                            price: currentPizzaData[selectedPriceKey] / 2,
+                            description: `Primeira metade: ${currentPizzaData.description}`,
+                            id: 'pending-half-pizza',
+                            category: currentPizzaData.category,
+                            selected_slices: selectedSlices
+                        });
+                        showMessageModal('Agora, escolha a segunda metade da sua pizza.');
+                    });
+                });
+
+                pizzaOptionModal.style.display = 'flex';
+            } else { // Para itens não-pizza (bebidas)
+                addToOrder({
+                    type: 'full',
+                    name: item.name,
+                    price: item.basePrice, // Para bebidas, basePrice é o preço único
+                    description: item.description,
+                    category: item.category
+                });
             }
+        }
+        
+        // Adicionar item ao array de pedidos
+        function addToOrder(item) {
+            order.push(item);
+            updateOrderDisplay();
+            updateCartCount();
+            toggleOrderSidebar();
+            // Feedback visual de adição
+            const feedback = document.createElement('div');
+            feedback.textContent = '✔️ Adicionado ao pedido!';
+            feedback.className = 'fixed right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg slide-in';
+            feedback.style.zIndex = '100';
 
-            // Função para controlar a visibilidade do botão de promoção
-            function updatePromotionButtonVisibility() {
-                const activePromotionsWithPrice = allPromotionsData.filter(promo => promo.active && promo.promoPrice !== null);
-                console.log('updatePromotionButtonVisibility: activePromotionsWithPrice.length =', activePromotionsWithPrice.length);
-                if (activePromotionsWithPrice.length > 0) {
-                    promotionButton.style.display = 'flex'; // Mostra o botão
-                    console.log('updatePromotionButtonVisibility: Botão de promoção DEVE estar visível.');
-                } else {
-                    promotionButton.style.display = 'none'; // Oculta o botão
-                    console.log('updatePromotionButtonVisibility: Botão de promoção DEVE estar oculto.');
-                }
-            }
-
-            // Listeners para fechar o modal de promoção
-            closePromotionPopupBtn.addEventListener('click', function() {
-                promotionPopup.style.display = 'none';
-            });
-            closePromotionPopupBtnBottom.addEventListener('click', function() {
-                promotionPopup.style.display = 'none';
-            });
-            window.addEventListener('click', function(event) {
-                if (event.target == promotionPopup) {
-                    promotionPopup.style.display = 'none';
-                }
-            });
-
-            // Listener para o novo botão de promoção
-            promotionButton.addEventListener('click', function() {
-                displayPromotionsPopup(); // Exibe o popup quando o botão é clicado
-            });
-
-            // Listener para fechar o modal de seleção de pizza
-            closePizzaOptionModalBtn.addEventListener('click', function() {
-                pizzaOptionModal.style.display = 'none';
-            });
-
-            // Fecha o modal se clicar fora do conteúdo do modal
-            window.addEventListener('click', function(event) {
-                if (event.target == pizzaOptionModal) {
-                    pizzaOptionModal.style.display = 'none';
-                }
-            });
+            const cartButton = document.querySelector('.fixed.bottom-6.right-6 button'); // Seleciona o botão do carrinho
+            const cartButtonRect = cartButton.getBoundingClientRect();
+            feedback.style.bottom = `${window.innerHeight - cartButtonRect.top + 10}px`; // Posição acima do botão do carrinho
+            document.body.appendChild(feedback);
             
-            // Função para adicionar um item ao array de pedidos
-            function addToOrder(item) {
-                order.push(item); // Adiciona o item ao array
-                updateOrderDisplay(); // Atualiza a exibição do carrinho
-                
-                // Feedback visual de adição
-                const feedback = document.createElement('div');
-                feedback.textContent = '✔️ Adicionado ao pedido!';
-                feedback.className = 'fixed right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg slide-in';
-                feedback.style.zIndex = '100'; // Garante que esteja acima de outros elementos
-
-                // Calcula a posição logo acima do botão "Ver Pedido"
-                // Garante que o botão "Ver Pedido" esteja visível para obter sua altura
-                // Temporariamente mostra o botão para pegar a altura correta
-                const wasHidden = viewOrderMobileBtn.classList.contains('hidden');
-                if (wasHidden) {
-                    viewOrderMobileBtn.classList.remove('hidden');
-                }
-                const viewOrderBtnHeight = viewOrderMobileBtn.offsetHeight;
-                const bottomPosition = viewOrderBtnHeight + 16; // 16px para o espaçamento bottom-4 do botão
-                feedback.style.bottom = `${bottomPosition}px`;
-
-                document.body.appendChild(feedback);
-                
-                // Restaura o estado de visibilidade original do botão "Ver Pedido"
-                if (wasHidden) {
-                    viewOrderMobileBtn.classList.add('hidden');
-                }
-
-                // Remove o feedback após 2 segundos
-                setTimeout(() => {
-                    feedback.classList.add('opacity-0', 'transition-opacity', 'duration-300');
-                    setTimeout(() => feedback.remove(), 300);
-                }, 2000);
-            }
+            setTimeout(() => {
+                feedback.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+                setTimeout(() => feedback.remove(), 300);
+            }, 2000);
+        }
+        
+        // Atualizar exibição do pedido
+        function updateOrderDisplay() {
+            const orderItemsContainer = document.getElementById('orderItems');
             
-            // Função para atualizar a exibição do carrinho e os totais
-            function updateOrderDisplay() {
-                if (order.length === 0) {
-                    orderItemsEl.innerHTML = '<p class="text-gray-500 text-center py-4">Seu pedido está vazio</p>';
-                    viewOrderMobileBtn.classList.add('hidden'); // Oculta o botão "Ver Pedido"
-                } else {
-                    orderItemsEl.innerHTML = ''; // Limpa a lista de itens
+            if (order.length === 0) {
+                emptyOrderMessage.classList.remove('hidden');
+                orderItemsContainer.innerHTML = '';
+                orderItemsContainer.appendChild(emptyOrderMessage);
+                
+                document.getElementById('subtotal').textContent = 'R$ 0,00';
+                document.getElementById('total').textContent = 'R$ ' + deliveryFee.toFixed(2).replace('.', ',');
+            } else {
+                emptyOrderMessage.classList.add('hidden');
+                
+                let itemsHTML = '';
+                let subtotal = 0;
+                
+                order.forEach((item, index) => {
+                    subtotal += item.price;
+                    let itemDescription = item.description || ''; // Garante que description não seja undefined
+                    let itemName = item.name;
+
+                    if (item.type === 'promotion') {
+                        itemName = `<i class="fas fa-tags text-red-600 mr-2"></i> ${item.name}`; // Ícone vermelho para promoções
+                    } else if (item.selected_slices) {
+                        const sizeLabel = `${item.selected_slices} FATIAS`.toUpperCase();
+                        itemName = `<b>${sizeLabel}</b>: ${item.name}`;
+                    }
                     
-                    order.forEach((item, index) => {
-                        const itemEl = document.createElement('div');
-                        // Ajusta a classe com base no tipo de item para distinção visual
-                        itemEl.className = `flex justify-between items-start py-3 border-b ${item.type === 'half_pending' ? 'bg-yellow-50 border-yellow-300' : ''}`;
-                        
-                        let displayName = item.name;
-                        if (item.selected_slices) { // Verifica se é um item de pizza pela presença de selected_slices
-                            const sizeLabel = `${item.selected_slices} FATIAS`.toUpperCase();
-                            displayName = `<b>${sizeLabel}</b>: ${item.name}`;
-                        }
-
-                        // Cria o HTML para cada item do pedido
-                        itemEl.innerHTML = `
+                    itemsHTML += `
+                        <div class="flex justify-between items-center py-3 border-b border-gray-100">
                             <div class="flex-1">
-                                <h4 class="font-medium">${displayName}</h4>
-                                <p class="text-sm text-gray-600">${item.description}</p>
+                                <p class="font-medium">${itemName}</p>
+                                <p class="text-sm text-gray-500">${itemDescription}</p>
                             </div>
                             <div class="flex items-center">
                                 <span class="font-bold mr-4">R$ ${item.price.toFixed(2).replace('.', ',')}</span>
-                                ${item.type !== 'half_pending' ? `<button class="remove-item-btn text-red-500 hover:text-red-700" data-index="${index}">
-                                    <i class="fas fa-times"></i>
-                                </button>` : ''}
+                                <button onclick="removeItem(${index})" class="text-red-500 hover:text-red-700">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
                             </div>
-                        `;
-                        
-                        orderItemsEl.appendChild(itemEl); // Adiciona o item à lista
-                    });
-                    // Oculta o botão "Ver Pedido" se a seção do pedido já estiver visível
-                    // Isso será tratado pelo orderSectionObserver
-                    // viewOrderMobileBtn.classList.remove('hidden'); 
-                }
+                        </div>
+                    `;
+                });
                 
-                // Calcula e atualiza os totais
-                // Garante que a soma é feita sobre o preço de cada item no pedido
-                const subtotal = order.reduce((sum, item) => sum + item.price, 0);
-                const total = subtotal + currentDeliveryFee; // Usa a taxa de entrega atual
+                orderItemsContainer.innerHTML = itemsHTML;
                 
-                subtotalEl.textContent = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
-                deliveryFeeEl.textContent = `R$ ${currentDeliveryFee.toFixed(2).replace('.', ',')}`; // Atualiza a exibição da taxa
-                totalEl.textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
+                const total = subtotal + deliveryFee;
+                
+                subtotalEl.textContent = 'R$ ' + subtotal.toFixed(2).replace('.', ',');
+                totalEl.textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
+            }
+        }
+        
+        // Remover item do pedido
+        function removeItem(index) {
+            order.splice(index, 1);
+            updateOrderDisplay();
+            updateCartCount();
+        }
+        
+        // Limpar todo o pedido
+        function clearOrder() {
+            order = [];
+            updateOrderDisplay();
+            updateCartCount();
+        }
+        
+        // Atualizar contagem do carrinho
+        function updateCartCount() {
+            if (order.length > 0) {
+                cartCount.textContent = order.length;
+                cartCount.classList.remove('hidden');
+            } else {
+                cartCount.classList.add('hidden');
+            }
+        }
+        
+        // Função de finalização do pedido
+        function checkout() {
+            if (order.length === 0) {
+                showMessageModal('Seu pedido está vazio. Adicione itens antes de finalizar.');
+                return;
+            }
+            
+            // Verifica se há uma pizza meio a meio pendente
+            if (isSelectingSecondHalf) {
+                showMessageModal('Por favor, escolha a segunda metade da sua pizza antes de finalizar o pedido.');
+                return;
+            }
 
-                // Reavalia a visibilidade do botão "Ver Pedido" após a atualização do pedido
-                // para garantir que o IntersectionObserver seja acionado.
-                if (orderSectionContainer) {
-                    orderSectionObserver.unobserve(orderSectionContainer);
-                    orderSectionObserver.observe(orderSectionContainer);
+            const phoneNumber = '5587996070638'; 
+            let message = 'Olá! Gostaria de fazer o seguinte pedido:\n\n';
+            let subtotal = 0;
+
+            order.forEach(item => {
+                let itemName = item.name;
+                if (item.type === 'promotion') {
+                    itemName = item.name.replace('<i class="fas fa-tags text-red-600 mr-2"></i> ', ''); // Remove o ícone para o WhatsApp
+                } else if (item.selected_slices) {
+                    itemName = `${item.selected_slices} FATIAS: ${item.name}`;
+                }
+                message += `- ${itemName}: R$ ${item.price.toFixed(2).replace('.', ',')}\n`;
+                subtotal += item.price;
+            });
+
+            const total = subtotal + deliveryFee;
+
+            message += `\nSubtotal: R$ ${subtotal.toFixed(2).replace('.', ',')}`;
+            message += `\nTaxa de entrega: R$ ${deliveryFee.toFixed(2).replace('.', ',')}`;
+            message += `\nTotal: R$ ${total.toFixed(2).replace('.', ',')}`;
+            message += '\n\nObrigado!';
+
+            const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+            
+            order = [];
+            updateOrderDisplay();
+            updateCartCount();
+            closeOrderSidebar();
+        }
+
+        // Função para voltar ao menu
+        function backToMenu() {
+            closeOrderSidebar();
+            document.getElementById('menu').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Funções de Promoção
+        function displayPromotionsPopup() {
+            promotionsListEl.innerHTML = '';
+            const activePromotions = allPromotionsData.filter(promo => promo.active && promo.promoPrice !== null);
+
+            if (activePromotions.length > 0) {
+                activePromotions.forEach(promo => {
+                    const promoDiv = document.createElement('div');
+                    promoDiv.className = 'promotion-item';
+                    promoDiv.innerHTML = `
+                        <h4>${promo.name}</h4>
+                        <p>${promo.description}</p>
+                        <span class="price">R$ ${promo.promoPrice.toFixed(2).replace('.', ',')}</span>
+                        <button class="add-promo-to-order-btn px-3 py-1 bg-green-600 text-white rounded-full text-sm hover:bg-green-700 transition mt-2"
+                                data-promo-id="${promo.id}">
+                            Adicionar à Sacola
+                        </button>
+                    `;
+                    promotionsListEl.appendChild(promoDiv);
+                });
+                document.querySelectorAll('.add-promo-to-order-btn').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const promoId = this.dataset.promoId;
+                        addPromotionToOrder(promoId);
+                    });
+                });
+                promotionPopup.style.display = 'flex';
+            } else {
+                promotionPopup.style.display = 'none';
+            }
+        }
+
+        function addPromotionToOrder(promoId) {
+            const promotion = allPromotionsData.find(p => p.id === promoId);
+            if (promotion) {
+                order.push({
+                    type: 'promotion',
+                    name: promotion.name,
+                    price: promotion.promoPrice,
+                    description: promotion.description,
+                    itemId: promotion.itemId
+                });
+                updateOrderDisplay();
+                updateCartCount();
+                promotionPopup.style.display = 'none';
+                showMessageModal(`Promoção "${promotion.name}" adicionada ao pedido!`);
+            } else {
+                console.error('Promoção não encontrada:', promoId);
+                showMessageModal('Erro ao adicionar promoção. Por favor, tente novamente.');
+            }
+        }
+
+        function updatePromotionButtonVisibility() {
+            const activePromotionsWithPrice = allPromotionsData.filter(promo => promo.active && promo.promoPrice !== null);
+            if (activePromotionsWithPrice.length > 0) {
+                promotionButton.style.display = 'flex';
+            } else {
+                promotionButton.style.display = 'none';
+            }
+        }
+
+        // Listeners para fechar o modal de promoção
+        closePromotionPopupBtn.addEventListener('click', function() {
+            promotionPopup.style.display = 'none';
+        });
+        closePromotionPopupBtnBottom.addEventListener('click', function() {
+            promotionPopup.style.display = 'none';
+        });
+        window.addEventListener('click', function(event) {
+            if (event.target == promotionPopup) {
+                promotionPopup.style.display = 'none';
+            }
+        });
+
+        // Listener para o botão flutuante de promoção
+        promotionButton.addEventListener('click', function() {
+            displayPromotionsPopup();
+        });
+
+        // Sticky category bar logic (re-implemented for pizza categories)
+        const categoryBtns = document.querySelectorAll('.category-btn');
+        const categorySections = document.querySelectorAll('.pizza-category-section');
+        let isScrollingFromClick = false; 
+        let currentActiveCategoryByScroll = 'tradicionais'; 
+
+        function getStickyHeaderHeight() {
+            const stickyHeader = document.querySelector('.category-bar-mobile-sticky');
+            return stickyHeader ? stickyHeader.offsetHeight : 0;
+        }
+
+        categoryBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const category = this.dataset.category;
+                const targetId = this.dataset.targetId;
+                setActiveCategoryButton(category);
+                isScrollingFromClick = true;
+                document.getElementById(targetId).scrollIntoView({ behavior: 'smooth', block: 'start' });
+                setTimeout(() => {
+                    isScrollingFromClick = false;
+                    window.dispatchEvent(new Event('scroll'));
+                }, 700);
+            });
+        });
+
+        function setActiveCategoryButton(category) {
+            categoryBtns.forEach(btn => {
+                if (btn.dataset.category === category) {
+                    btn.classList.remove('bg-gray-200', 'text-gray-800');
+                    btn.classList.add('bg-red-600', 'text-white');
+                    btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                } else {
+                    btn.classList.remove('bg-red-600', 'text-white');
+                    btn.classList.add('bg-gray-200', 'text-gray-800');
+                }
+            });
+        }
+
+        const categoryObserver = new IntersectionObserver((entries) => {
+            if (isScrollingFromClick) {
+                return;
+            }
+            let newActiveCategory = null;
+            const stickyHeaderHeight = getStickyHeaderHeight();
+            let bestMatchTop = Infinity;
+
+            categorySections.forEach(section => {
+                const rect = section.getBoundingClientRect();
+                const category = section.id.replace('-section', '');
+                const h3 = section.querySelector('h3');
+                if (!h3) return;
+
+                const h3Rect = h3.getBoundingClientRect();
+                const detectionLine = stickyHeaderHeight + 10;
+
+                if (h3Rect.top <= detectionLine && h3Rect.bottom > 0) {
+                    if (h3Rect.top < bestMatchTop) {
+                        bestMatchTop = h3Rect.top;
+                        newActiveCategory = category;
+                    }
+                }
+            });
+
+            if (!newActiveCategory && categorySections.length > 0) {
+                if (window.scrollY <= stickyHeaderHeight + 20) {
+                    newActiveCategory = 'tradicionais';
+                } else {
+                    let closestToTop = Infinity;
+                    for (let i = 0; i < categorySections.length; i++) {
+                        const section = categorySections[i];
+                        const rect = section.getBoundingClientRect();
+                        const category = section.id.replace('-section', '');
+                        if (rect.bottom > 0 && rect.top < window.innerHeight) {
+                            if (Math.abs(rect.top - stickyHeaderHeight) < closestToTop) {
+                                closestToTop = Math.abs(rect.top - stickyHeaderHeight);
+                                newActiveCategory = category;
+                            }
+                        }
+                    }
                 }
             }
             
-            // Remove item do pedido quando o botão de remover é clicado
-            orderItemsEl.addEventListener('click', function(e) {
-                if (e.target.classList.contains('remove-item-btn') || e.target.closest('.remove-item-btn')) {
-                    const btn = e.target.classList.contains('remove-item-btn') ? e.target : e.target.closest('.remove-item-btn');
-                    const index = parseInt(btn.dataset.index); // Pega o índice do item a ser removido
-                    
-                    order.splice(index, 1); // Remove o item do array
-                    updateOrderDisplay(); // Atualiza a exibição
-                }
-            });
+            if (newActiveCategory && newActiveCategory !== currentActiveCategoryByScroll) {
+                setActiveCategoryButton(newActiveCategory);
+                currentActiveCategoryByScroll = newActiveCategory;
+            }
+        }, {
+            root: null,
+            rootMargin: `-${getStickyHeaderHeight()}px 0px 0px 0px`,
+            threshold: 0.1
+        });
+
+        categorySections.forEach(section => {
+            categoryObserver.observe(section);
+        });
+
+        let scrollTimeout;
+        window.addEventListener('scroll', () => {
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+                // Isso fará com que os IntersectionObservers reavaliem suas interseções.
+            }, 50);
+        });
+        // Fim da lógica da barra de categorias
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', async function() {
+            allMenuData = await loadMenuFromSheet(); // Carrega todos os itens do cardápio (pizzas e bebidas)
+            allPromotionsData = await loadPromotionsFromSheet(); // Carrega promoções
             
-            // Botão Finalizar Pedido
-            document.getElementById('checkout-btn').addEventListener('click', checkAndSuggestDrinks);
+            populateMenu(allMenuData); // Popula o cardápio com todos os itens
+            updatePromotionButtonVisibility(); // Atualiza a visibilidade do botão de promoção
+            updateCartCount(); // Garante que a contagem do carrinho esteja correta ao carregar
+            updateOrderDisplay(); // Garante que o pedido esteja correto ao carregar
 
-            // Listener para o botão "Continuar sem bebidas" do modal de sugestão
-            proceedWithoutDrinksBtn.addEventListener('click', () => {
-                drinkSuggestionModal.style.display = 'none';
-                sendOrderToWhatsapp(); // Envia para o WhatsApp mesmo sem bebidas
-            });
-
-            // Listener para fechar o modal de sugestão de bebidas
-            closeDrinkSuggestionModalBtn.addEventListener('click', () => {
-                drinkSuggestionModal.style.display = 'none';
-            });
-
-            // Fecha o modal de sugestão de bebidas se clicar fora
-            window.addEventListener('click', function(event) {
-                if (event.target == drinkSuggestionModal) {
-                    drinkSuggestionModal.style.display = 'none';
-                }
-            });
-
-            // Listener para o botão "Ver Pedido" mobile
-            viewOrderMobileBtn.addEventListener('click', function() {
-                // Rola para o topo da seção do pedido
-                const orderSection = document.querySelector('.lg\\:w-1\\/3');
-                if (orderSection) {
-                    orderSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-            });
-
-            // Chamada inicial para popular o cardápio e definir a categoria ativa correta no carregamento
-            window.addEventListener('load', async () => {
-                allMenuData = await loadMenuFromSheet(); // Carrega todos os dados da planilha
-                allPromotionsData = await loadPromotionsFromSheet(); // Carrega todos os dados das promoções
-                
-                populateMenu(allMenuData); // Popula o cardápio dinamicamente com os dados carregados
-                updatePromotionButtonVisibility(); // Atualiza a visibilidade do botão de promoção
-                
-                // Dispara um evento de rolagem após um curto atraso para garantir que o observer seja executado
-                // depois que todos os elementos forem renderizados e posicionados corretamente.
-                setTimeout(() => {
-                    window.dispatchEvent(new Event('scroll'));
-                }, 100);
-            });
+            // Dispara um evento de rolagem após um curto atraso para garantir que o observer seja executado
+            setTimeout(() => {
+                window.dispatchEvent(new Event('scroll'));
+            }, 100);
         });
     </script>
 </body>
