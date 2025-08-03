@@ -347,13 +347,53 @@
                 try {
                     const response = await fetch(CARDAPIO_CSV_URL);
                     const csvText = await response.text();
-                    
-                    // Parse do CSV para um array de objetos
-                    const lines = csvText.split('\n');
-                    // Remove espaços em branco dos cabeçalhos e padroniza para camelCase
-                    const headers = lines[0].split(',').map(header => {
+                    console.log("CSV Bruto recebido:", csvText); // Log para depuração
+
+                    const lines = csvText.split('\n').filter(line => line.trim() !== '');
+
+                    if (lines.length === 0) {
+                        console.warn("Nenhuma linha válida encontrada no CSV.");
+                        return [];
+                    }
+
+                    // Função auxiliar para analisar uma única linha CSV
+                    function parseCsvLine(line) {
+                        const values = [];
+                        let inQuote = false;
+                        let currentField = '';
+                        for (let i = 0; i < line.length; i++) {
+                            const char = line[i];
+                            if (char === '"') {
+                                // Lida com aspas duplas escapadas (ex: "" dentro de um campo entre aspas)
+                                if (inQuote && i + 1 < line.length && line[i + 1] === '"') {
+                                    currentField += '"';
+                                    i++; // Pula a próxima aspa
+                                } else {
+                                    inQuote = !inQuote; // Alterna o estado de aspas
+                                }
+                            } else if (char === ',' && !inQuote) {
+                                values.push(currentField); // Adiciona sem trim inicialmente
+                                currentField = '';
+                            } else {
+                                currentField += char;
+                            }
+                        }
+                        values.push(currentField); // Adiciona o último campo
+
+                        // Processa cada valor: remove aspas externas e desescapa aspas internas duplas
+                        return values.map(v => {
+                            if (v === undefined || v === null) return ''; // Lida com valores indefinidos/nulos
+                            let processed = v;
+                            if (processed.startsWith('"') && processed.endsWith('"')) {
+                                processed = processed.substring(1, processed.length - 1);
+                            }
+                            return processed.replace(/""/g, '"').trim(); // Trim no final
+                        });
+                    }
+
+                    const headersRaw = parseCsvLine(lines[0]); // Usa a função auxiliar para analisar os cabeçalhos
+                    const mappedHeaders = headersRaw.map(header => {
                         let cleanedHeader = header.trim();
-                        // Mapeia nomes de cabeçalho para nomes de propriedade mais amigáveis
                         switch (cleanedHeader) {
                             case 'ID Item (único)': return 'id';
                             case 'Nome do Item': return 'name';
@@ -365,20 +405,26 @@
                             default: return cleanedHeader.replace(/[^a-zA-Z0-9]+(.)?/g, (match, chr) => chr ? chr.toUpperCase() : '').replace(/^./, (match) => match.toLowerCase());
                         }
                     });
+                    console.log("Cabeçalhos parseados e mapeados:", mappedHeaders); // Log para depuração
                     
                     const menuData = [];
 
                     for (let i = 1; i < lines.length; i++) {
-                        const values = lines[i].split(',');
-                        if (values.length === headers.length) { // Garante que a linha tem o mesmo número de colunas
+                        const line = lines[i];
+                        const rowValues = parseCsvLine(line); // Usa a função auxiliar para analisar cada linha
+                        
+                        console.log(`Linha ${i + 1} original: "${line}"`); // Log da linha original
+                        console.log(`Linha ${i + 1} parseada (rowValues):`, rowValues); // Log dos valores parseados
+                        console.log(`rowValues.length: ${rowValues.length}, mappedHeaders.length: ${mappedHeaders.length}`); // Log dos comprimentos
+
+                        if (rowValues.length === mappedHeaders.length) {
                             let item = {};
-                            for (let j = 0; j < headers.length; j++) {
-                                let headerKey = headers[j];
-                                let value = values[j].trim(); // Remove espaços em branco
+                            for (let j = 0; j < mappedHeaders.length; j++) {
+                                let headerKey = mappedHeaders[j];
+                                let value = rowValues[j];
                                 
-                                // Converte tipos de dados
                                 if (headerKey === 'basePrice') {
-                                    item[headerKey] = parseFloat(value);
+                                    item[headerKey] = parseFloat(value.replace(',', '.'));
                                 } else if (headerKey === 'isPizza') {
                                     item[headerKey] = value.toUpperCase() === 'SIM';
                                 } else if (headerKey === 'available') {
@@ -387,16 +433,20 @@
                                     item[headerKey] = value;
                                 }
                             }
-                            if (item.available) { // Apenas adiciona itens disponíveis
+                            if (item.available) {
                                  menuData.push(item);
+                                 console.log("Item parseado:", item); // Log de cada item
                             }
+                        } else {
+                            console.warn(`Linha ${i + 1} ignorada ou malformada (esperado ${mappedHeaders.length} colunas, encontrado ${rowValues.length}): "${line}"`);
+                            console.warn("Valores da linha:", rowValues);
                         }
                     }
                     return menuData;
 
                 } catch (error) {
                     console.error('Erro ao carregar cardápio da planilha:', error);
-                    return []; // Retorna um array vazio em caso de erro
+                    return [];
                 }
             }
 
