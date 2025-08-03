@@ -1580,11 +1580,12 @@
                 const targetId = this.dataset.targetId;
                 setActiveCategoryButton(category);
                 isScrollingFromClick = true;
+                // Scroll to the target section, aligning its top with the start of the viewport
                 document.getElementById(targetId).scrollIntoView({ behavior: 'smooth', block: 'start' });
-                // Reseta a flag após um pequeno atraso para permitir que o IntersectionObserver funcione novamente
+                // Reset the flag after a short delay to allow the IntersectionObserver to work again
                 setTimeout(() => {
                     isScrollingFromClick = false;
-                }, 700); // Ajuste este tempo se o scroll for muito rápido/lento
+                }, 700); // Adjust this time if scrolling is too fast/slow
             });
         });
 
@@ -1608,9 +1609,9 @@
             }
 
             const stickyHeaderHeight = getStickyHeaderHeight();
-            let activeCategory = null;
+            let newActiveCategory = null;
 
-            // Sort entries by their top position to prioritize sections higher on the screen
+            // Sort entries by their top position to ensure we process them from top to bottom
             // This is crucial because IntersectionObserver entries might not come in order.
             entries.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
 
@@ -1622,19 +1623,19 @@
 
                 // A section is considered "active" if its top edge is at or above the bottom of the sticky header,
                 // and it's still visible within the viewport (isIntersecting).
-                // We add a small buffer (e.g., 5px) to account for slight variations in scrolling and element rendering.
-                if (entry.isIntersecting && rect.top <= stickyHeaderHeight + 5) {
-                    activeCategory = category;
+                // We add a small buffer (e.g., 1px) to account for slight variations in scrolling and element rendering.
+                if (entry.isIntersecting && rect.top <= stickyHeaderHeight + 1) {
+                    newActiveCategory = category;
                     break; // Found the topmost active section, no need to check further
                 }
             }
 
-            // Fallback for when no section perfectly meets the criteria (e.g., at the very top or bottom of page, or during fast scrolls)
-            if (!activeCategory && categorySections.length > 0) {
+            // Fallback: If no section perfectly meets the criteria (e.g., at the very top or bottom of page, or during fast scrolls)
+            if (!newActiveCategory && categorySections.length > 0) {
                 // If scrolled to the very top, default to the first category ('tradicionais')
                 // A small buffer (20px) is added to window.scrollY to ensure it triggers near the absolute top.
                 if (window.scrollY <= stickyHeaderHeight + 20) { 
-                    activeCategory = 'tradicionais';
+                    newActiveCategory = 'tradicionais';
                 } else {
                     // As a last resort, find the first visible section in the viewport
                     // This handles cases where no section's top is precisely aligned with the sticky header,
@@ -1644,7 +1645,7 @@
                         const rect = section.getBoundingClientRect();
                         // If any part of the section is visible in the viewport
                         if (rect.bottom > 0 && rect.top < window.innerHeight) {
-                            activeCategory = section.id.replace('-section', '');
+                            newActiveCategory = section.id.replace('-section', '');
                             break; // Take the first visible one (which is typically the topmost)
                         }
                     }
@@ -1652,19 +1653,20 @@
             }
             
             // Only update the active button if a new active category is determined and it's different from the current one
-            if (activeCategory && activeCategory !== currentActiveCategoryByScroll) {
-                setActiveCategoryButton(activeCategory);
-                currentActiveCategoryByScroll = activeCategory;
+            if (newActiveCategory && newActiveCategory !== currentActiveCategoryByScroll) {
+                setActiveCategoryButton(newActiveCategory);
+                currentActiveCategoryByScroll = newActiveCategory;
             }
         }, {
             root: null, // The viewport is the root
-            // The rootMargin defines the area within the root (viewport) that is used to check for intersection.
-            // By setting the top margin to -stickyHeaderHeight, the intersection area effectively starts
-            // at the bottom edge of your sticky header.
-            rootMargin: `-${getStickyHeaderHeight()}px 0px 0px 0px`, 
-            // Thresholds at 0 means the callback will fire as soon as any part of the target element
-            // enters or leaves the intersection root. Using multiple thresholds provides more granular
-            // detection, though the primary logic relies on `rect.top` relative to `stickyHeaderHeight`.
+            // The rootMargin defines the area *within the root* where intersection is detected.
+            // By setting the top margin to -stickyHeaderHeight, the intersection calculation
+            // effectively starts from the bottom edge of your sticky header.
+            // A small negative bottom margin (-1px) ensures that the observer
+            // continues to fire as elements scroll out of the bottom of the viewport,
+            // but primarily focuses on the top.
+            rootMargin: `-${getStickyHeaderHeight()}px 0px -1px 0px`, 
+            // Observe all thresholds for more granular data. This helps in detecting subtle changes.
             threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1] 
         });
 
