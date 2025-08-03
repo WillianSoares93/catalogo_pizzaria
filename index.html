@@ -186,6 +186,94 @@
         .pizza-category-section {
             scroll-margin-top: 6rem; /* Ajuste este valor se a altura da barra fixa mudar */
         }
+
+        /* Estilos para o popup de promoção */
+        .promotion-popup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 2000; /* Acima de todos os outros modais */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .promotion-popup-content {
+            background-color: #fff;
+            padding: 40px; /* Aumentado o padding */
+            border-radius: 15px; /* Mais arredondado */
+            width: 90%;
+            max-width: 550px; /* Maior largura máxima */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3); /* Sombra mais intensa */
+            text-align: center;
+            position: relative;
+            animation: popIn 0.4s ease-out;
+            border: 3px solid #f97316; /* Cor laranja para destaque */
+            overflow-y: auto; /* Adiciona scroll se conteúdo for grande */
+            max-height: 90vh; /* Limita a altura para caber na tela */
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .promotion-popup-content h3 {
+            font-size: 2.25rem; /* text-4xl */
+            font-weight: bold;
+            color: #dc2626; /* red-600 */
+            margin-bottom: 15px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .promotion-popup-content p {
+            font-size: 1.125rem; /* text-lg */
+            color: #374151; /* gray-700 */
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        .promotion-popup-content .close-button {
+            top: 15px;
+            right: 25px;
+            font-size: 32px; /* Maior para facilitar o clique */
+            color: #6b7280; /* gray-500 */
+        }
+
+        .promotion-popup-content .close-button:hover {
+            color: #1f2937; /* gray-900 */
+        }
+
+        .promotion-item {
+            background-color: #fff7ed; /* orange-50 */
+            border: 1px solid #fed7aa; /* orange-200 */
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            text-align: left;
+        }
+
+        .promotion-item h4 {
+            font-weight: bold;
+            color: #f97316; /* orange-500 */
+            margin-bottom: 5px;
+        }
+
+        .promotion-item p {
+            font-size: 0.95rem;
+            color: #4b5563; /* gray-600 */
+            margin-bottom: 5px;
+        }
+
+        .promotion-item .price {
+            font-weight: bold;
+            color: #dc2626; /* red-600 */
+            font-size: 1.1rem;
+        }
     </style>
 </head>
 <body class="bg-gray-50 font-sans">
@@ -337,11 +425,27 @@
         </div>
     </div>
 
+    <!-- Novo Modal de Promoção Flutuante -->
+    <div id="promotion-popup" class="promotion-popup">
+        <div class="promotion-popup-content">
+            <span class="close-button" id="close-promotion-popup">&times;</span>
+            <h3>Promoções Especiais!</h3>
+            <p>Confira as nossas ofertas exclusivas e não perca tempo!</p>
+            <div id="promotions-list">
+                <!-- Promoções serão carregadas aqui -->
+            </div>
+            <button id="close-promotion-popup-btn" class="px-6 py-3 mt-6 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition w-full">
+                Fechar Promoções
+            </button>
+        </div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // URL da planilha Google Sheets publicada como CSV
-            // Adicionado um parâmetro de tempo para tentar evitar o cache do navegador/proxy
+            // URL da planilha Google Sheets publicada como CSV para o cardápio
             const CARDAPIO_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=664943668&single=true&output=csv';
+            // URL da planilha Google Sheets publicada como CSV para promoções
+            const PROMOCOES_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=600393470&single=true&output=csv'; 
 
             // Função para carregar os dados do cardápio da planilha Google
             async function loadMenuFromSheet() {
@@ -350,12 +454,12 @@
                     const urlWithCacheBuster = `${CARDAPIO_CSV_URL}&_=${new Date().getTime()}`;
                     const response = await fetch(urlWithCacheBuster);
                     const csvText = await response.text();
-                    console.log("CSV Bruto recebido:", csvText); // Log para depuração
+                    console.log("CSV Bruto recebido (Cardápio):", csvText); // Log para depuração
 
                     const lines = csvText.split('\n').filter(line => line.trim() !== '');
 
                     if (lines.length === 0) {
-                        console.warn("Nenhuma linha válida encontrada no CSV.");
+                        console.warn("Nenhuma linha válida encontrada no CSV do Cardápio.");
                         return [];
                     }
 
@@ -406,11 +510,11 @@
                             case 'Preço 4 fatias': return 'price4Slices'; // Nova coluna
                             case 'Categoria': return 'category';
                             case 'É Pizza? (SIM/NÃO)': return 'isPizza';
-                            case 'Disponível (SIM/NÃO)': return 'available';
+                            case 'Disponível (SIM/NAO)': return 'available'; // Corrigido para corresponder à planilha
                             default: return cleanedHeader.replace(/[^a-zA-Z0-9]+(.)?/g, (match, chr) => chr ? chr.toUpperCase() : '').replace(/^./, (match) => match.toLowerCase());
                         }
                     });
-                    console.log("Cabeçalhos parseados e mapeados:", mappedHeaders); // Log para depuração
+                    console.log("Cabeçalhos parseados e mapeados (Cardápio):", mappedHeaders); // Log para depuração
                     
                     const menuData = [];
 
@@ -418,8 +522,8 @@
                         const line = lines[i];
                         const rowValues = parseCsvLine(line); // Usa a função auxiliar para analisar cada linha
                         
-                        console.log(`Linha ${i + 1} original: "${line}"`); // Log da linha original
-                        console.log(`Linha ${i + 1} parseada (rowValues):`, rowValues); // Log dos valores parseados
+                        console.log(`Linha ${i + 1} original (Cardápio): "${line}"`); // Log da linha original
+                        console.log(`Linha ${i + 1} parseada (Cardápio - rowValues):`, rowValues); // Log dos valores parseados
                         console.log(`rowValues.length: ${rowValues.length}, mappedHeaders.length: ${mappedHeaders.length}`); // Log dos comprimentos
 
                         if (rowValues.length === mappedHeaders.length) {
@@ -452,17 +556,128 @@
                             }
                             if (item.available) {
                                  menuData.push(item);
-                                 console.log("Item parseado:", item); // Log de cada item
+                                 console.log("Item parseado (Cardápio):", item); // Log de cada item
                             }
                         } else {
-                            console.warn(`Linha ${i + 1} ignorada ou malformada (esperado ${mappedHeaders.length} colunas, encontrado ${rowValues.length}): "${line}"`);
-                            console.warn("Valores da linha:", rowValues);
+                            console.warn(`Linha ${i + 1} ignorada ou malformada (Cardápio - esperado ${mappedHeaders.length} colunas, encontrado ${rowValues.length}): "${line}"`);
+                            console.warn("Valores da linha (Cardápio):", rowValues);
                         }
                     }
                     return menuData;
 
                 } catch (error) {
                     console.error('Erro ao carregar cardápio da planilha:', error);
+                    return [];
+                }
+            }
+
+            // Função para carregar os dados das promoções da planilha Google
+            async function loadPromotionsFromSheet() {
+                try {
+                    // Adiciona um timestamp para tentar forçar o recarregamento do CSV
+                    const urlWithCacheBuster = `${PROMOCOES_CSV_URL}&_=${new Date().getTime()}`;
+                    const response = await fetch(urlWithCacheBuster);
+                    const csvText = await response.text();
+                    console.log("CSV Bruto recebido (Promoções):", csvText); // Log para depuração
+
+                    const lines = csvText.split('\n').filter(line => line.trim() !== '');
+
+                    if (lines.length === 0) {
+                        console.warn("Nenhuma linha válida encontrada no CSV de Promoções.");
+                        return [];
+                    }
+
+                    function parseCsvLine(line) {
+                        const values = [];
+                        let inQuote = false;
+                        let currentField = '';
+                        for (let i = 0; i < line.length; i++) {
+                            const char = line[i];
+                            if (char === '"') {
+                                if (inQuote && i + 1 < line.length && line[i + 1] === '"') {
+                                    currentField += '"';
+                                    i++;
+                                } else {
+                                    inQuote = !inQuote;
+                                }
+                            } else if (char === ',' && !inQuote) {
+                                values.push(currentField);
+                                currentField = '';
+                            } else {
+                                currentField += char;
+                            }
+                        }
+                        values.push(currentField);
+                        return values.map(v => {
+                            if (v === undefined || v === null) return '';
+                            let processed = v;
+                            if (processed.startsWith('"') && processed.endsWith('"')) {
+                                processed = processed.substring(1, processed.length - 1);
+                            }
+                            return processed.replace(/""/g, '"').trim();
+                        });
+                    }
+
+                    const headersRaw = parseCsvLine(lines[0]);
+                    const mappedHeaders = headersRaw.map(header => {
+                        let cleanedHeader = header.trim();
+                        switch (cleanedHeader) {
+                            case 'ID Promocao': return 'id';
+                            case 'Nome da Promocao': return 'name';
+                            case 'Descricao': return 'description';
+                            case 'Preco Promocional': return 'promoPrice';
+                            case 'ID Item Aplicavel': return 'itemId';
+                            case 'Ativo (SIM/NAO)': return 'active';
+                            default: return cleanedHeader.replace(/[^a-zA-Z0-9]+(.)?/g, (match, chr) => chr ? chr.toUpperCase() : '').replace(/^./, (match) => match.toLowerCase());
+                        }
+                    });
+                    console.log("Cabeçalhos parseados e mapeados (Promoções):", mappedHeaders);
+                    
+                    const promotionsData = [];
+
+                    for (let i = 1; i < lines.length; i++) {
+                        const line = lines[i];
+                        const rowValues = parseCsvLine(line);
+                        
+                        console.log(`Linha ${i + 1} original (Promoções): "${line}"`);
+                        console.log(`Linha ${i + 1} parseada (Promoções - rowValues):`, rowValues);
+                        console.log(`rowValues.length: ${rowValues.length}, mappedHeaders.length: ${mappedHeaders.length}`);
+
+                        if (rowValues.length === mappedHeaders.length) {
+                            let promo = {
+                                id: '',
+                                name: '',
+                                description: '',
+                                promoPrice: null, // Pode ser null se não houver preço
+                                itemId: '',
+                                active: false
+                            };
+                            for (let j = 0; j < mappedHeaders.length; j++) {
+                                let headerKey = mappedHeaders[j];
+                                let value = rowValues[j];
+                                
+                                if (headerKey === 'promoPrice') {
+                                    const parsedValue = parseFloat(String(value).replace(',', '.'));
+                                    promo[headerKey] = isNaN(parsedValue) ? null : parsedValue; // Null if NaN
+                                } else if (headerKey === 'active') {
+                                    promo[headerKey] = value.toUpperCase() === 'SIM';
+                                } else {
+                                    promo[headerKey] = value;
+                                }
+                            }
+                            if (promo.active) { // Apenas adiciona promoções ativas
+                                promotionsData.push(promo);
+                                console.log("Promoção parseada:", promo);
+                            }
+                        } else {
+                            console.warn(`Linha ${i + 1} ignorada ou malformada (Promoções - esperado ${mappedHeaders.length} colunas, encontrado ${rowValues.length}): "${line}"`);
+                            console.warn("Valores da linha (Promoções):", rowValues);
+                        }
+                    }
+                    return promotionsData;
+
+                } catch (error) {
+                    console.error('Erro ao carregar promoções da planilha:', error);
                     return [];
                 }
             }
@@ -529,6 +744,12 @@
 
             // Referência para o botão "Ver Pedido" mobile
             const viewOrderMobileBtn = document.getElementById('view-order-mobile-btn');
+
+            // Referências para o modal de promoção
+            const promotionPopup = document.getElementById('promotion-popup');
+            const closePromotionPopupBtn = document.getElementById('close-promotion-popup');
+            const closePromotionPopupBtnBottom = document.getElementById('close-promotion-popup-btn');
+            const promotionsListEl = document.getElementById('promotions-list');
 
             let currentPizzaData = {}; // Objeto para armazenar temporariamente os dados da pizza selecionada
             let firstHalfPizza = null; // Armazena os dados da primeira metade de uma pizza dividida
@@ -935,6 +1156,7 @@
 
             // Variável global para armazenar todos os dados do menu carregados
             let allMenuData = [];
+            let allPromotionsData = []; // Nova variável para armazenar dados de promoções
 
             // Função para popular o cardápio dinamicamente
             function populateMenu(menuItems) {
@@ -1002,6 +1224,41 @@
                 // Reanexa os event listeners após popular o cardápio
                 attachAddButtonListeners();
             }
+
+            // Função para exibir o popup de promoções
+            function displayPromotionsPopup() {
+                promotionsListEl.innerHTML = ''; // Limpa a lista de promoções
+                const activePromotions = allPromotionsData.filter(promo => promo.active && promo.promoPrice !== null);
+
+                if (activePromotions.length > 0) {
+                    activePromotions.forEach(promo => {
+                        const promoDiv = document.createElement('div');
+                        promoDiv.className = 'promotion-item';
+                        promoDiv.innerHTML = `
+                            <h4>${promo.name}</h4>
+                            <p>${promo.description}</p>
+                            <span class="price">R$ ${promo.promoPrice.toFixed(2).replace('.', ',')}</span>
+                        `;
+                        promotionsListEl.appendChild(promoDiv);
+                    });
+                    promotionPopup.style.display = 'flex'; // Exibe o popup
+                } else {
+                    promotionPopup.style.display = 'none'; // Oculta se não houver promoções ativas com preço
+                }
+            }
+
+            // Listeners para fechar o modal de promoção
+            closePromotionPopupBtn.addEventListener('click', function() {
+                promotionPopup.style.display = 'none';
+            });
+            closePromotionPopupBtnBottom.addEventListener('click', function() {
+                promotionPopup.style.display = 'none';
+            });
+            window.addEventListener('click', function(event) {
+                if (event.target == promotionPopup) {
+                    promotionPopup.style.display = 'none';
+                }
+            });
 
             // Listener para fechar o modal de seleção de pizza
             closePizzaOptionModalBtn.addEventListener('click', function() {
@@ -1152,7 +1409,11 @@
             // Chamada inicial para popular o cardápio e definir a categoria ativa correta no carregamento
             window.addEventListener('load', async () => {
                 allMenuData = await loadMenuFromSheet(); // Carrega todos os dados da planilha
+                allPromotionsData = await loadPromotionsFromSheet(); // Carrega todos os dados das promoções
+                
                 populateMenu(allMenuData); // Popula o cardápio dinamicamente com os dados carregados
+                displayPromotionsPopup(); // Exibe o popup de promoções se houver
+                
                 // Dispara um evento de rolagem após um curto atraso para garantir que o observer seja executado
                 // depois que todos os elementos forem renderizados e posicionados corretamente.
                 setTimeout(() => {
