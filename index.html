@@ -338,6 +338,44 @@
         .suggested-drink-item button:hover {
             background-color: #16a34a; /* green-600 */
         }
+
+        /* CSS para a animação do item voando para o carrinho */
+        .fly-to-cart-animation {
+            position: fixed;
+            background-color: #ef4444; /* Red-500 */
+            color: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            font-weight: bold;
+            z-index: 9999; /* Acima de tudo */
+            pointer-events: none; /* Não interfere com cliques */
+            animation: flyToCart 0.8s ease-in-out forwards;
+            opacity: 1;
+        }
+
+        @keyframes flyToCart {
+            0% {
+                left: var(--start-x);
+                top: var(--start-y);
+                transform: scale(1);
+                opacity: 1;
+            }
+            70% {
+                transform: scale(1.2);
+                opacity: 0.8;
+            }
+            100% {
+                left: var(--end-x);
+                top: var(--end-y);
+                transform: scale(0);
+                opacity: 0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -492,7 +530,7 @@
 
     <!-- Floating Order Button -->
     <div class="fixed bottom-6 right-6 z-40">
-        <button onclick="toggleOrderSidebar()" class="bg-red-600 hover:bg-red-700 text-white rounded-full p-5 shadow-lg relative transition duration-300 transform hover:scale-110">
+        <button onclick="toggleOrderSidebar()" class="bg-red-600 hover:bg-red-700 text-white rounded-full p-5 shadow-lg relative transition duration-300 transform hover:scale-110" id="cart-button">
             <i class="fas fa-shopping-cart text-2xl"></i>
             <span id="cartCount" class="absolute -top-2 -right-2 bg-red-500 text-white text-sm font-bold rounded-full h-7 w-7 flex items-center justify-center hidden">0</span>
         </button>
@@ -552,6 +590,7 @@
         let order = [];
         let allMenuData = []; // Armazenará todos os itens do cardápio (pizzas e bebidas)
         let allPromotionsData = [];
+        let hasOrderSidebarOpenedAutomatically = false; // Nova flag para controlar a abertura automática
 
         // Referências para os elementos DOM
         const orderSidebar = document.getElementById('orderSidebar');
@@ -565,7 +604,8 @@
         const closePromotionPopupBtn = document.getElementById('close-promotion-popup');
         const closePromotionPopupBtnBottom = document.getElementById('close-promotion-popup-btn');
         const promotionsListEl = document.getElementById('promotions-list');
-        const promotionButton = document.getElementById('promotion-button');
+        const promotionButton = document.getElementById('promotion-button'); // Referência ao botão de promoção
+        const cartButton = document.getElementById('cart-button'); // Adicionado ID ao botão do carrinho
         const cuscuzListEl = document.getElementById('cuscuz-list'); // Este será o container principal para pizzas agora
         const bebidasListEl = document.getElementById('bebidas-items'); // Container para bebidas
         const subtotalEl = document.getElementById('subtotal');
@@ -605,11 +645,21 @@
         function toggleOrderSidebar() {
             orderSidebar.classList.toggle('translate-x-full');
             orderSidebar.classList.toggle('translate-x-0');
+
+            // Controla a visibilidade do botão de promoção
+            if (orderSidebar.classList.contains('translate-x-0')) {
+                // Se a sidebar está abrindo, esconde o botão de promoção
+                promotionButton.style.display = 'none';
+            } else {
+                // Se a sidebar está fechando, mostra o botão de promoção (se houver promoções ativas)
+                updatePromotionButtonVisibility();
+            }
         }
         
         function closeOrderSidebar() {
             orderSidebar.classList.add('translate-x-full');
             orderSidebar.classList.remove('translate-x-0');
+            updatePromotionButtonVisibility(); // Garante que o botão de promoção reapareça ao fechar
         }
         
         function showMessageModal(message) {
@@ -828,7 +878,7 @@
                             } else if (headerKey === 'active') {
                                 promo[headerKey] = value.toUpperCase() === 'SIM';
                             } else {
-                                promo[headerKey] = value;
+                                promo[headerKey] = value; 
                             }
                         }
                         if (promo.active) {
@@ -918,7 +968,8 @@
 
         // Função para lidar com o clique no botão "Adicionar" (para pizzas e bebidas)
         function handleAddButtonClick(e) {
-            const itemId = e.target.dataset.itemId;
+            const clickedButton = e.target; // O botão clicado
+            const itemId = clickedButton.dataset.itemId;
             const item = allMenuData.find(i => i.id === itemId);
 
             if (!item) {
@@ -957,7 +1008,7 @@
                     description: combinedDescription,
                     category: 'pizzas', // Categoria genérica para pizzas meio a meio
                     selected_slices: firstHalfPizza.selected_slices
-                });
+                }, clickedButton); // Passa o botão clicado para a animação
 
                 firstHalfPizza = null;
                 isSelectingSecondHalf = false;
@@ -1001,7 +1052,7 @@
                             description: currentPizzaData.description,
                             category: currentPizzaData.category,
                             selected_slices: selectedSlices
-                        });
+                        }, this); // Passa o botão clicado para a animação
                         pizzaOptionModal.style.display = 'none';
                     });
 
@@ -1029,7 +1080,7 @@
                                 id: 'pending-half-pizza',
                                 category: currentPizzaData.category,
                                 selected_slices: selectedSlices
-                            }
+                            }, this // Passa o botão clicado para a animação
                         );
                         // Pequeno atraso antes de mostrar o modal para garantir que a sidebar atualize
                         setTimeout(() => {
@@ -1046,27 +1097,66 @@
                     price: item.basePrice, // Para bebidas, basePrice é o preço único
                     description: item.description,
                     category: item.category
-                });
+                }, clickedButton); // Passa o botão clicado para a animação
             }
         }
         
         // Adicionar item ao array de pedidos (com abertura da sidebar e feedback)
-        function addToOrder(item) {
+        function addToOrder(item, clickedButton = null) {
             order.push(item);
             updateOrderDisplay();
             updateCartCount();
-            toggleOrderSidebar(); // Abre a sidebar
+
+            // Só abre a sidebar automaticamente se for o primeiro item adicionado (e não for uma meia pizza pendente)
+            // e a sidebar ainda não tiver sido aberta automaticamente antes.
+            if (!hasOrderSidebarOpenedAutomatically && item.type !== 'half_pending') {
+                toggleOrderSidebar(); // Abre a sidebar
+                hasOrderSidebarOpenedAutomatically = true;
+            }
+            // Se for um item subsequente ou uma meia pizza pendente, a sidebar não abrirá automaticamente aqui.
+
+            // Animação de voo para o carrinho
+            if (clickedButton) {
+                animateItemToCart(clickedButton);
+            }
+            
             // Feedback visual de adição
             showTemporaryFeedback('✔️ Adicionado ao pedido!', 'bg-green-500');
         }
 
         // Adicionar item ao array de pedidos (SEM abertura da sidebar e SEM feedback)
-        function addToOrderOnly(item) {
+        function addToOrderOnly(item, clickedButton = null) {
             order.push(item);
             updateOrderDisplay();
             updateCartCount();
+            // Animação de voo para o carrinho
+            if (clickedButton) {
+                animateItemToCart(clickedButton);
+            }
             // Não chama toggleOrderSidebar() aqui
             // Não mostra showTemporaryFeedback() aqui
+        }
+
+        // Nova função para animar o item até o carrinho
+        function animateItemToCart(originElement) {
+            const cartButtonRect = cartButton.getBoundingClientRect();
+            const originRect = originElement.getBoundingClientRect();
+
+            const flyingEl = document.createElement('div');
+            flyingEl.classList.add('fly-to-cart-animation');
+            flyingEl.innerHTML = '<i class="fas fa-plus"></i>'; // Ou um ícone representativo do item
+
+            // Define as posições iniciais e finais como variáveis CSS
+            flyingEl.style.setProperty('--start-x', `${originRect.left + originRect.width / 2 - 15}px`);
+            flyingEl.style.setProperty('--start-y', `${originRect.top + originRect.height / 2 - 15}px`);
+            flyingEl.style.setProperty('--end-x', `${cartButtonRect.left + cartButtonRect.width / 2 - 15}px`);
+            flyingEl.style.setProperty('--end-y', `${cartButtonRect.top + cartButtonRect.height / 2 - 15}px`);
+
+            document.body.appendChild(flyingEl);
+
+            flyingEl.addEventListener('animationend', () => {
+                flyingEl.remove();
+            });
         }
 
         // Função genérica para exibir feedback temporário
@@ -1076,8 +1166,7 @@
             feedback.className = `fixed right-4 ${bgColorClass} text-white px-4 py-2 rounded-lg shadow-lg slide-in`;
             feedback.style.zIndex = '100';
 
-            const cartButton = document.querySelector('.fixed.bottom-6.right-6 button'); // Seleciona o botão do carrinho
-            const cartButtonRect = cartButton.getBoundingClientRect();
+            const cartButtonRect = cartButton.getBoundingClientRect(); // Usa a referência direta
             feedback.style.bottom = `${window.innerHeight - cartButtonRect.top + 10}px`; // Posição acima do botão do carrinho
             document.body.appendChild(feedback);
             
@@ -1168,6 +1257,7 @@
             // Reseta o estado da meia pizza ao limpar o pedido
             firstHalfPizza = null;
             isSelectingSecondHalf = false;
+            hasOrderSidebarOpenedAutomatically = false; // Reseta a flag para permitir nova abertura automática
         }
         
         // Atualizar contagem do carrinho
@@ -1231,6 +1321,7 @@
             updateOrderDisplay();
             updateCartCount();
             closeOrderSidebar();
+            hasOrderSidebarOpenedAutomatically = false; // Reseta a flag após finalizar o pedido
         }
 
         // Função para voltar ao menu
@@ -1292,8 +1383,9 @@
         }
 
         function updatePromotionButtonVisibility() {
+            // Só mostra o botão de promoção se houver promoções ativas E a sidebar do pedido não estiver aberta
             const activePromotionsWithPrice = allPromotionsData.filter(promo => promo.active && promo.promoPrice !== null);
-            if (activePromotionsWithPrice.length > 0) {
+            if (activePromotionsWithPrice.length > 0 && !orderSidebar.classList.contains('translate-x-0')) {
                 promotionButton.style.display = 'flex';
             } else {
                 promotionButton.style.display = 'none';
@@ -1324,8 +1416,7 @@
             const availableDrinks = allMenuData.filter(item => item.category === 'bebidas' && item.available);
 
             if (availableDrinks.length > 0) {
-                // Pega as 3 primeiras bebidas disponíveis ou menos, se não houver 3
-                const drinksToSuggest = availableDrinks.slice(0, 3); 
+                const drinksToSuggest = availableDrinks; 
                 drinksToSuggest.forEach(drink => {
                     const drinkItemHtml = `
                         <div class="suggested-drink-item">
@@ -1349,11 +1440,9 @@
                                 price: item.basePrice,
                                 description: item.description,
                                 category: item.category
-                            });
+                            }, this); // Passa o botão clicado para a animação
                             drinkSuggestionModal.style.display = 'none'; // Fecha o modal após adicionar
-                            // O checkout será revalidado na próxima tentativa, ou você pode chamar checkout() novamente aqui
-                            // Se chamar checkout() aqui, remova o return no checkout() principal
-                            // Para este caso, vamos deixar o usuário tentar finalizar novamente
+                            checkout(); // Chama o checkout imediatamente após adicionar a bebida
                         }
                     });
                 });
@@ -1373,14 +1462,8 @@
         proceedWithoutDrinksBtn.addEventListener('click', function() {
             drinkSuggestionModal.style.display = 'none';
             // Se o usuário optar por continuar sem bebidas, chamamos o checkout novamente
-            // mas desta vez a condição `!hasDrinks` será ignorada (ou podemos adicionar uma flag)
-            // Para simplificar, vamos permitir que o checkout original continue.
-            // A forma mais robusta seria ter uma flag ou um parâmetro para checkout()
-            // que indica que a verificação de bebidas deve ser ignorada para esta chamada.
-            // Por enquanto, vamos chamar o checkout novamente.
-            // ATENÇÃO: Isso pode levar a um loop se o usuário continuar clicando e não houver bebidas.
-            // Uma solução melhor seria ter uma função `finalizeOrder()` separada.
-            // Por simplicidade, para este exemplo, vamos chamar o checkout() novamente.
+            // A lógica original do checkout já irá prosseguir para o WhatsApp se não houver bebidas
+            // e o modal de sugestão não for mais exibido.
             const phoneNumber = '5587996070638'; 
             let message = 'Olá! Gostaria de fazer o seguinte pedido:\n\n';
             let subtotal = 0;
@@ -1410,6 +1493,7 @@
             updateOrderDisplay();
             updateCartCount();
             closeOrderSidebar();
+            hasOrderSidebarOpenedAutomatically = false; // Reseta a flag após finalizar o pedido
         });
 
 
