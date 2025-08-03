@@ -486,10 +486,7 @@
                 Finalizar Pedido
             </button>
             
-            <!-- Botão "Limpar Pedido" -->
-            <button onclick="clearOrder()" class="w-full py-2 bg-gray-200 text-gray-700 font-medium rounded-full hover:bg-gray-300 transition duration-300">
-                Limpar Pedido
-            </button>
+            <!-- O botão "Limpar Pedido" foi removido conforme sua solicitação -->
         </div>
     </div>
 
@@ -516,7 +513,7 @@
 
     <!-- Novo Modal de Promoção Flutuante -->
     <div id="promotion-popup" class="promotion-popup">
-        <div class="promotion-popup-content">
+        <div class="modal-content">
             <span class="close-button" id="close-promotion-popup">&times;</span>
             <h3>Promoções Especiais!</h3>
             <p>Confira as nossas ofertas exclusivas e não perca tempo!</p>
@@ -565,7 +562,7 @@
             <p class="text-lg font-semibold text-gray-800 mb-4">Pedir sem uma bebida?</p>
             <div class="flex justify-center space-x-4">
                 <button id="confirm-no-drink-yes" class="px-6 py-2 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition">Sim!</button>
-                <button id="confirm-no-drink-no" class="px-6 py-2 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition">Não!</button>
+                <button id="confirm-no-drink-no-btn" class="px-6 py-2 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition">Não!</button>
             </div>
         </div>
     </div>
@@ -609,7 +606,7 @@
         let order = [];
         let allMenuData = []; // Armazenará todos os itens do cardápio (pizzas e bebidas)
         let allPromotionsData = [];
-        let hasOrderSidebarOpenedAutomatically = false; // Nova flag para controlar a abertura automática
+        // A flag hasOrderSidebarOpenedAutomatically não é mais necessária, pois a abertura automática foi removida.
 
         // Mapeamento de imagens para pizzas
         const pizzaImages = {
@@ -664,7 +661,7 @@
         const confirmNoDrinkModal = document.getElementById('confirm-no-drink-modal');
         const closeConfirmNoDrinkModalBtn = document.getElementById('close-confirm-no-drink-modal');
         const confirmNoDrinkYesBtn = document.getElementById('confirm-no-drink-yes');
-        const confirmNoDrinkNoBtn = document.getElementById('close-confirm-no-drink-modal'); // Changed from confirmNoDrinkNoBtn to closeConfirmNoDrinkModalBtn
+        const confirmNoDrinkNoBtn = document.getElementById('confirm-no-drink-no-btn'); // ID corrigido
 
 
         let currentPizzaData = {}; // Objeto para armazenar temporariamente os dados da pizza selecionada
@@ -967,9 +964,9 @@
                                 <div class="p-6">
                                     <h3 class="text-xl font-bold text-gray-800 mb-2">${item.name}</h3>
                                     <div class="flex justify-between items-center text-sm mb-4">
-                                        <span class="font-bold text-red-600">4F: R$ ${price4F}</span>
-                                        <span class="font-bold text-red-600">6F: R$ ${price6F}</span>
-                                        <span class="font-bold text-red-600">8F: R$ ${price8F}</span>
+                                        <span class="font-bold text-gray-800">4F:</span> <span class="font-bold text-red-600">R$ ${price4F}</span>
+                                        <span class="font-bold text-gray-800">6F:</span> <span class="font-bold text-red-600">R$ ${price6F}</span>
+                                        <span class="font-bold text-gray-800">8F:</span> <span class="font-bold text-red-600">R$ ${price8F}</span>
                                     </div>
                                     <p class="text-gray-600 text-sm mb-4">${item.description}</p>
                                     <div class="flex justify-end mt-auto">
@@ -1152,19 +1149,14 @@
             }
         }
         
-        // Adicionar item ao array de pedidos (com abertura da sidebar e feedback)
+        // Adicionar item ao array de pedidos (com feedback, mas sem abertura automática da sidebar)
         function addToOrder(item, clickedButton = null, itemImageUrl = null) {
             order.push(item);
             updateOrderDisplay();
             updateCartCount();
 
-            // Só abre a sidebar automaticamente se for o primeiro item adicionado (e não for uma meia pizza pendente)
-            // e a sidebar ainda não tiver sido aberta automaticamente antes.
-            if (!hasOrderSidebarOpenedAutomatically && item.type !== 'half_pending') {
-                toggleOrderSidebar(); // Abre a sidebar
-                hasOrderSidebarOpenedAutomatically = true;
-            }
-            // Se for um item subsequente ou uma meia pizza pendente, a sidebar não abrirá automaticamente aqui.
+            // Abertura automática da sidebar removida conforme sua solicitação.
+            // O usuário agora precisa clicar no botão do carrinho para abrir o pedido.
 
             // Animação de voo para o carrinho
             if (clickedButton) {
@@ -1313,7 +1305,7 @@
             // Reseta o estado da meia pizza ao limpar o pedido
             firstHalfPizza = null;
             isSelectingSecondHalf = false;
-            hasOrderSidebarOpenedAutomatically = false; // Reseta a flag para permitir nova abertura automática
+            // hasOrderSidebarOpenedAutomatically = false; // Não é mais necessária
         }
         
         // Atualizar contagem do carrinho
@@ -1357,7 +1349,7 @@
             updateOrderDisplay();
             updateCartCount();
             closeOrderSidebar();
-            hasOrderSidebarOpenedAutomatically = false; // Reseta a flag após finalizar o pedido
+            // hasOrderSidebarOpenedAutomatically = false; // Não é mais necessária
         }
 
         // Função de finalização do pedido (chamada pelo botão "Finalizar Pedido")
@@ -1549,7 +1541,7 @@
             proceedToWhatsappCheckout(); // Prossegue com o pedido para o WhatsApp
         });
 
-        confirmNoDrinkNoBtn.addEventListener('click', function() {
+        confirmNoDrinkNoBtn.addEventListener('click', function() { // Listener para o botão "Não!" corrigido
             confirmNoDrinkModal.style.display = 'none';
             drinkSuggestionModal.style.display = 'flex'; // Volta para o modal de sugestão de bebida
         });
