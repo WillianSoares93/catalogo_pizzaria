@@ -189,7 +189,7 @@
 
         /* Estilos para o popup de promoção */
         .promotion-popup {
-            display: none;
+            display: none; /* Oculto por padrão */
             position: fixed;
             top: 0;
             left: 0;
@@ -273,6 +273,38 @@
             font-weight: bold;
             color: #dc2626; /* red-600 */
             font-size: 1.1rem;
+        }
+
+        /* Estilos para o botão flutuante de promoção */
+        #promotion-button {
+            display: none; /* Oculto por padrão, será exibido via JS */
+            position: fixed;
+            bottom: 20px;
+            left: 20px; /* Posição à esquerda */
+            background-color: #f97316; /* Laranja vibrante */
+            color: white;
+            padding: 15px 20px;
+            border-radius: 50px; /* Formato de pílula */
+            font-weight: bold;
+            font-size: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+            cursor: pointer;
+            z-index: 1500; /* Acima da maioria dos elementos, mas abaixo dos modais */
+            transition: background-color 0.3s ease;
+            animation: pulse 1.5s infinite; /* Animação de piscar */
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #promotion-button:hover {
+            background-color: #ea580c; /* Laranja mais escuro no hover */
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.7); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(249, 115, 22, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); }
         }
     </style>
 </head>
@@ -440,6 +472,12 @@
         </div>
     </div>
 
+    <!-- Novo Botão Flutuante de Promoção -->
+    <button id="promotion-button" class="hidden">
+        <i class="fas fa-tags text-xl"></i>
+        <span>Promoções!</span>
+    </button>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // URL da planilha Google Sheets publicada como CSV para o cardápio
@@ -510,7 +548,7 @@
                             case 'Preço 4 fatias': return 'price4Slices'; // Nova coluna
                             case 'Categoria': return 'category';
                             case 'É Pizza? (SIM/NÃO)': return 'isPizza';
-                            case 'Disponível (SIM/NÃO)': return 'available'; // CORRIGIDO: Retornou para "SIM/NÃO"
+                            case 'Disponível (SIM/NÃO)': return 'available'; 
                             default: return cleanedHeader.replace(/[^a-zA-Z0-9]+(.)?/g, (match, chr) => chr ? chr.toUpperCase() : '').replace(/^./, (match) => match.toLowerCase());
                         }
                     });
@@ -750,6 +788,8 @@
             const closePromotionPopupBtn = document.getElementById('close-promotion-popup');
             const closePromotionPopupBtnBottom = document.getElementById('close-promotion-popup-btn');
             const promotionsListEl = document.getElementById('promotions-list');
+            // Referência para o novo botão de promoção
+            const promotionButton = document.getElementById('promotion-button');
 
             let currentPizzaData = {}; // Objeto para armazenar temporariamente os dados da pizza selecionada
             let firstHalfPizza = null; // Armazena os dados da primeira metade de uma pizza dividida
@@ -1247,6 +1287,16 @@
                 }
             }
 
+            // Função para controlar a visibilidade do botão de promoção
+            function updatePromotionButtonVisibility() {
+                const activePromotionsWithPrice = allPromotionsData.filter(promo => promo.active && promo.promoPrice !== null);
+                if (activePromotionsWithPrice.length > 0) {
+                    promotionButton.style.display = 'flex'; // Mostra o botão
+                } else {
+                    promotionButton.style.display = 'none'; // Oculta o botão
+                }
+            }
+
             // Listeners para fechar o modal de promoção
             closePromotionPopupBtn.addEventListener('click', function() {
                 promotionPopup.style.display = 'none';
@@ -1258,6 +1308,11 @@
                 if (event.target == promotionPopup) {
                     promotionPopup.style.display = 'none';
                 }
+            });
+
+            // Listener para o novo botão de promoção
+            promotionButton.addEventListener('click', function() {
+                displayPromotionsPopup(); // Exibe o popup quando o botão é clicado
             });
 
             // Listener para fechar o modal de seleção de pizza
@@ -1412,7 +1467,7 @@
                 allPromotionsData = await loadPromotionsFromSheet(); // Carrega todos os dados das promoções
                 
                 populateMenu(allMenuData); // Popula o cardápio dinamicamente com os dados carregados
-                displayPromotionsPopup(); // Exibe o popup de promoções se houver
+                updatePromotionButtonVisibility(); // Atualiza a visibilidade do botão de promoção
                 
                 // Dispara um evento de rolagem após um curto atraso para garantir que o observer seja executado
                 // depois que todos os elementos forem renderizados e posicionados corretamente.
