@@ -557,6 +557,18 @@
         </div>
     </div>
 
+    <!-- NOVO: Modal de Sugestão de Instalação do PWA -->
+    <div id="install-prompt-modal" class="message-modal">
+        <div class="modal-content">
+            <span class="close-button" id="close-install-prompt-modal">&times;</span>
+            <p class="text-lg font-semibold text-gray-800 mb-4">Instale o Sâmia Cardápio para uma experiência completa!</p>
+            <p class="text-gray-600 mb-6">Adicione nosso aplicativo à sua tela inicial para acesso rápido e fácil, mesmo offline.</p>
+            <button id="install-app-button" class="px-6 py-3 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition w-full">
+                Instalar Aplicativo
+            </button>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="bg-gray-800 text-white py-8 px-4">
         <div class="max-w-6xl mx-auto">
@@ -601,6 +613,7 @@
         let allPromotionsData = [];
         let isSelectingHalfPizza = false; // Nova flag para controlar se o usuário está selecionando uma meia pizza (qualquer categoria)
         let isFirstHalfPromotional = false; // Nova flag para indicar se a primeira metade foi promocional
+        let deferredPrompt; // Variável para armazenar o evento beforeinstallprompt
 
         // Imagem padrão para pizzas sem link na planilha
         const defaultPizzaImage = 'https://upload.wikimedia.org/wikipedia/commons/9/91/Pizza-3007395.jpg';
@@ -636,11 +649,16 @@
         const suggestedDrinksList = document.getElementById('suggested-drinks-list');
         const proceedWithoutDrinksBtn = document.getElementById('proceed-without-drinks');
 
-        // NOVO: Referências para o modal de confirmação de pedido sem bebida
+        // Referências para o modal de confirmação de pedido sem bebida
         const confirmNoDrinkModal = document.getElementById('confirm-no-drink-modal');
         const closeConfirmNoDrinkModalBtn = document.getElementById('close-confirm-no-drink-modal');
         const confirmNoDrinkYesBtn = document.getElementById('confirm-no-drink-yes');
         const confirmNoDrinkNoBtn = document.getElementById('confirm-no-drink-no-btn'); // ID corrigido
+
+        // NOVO: Referências para o modal de instalação do PWA
+        const installPromptModal = document.getElementById('install-prompt-modal');
+        const closeInstallPromptModalBtn = document.getElementById('close-install-prompt-modal');
+        const installAppButton = document.getElementById('install-app-button');
 
 
         let currentPizzaData = {}; // Objeto para armazenar temporariamente os dados da pizza selecionada
@@ -1882,6 +1900,79 @@
                     });
             });
         }
+
+        // --- Lógica de Instalação do PWA ---
+
+        // Verifica se o PWA já está instalado
+        function isPwaInstalled() {
+            // Para Chrome/Android
+            if (window.matchMedia('(display-mode: standalone)').matches) {
+                return true;
+            }
+            // Para Safari/iOS (mais antigo, pode não ser totalmente preciso)
+            if (navigator.standalone) {
+                return true;
+            }
+            return false;
+        }
+
+        // Listener para o evento beforeinstallprompt
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Previne que o mini-infobar padrão apareça
+            e.preventDefault();
+            // Armazena o evento para que possa ser acionado mais tarde
+            deferredPrompt = e;
+            
+            // Se o PWA não estiver instalado, mostra o botão/modal de instalação
+            if (!isPwaInstalled()) {
+                installPromptModal.style.display = 'flex';
+            }
+        });
+
+        // Listener para o botão de instalação no modal
+        installAppButton.addEventListener('click', () => {
+            // Esconde o modal de instalação
+            installPromptModal.style.display = 'none';
+            
+            // Mostra o prompt de instalação do navegador
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                // Aguarda a escolha do usuário
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('Usuário aceitou a instalação do PWA');
+                        showMessageModal('Sâmia Cardápio instalado com sucesso! 🎉');
+                    } else {
+                        console.log('Usuário recusou a instalação do PWA');
+                        showMessageModal('Você pode instalar o Sâmia Cardápio a qualquer momento pelo menu do navegador.');
+                    }
+                    deferredPrompt = null; // Limpa o evento
+                });
+            }
+        });
+
+        // Listener para fechar o modal de instalação (botão X)
+        closeInstallPromptModalBtn.addEventListener('click', () => {
+            installPromptModal.style.display = 'none';
+        });
+
+        // Listener para quando o aplicativo é realmente instalado
+        window.addEventListener('appinstalled', () => {
+            // Esconde qualquer UI de instalação se ela estiver visível
+            installPromptModal.style.display = 'none';
+            console.log('PWA Sâmia Cardápio foi instalado!');
+        });
+
+        // Verifica a instalação ao carregar a página (após um pequeno atraso)
+        // Isso é útil caso o beforeinstallprompt não seja disparado imediatamente
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                if (!isPwaInstalled() && deferredPrompt) {
+                    installPromptModal.style.display = 'flex';
+                }
+            }, 3000); // Atraso de 3 segundos para não ser intrusivo
+        });
+
     </script>
 </body>
 </html>
