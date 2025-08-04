@@ -976,28 +976,19 @@
                                 let priceDisplayHtml = '';
                                 if (item.price4Slices > 0) {
                                     priceDisplayHtml += `
-                                        <span class="flex items-baseline gap-x-0.5">
-                                            <span class="font-bold text-gray-800">4F:</span>
-                                            <span class="font-bold text-red-600 text-lg">R$ ${item.price4Slices.toFixed(2).replace('.', ',')}</span>
-                                        </span>
+                                        <span class="font-bold text-gray-800 whitespace-nowrap">4F: <span class="text-red-600 text-lg">R$ ${item.price4Slices.toFixed(2).replace('.', ',')}</span></span>
                                     `;
                                 }
                                 if (item.price6Slices > 0) {
                                     if (priceDisplayHtml !== '') priceDisplayHtml += `<span class="text-gray-400 px-0.5">|</span>`; /* Reduzido o espaçamento aqui */
                                     priceDisplayHtml += `
-                                        <span class="flex items-baseline gap-x-0.5">
-                                            <span class="font-bold text-gray-800">6F:</span>
-                                            <span class="font-bold text-red-600 text-lg">R$ ${item.price6Slices.toFixed(2).replace('.', ',')}</span>
-                                        </span>
+                                        <span class="font-bold text-gray-800 whitespace-nowrap">6F: <span class="text-red-600 text-lg">R$ ${item.price6Slices.toFixed(2).replace('.', ',')}</span></span>
                                     `;
                                 }
                                 if (item.basePrice > 0) { // basePrice é para 8 fatias
                                     if (priceDisplayHtml !== '') priceDisplayHtml += `<span class="text-gray-400 px-0.5">|</span>`; /* Reduzido o espaçamento aqui */
                                     priceDisplayHtml += `
-                                        <span class="flex items-baseline gap-x-0.5">
-                                            <span class="font-bold text-gray-800">8F:</span>
-                                            <span class="font-bold text-red-600 text-lg">R$ ${item.basePrice.toFixed(2).replace('.', ',')}</span>
-                                        </span>
+                                        <span class="font-bold text-gray-800 whitespace-nowrap">8F: <span class="text-red-600 text-lg">R$ ${item.basePrice.toFixed(2).replace('.', ',')}</span></span>
                                     `;
                                 }
                                 
