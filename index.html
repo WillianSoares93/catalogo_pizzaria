@@ -514,8 +514,8 @@
                     <span class="text-gray-600">Forma de Pagamento:</span>
                     <span id="selectedPaymentMethodText" class="font-bold text-red-600">Não selecionado</span>
                 </div>
-                <button onclick="openPaymentMethodModal()" class="w-full py-2 bg-gray-200 text-gray-800 rounded-md text-sm hover:bg-gray-300 transition">
-                    Alterar Forma de Pagamento
+                <button onclick="openPaymentMethodModal(false)" class="w-full py-2 bg-gray-200 text-gray-800 rounded-md text-sm hover:bg-gray-300 transition">
+                    Escolher Forma de Pagamento
                 </button>
             </div>
             
@@ -707,7 +707,8 @@
         let isSelectingHalfPizza = false; // Nova flag para controlar se o usuário está selecionando uma meia pizza (qualquer categoria)
         let isFirstHalfPromotional = false; // Nova flag para indicar se a primeira metade foi promocional
         let deferredPrompt; // Variável para armazenar o evento beforeinstallprompt
-        let selectedPaymentMethod = null; // NOVO: Variável para armazenar a forma de pagamento selecionada
+        let selectedPaymentMethod = null; // Variável para armazenar a forma de pagamento selecionada
+        let isCheckoutInitiated = false; // NOVO: Flag para controlar se o modal de pagamento foi aberto pelo checkout
 
         // Imagem padrão para pizzas sem link na planilha
         const defaultPizzaImage = 'https://upload.wikimedia.org/wikipedia/commons/9/91/Pizza-3007395.jpg';
@@ -749,12 +750,12 @@
         const confirmNoDrinkYesBtn = document.getElementById('confirm-no-drink-yes');
         const confirmNoDrinkNoBtn = document.getElementById('confirm-no-drink-no-btn'); // ID corrigido
 
-        // NOVO: Referências para o modal de instalação do PWA
+        // Referências para o modal de instalação do PWA
         const installPromptModal = document.getElementById('install-prompt-modal');
         const closeInstallPromptModalBtn = document.getElementById('close-install-prompt-modal');
         const installAppButton = document.getElementById('install-app-button');
 
-        // NOVO: Referências para o modal de seleção de forma de pagamento
+        // Referências para o modal de seleção de forma de pagamento
         const paymentMethodModal = document.getElementById('payment-method-modal');
         const closePaymentMethodModalBtn = document.getElementById('close-payment-method-modal');
         const paymentOptionsContainer = document.getElementById('payment-options-container');
@@ -1598,7 +1599,7 @@
             message += `\nTaxa de entrega: R$ ${deliveryFee.toFixed(2).replace('.', ',')}`;
             message += `\nTotal: R$ ${total.toFixed(2).replace('.', ',')}`;
             
-            // NOVO: Adiciona a forma de pagamento à mensagem do WhatsApp
+            // Adiciona a forma de pagamento à mensagem do WhatsApp
             if (selectedPaymentMethod) {
                 message += `\nForma de Pagamento: ${selectedPaymentMethod}`;
             }
@@ -1638,15 +1639,21 @@
                 return;
             }
 
-            // NOVA LÓGICA: Verifica se há alguma bebida no pedido
+            // Verifica se há alguma bebida no pedido
             const hasDrinks = order.some(item => item.category === 'bebidas');
             if (!hasDrinks) {
                 displayDrinkSuggestionModal(); // Chama o novo modal de sugestão de bebidas
                 return; // Interrompe o checkout para que o usuário possa escolher uma bebida
             }
 
-            // NOVO: Se tudo estiver OK e bebidas verificadas, abre o modal de seleção de pagamento
-            openPaymentMethodModal();
+            // NOVO: Se tudo estiver OK e bebidas verificadas, verifica a forma de pagamento
+            if (!selectedPaymentMethod) {
+                isCheckoutInitiated = true; // Define a flag para indicar que o modal foi aberto pelo checkout
+                openPaymentMethodModal(true); // Abre o modal de pagamento
+            } else {
+                // Se já houver um método de pagamento selecionado, prossegue para o WhatsApp
+                proceedToWhatsappCheckout();
+            }
         }
 
         // Função para voltar ao menu
@@ -1784,8 +1791,9 @@
                                 category: item.category
                             }, this, null); // Passa o botão clicado e null para a imagem (bebidas não têm)
                             drinkSuggestionModal.style.display = 'none'; // Fecha o modal após adicionar
-                            // NOVO: Após adicionar bebida, abre o modal de pagamento
-                            openPaymentMethodModal(); 
+                            // Após adicionar bebida, abre o modal de pagamento
+                            isCheckoutInitiated = true; // Define a flag para o próximo modal
+                            openPaymentMethodModal(true); 
                         }
                     });
                 });
@@ -1808,7 +1816,7 @@
             confirmNoDrinkModal.style.display = 'flex'; // Mostra o modal de confirmação
         });
 
-        // NOVO: Listeners para o modal de confirmação de pedido sem bebida
+        // Listeners para o modal de confirmação de pedido sem bebida
         closeConfirmNoDrinkModalBtn.addEventListener('click', function() {
             confirmNoDrinkModal.style.display = 'none';
             drinkSuggestionModal.style.display = 'flex'; // Volta para o modal de sugestão de bebida
@@ -1816,8 +1824,9 @@
 
         confirmNoDrinkYesBtn.addEventListener('click', function() {
             confirmNoDrinkModal.style.display = 'none';
-            // NOVO: Após confirmar que não quer bebida, abre o modal de pagamento
-            openPaymentMethodModal(); 
+            // Após confirmar que não quer bebida, abre o modal de pagamento
+            isCheckoutInitiated = true; // Define a flag para o próximo modal
+            openPaymentMethodModal(true); 
         });
 
         confirmNoDrinkNoBtn.addEventListener('click', function() { // Listener para o botão "Não!" corrigido
@@ -1832,8 +1841,9 @@
             }
         });
 
-        // NOVO: Funções para o modal de seleção de forma de pagamento
-        function openPaymentMethodModal() {
+        // Funções para o modal de seleção de forma de pagamento
+        function openPaymentMethodModal(fromCheckout = false) { // NOVO: Parâmetro para indicar se veio do checkout
+            isCheckoutInitiated = fromCheckout; // Define a flag global
             paymentMethodModal.style.display = 'flex';
             // Se já houver um método selecionado, marca o rádio button correspondente
             if (selectedPaymentMethod) {
@@ -1882,7 +1892,15 @@
                 selectedPaymentMethod = selectedRadio.value;
                 selectedPaymentMethodText.textContent = selectedPaymentMethod;
                 closePaymentMethodModal();
-                proceedToWhatsappCheckout(); // Prossegue para o WhatsApp após confirmar o pagamento
+                
+                // NOVO: Lógica condicional baseada em como o modal foi aberto
+                if (isCheckoutInitiated) {
+                    proceedToWhatsappCheckout(); // Se veio do checkout, prossegue para o WhatsApp
+                } else {
+                    // Se veio do botão "Escolher Forma de Pagamento", apenas volta para a sidebar do pedido
+                    // A sidebar já está aberta, então não precisa fazer nada além de fechar o modal.
+                }
+                isCheckoutInitiated = false; // Reseta a flag após a ação
             } else {
                 showMessageModal('Por favor, selecione uma forma de pagamento.');
             }
@@ -2059,7 +2077,7 @@
             }
         });
 
-        // NOVO: Adicionado para registrar o Service Worker
+        // Adicionado para registrar o Service Worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/service-worker.js')
