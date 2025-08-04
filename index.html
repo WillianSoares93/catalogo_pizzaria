@@ -1476,6 +1476,7 @@
             const orderItemsContainer = document.getElementById('orderItems');
             
             if (order.length === 0) {
+                console.log("DEBUG: Order empty, resetting selectedPaymentMethod to null.");
                 emptyOrderMessage.classList.remove('hidden');
                 orderItemsContainer.innerHTML = '';
                 orderItemsContainer.appendChild(emptyOrderMessage);
@@ -1486,6 +1487,7 @@
                 selectedPaymentMethod = null; // Reseta a forma de pagamento
                 selectedPaymentMethodText.textContent = 'Não selecionado';
             } else {
+                console.log("DEBUG: Order not empty, selectedPaymentMethod is:", selectedPaymentMethod);
                 emptyOrderMessage.classList.add('hidden');
                 paymentMethodDisplay.classList.remove('hidden'); // Mostra a forma de pagamento se houver itens
                 
@@ -1626,9 +1628,9 @@
 
         // Função de finalização do pedido (chamada pelo botão "Finalizar Pedido")
         function checkout() {
-            console.log("Checkout function called. Current order length:", order.length); // Debug log
+            console.log("DEBUG: checkout() called. selectedPaymentMethod:", selectedPaymentMethod);
             if (order.length === 0) {
-                console.log("Order is empty. Showing message modal."); // Debug log
+                console.log("DEBUG: Order is empty. Showing message modal.");
                 showMessageModal('O seu pedido está vazio. Adicione itens antes de finalizar.');
                 return;
             }
@@ -1646,7 +1648,7 @@
                 return; // Interrompe o checkout para que o usuário possa escolher uma bebida
             }
 
-            // NOVO: Se tudo estiver OK e bebidas verificadas, verifica a forma de pagamento
+            // Se tudo estiver OK e bebidas verificadas, verifica a forma de pagamento
             if (!selectedPaymentMethod) {
                 isCheckoutInitiated = true; // Define a flag para indicar que o modal foi aberto pelo checkout
                 openPaymentMethodModal(true); // Abre o modal de pagamento
@@ -1851,6 +1853,7 @@
                 if (radio) {
                     radio.checked = true;
                     // Adiciona a classe 'selected' ao label pai
+                    document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('selected')); // Garante que apenas um esteja selecionado
                     radio.closest('.payment-option').classList.add('selected');
                 }
             } else {
@@ -1860,6 +1863,7 @@
                     radio.closest('.payment-option').classList.remove('selected');
                 });
             }
+            console.log("DEBUG: openPaymentMethodModal() called. fromCheckout:", fromCheckout, "selectedPaymentMethod on entry:", selectedPaymentMethod);
         }
 
         function closePaymentMethodModal() {
@@ -1890,13 +1894,16 @@
             const selectedRadio = document.querySelector('input[name="paymentMethod"]:checked');
             if (selectedRadio) {
                 selectedPaymentMethod = selectedRadio.value;
+                console.log("DEBUG: Payment method selected:", selectedPaymentMethod);
                 selectedPaymentMethodText.textContent = selectedPaymentMethod;
                 closePaymentMethodModal();
                 
-                // NOVO: Lógica condicional baseada em como o modal foi aberto
+                // Lógica condicional baseada em como o modal foi aberto
                 if (isCheckoutInitiated) {
+                    console.log("DEBUG: Initiated from checkout, proceeding to WhatsApp.");
                     proceedToWhatsappCheckout(); // Se veio do checkout, prossegue para o WhatsApp
                 } else {
+                    console.log("DEBUG: Not initiated from checkout, returning to order sidebar.");
                     // Se veio do botão "Escolher Forma de Pagamento", apenas volta para a sidebar do pedido
                     // A sidebar já está aberta, então não precisa fazer nada além de fechar o modal.
                 }
@@ -1917,18 +1924,20 @@
         }
 
         function setActiveCategoryButton(category) {
-            const categoryBtns = document.querySelectorAll('.category-btn'); // Re-seleciona os botões
+            const categoryBtns = document.querySelectorAll('.category-btn');
             categoryBtns.forEach(btn => {
-                if (btn.dataset.category === category) {
-                    btn.classList.remove('bg-gray-200', 'text-gray-800');
-                    btn.classList.add('bg-red-600', 'text-white');
-                    // Ensure the active button is visible in the scrollable category bar
-                    btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-                } else {
-                    btn.classList.remove('bg-gray-200', 'text-white');
-                    btn.classList.add('bg-gray-200', 'text-gray-800'); // Ensure non-active buttons are gray
-                }
+                // Reset all buttons to default inactive state
+                btn.classList.remove('bg-red-600', 'text-white');
+                btn.classList.add('bg-gray-200', 'text-gray-800');
             });
+
+            // Find and activate the target button
+            const targetBtn = document.querySelector(`.category-btn[data-category="${category}"]`);
+            if (targetBtn) {
+                targetBtn.classList.remove('bg-gray-200', 'text-gray-800'); // Remove default gray
+                targetBtn.classList.add('bg-red-600', 'text-white'); // Add active red/white
+                targetBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
         }
 
         let categoryObserver; // Declara a variável no escopo global/superior
