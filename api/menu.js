@@ -1,3 +1,16 @@
+// Para usar 'import' em vez de 'require' em Serverless Functions do Vercel,
+// você precisa garantir que o ambiente Node.js trate este arquivo como um módulo ES.
+// A forma mais comum de fazer isso é adicionando "type": "module" no seu package.json
+// ou renomeando o arquivo para .mjs.
+// No Vercel, a forma mais simples é garantir que o package.json esteja configurado corretamente.
+// O erro "ERR_REQUIRE_ESM" indica que o Vercel está tratando este arquivo como CommonJS.
+
+// A solução é garantir que o package.json na raiz do seu projeto tenha:
+// {
+//   "type": "module"
+// }
+// E que 'node-fetch' seja importado como abaixo.
+
 import fetch from 'node-fetch';
 
 // ATENÇÃO: Substitua esta URL pela URL CSV DA SUA PLANILHA DE CARDÁPIO PUBLICADA.
@@ -38,3 +51,4 @@ export default async (req, res) => {
         res.status(500).json({ error: 'Erro interno no servidor ao carregar dados.' });
     }
 };
+
