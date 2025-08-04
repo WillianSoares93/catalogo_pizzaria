@@ -528,16 +528,16 @@
             <span class="close-button" id="close-drink-suggestion-modal">&times;</span>
             <h3 class="text-xl font-bold text-gray-800 mb-4">Que tal adicionar uma bebida?</h3>
             <p class="text-gray-600 mb-6">Seu pedido não contém bebidas. Gostaria de adicionar alguma?</p>
-            <div id="suggested-drinks-list" class="flex flex-col gap-3 mb-6">
-                <!-- Sugestões de bebidas serão inseridas aqui via JS -->
-            </div>
-            <!-- Novo botão de voltar para o cardápio -->
+            <!-- NOVO: Botões movidos para antes da lista de bebidas -->
             <button onclick="backToMenuFromDrinkSuggestion()" class="px-6 py-3 bg-gray-500 text-white rounded-lg font-bold hover:bg-gray-600 transition w-full mb-3">
                 Voltar para o Cardápio
             </button>
-            <button id="proceed-without-drinks" class="px-6 py-3 bg-gray-500 text-white rounded-lg font-bold hover:bg-gray-600 transition w-full">
+            <button id="proceed-without-drinks" class="px-6 py-3 bg-gray-500 text-white rounded-lg font-bold hover:bg-gray-600 transition w-full mb-6">
                 Continuar sem bebidas
             </button>
+            <div id="suggested-drinks-list" class="flex flex-col gap-3 mb-6">
+                <!-- Sugestões de bebidas serão inseridas aqui via JS -->
+            </div>
         </div>
     </div>
 
@@ -592,7 +592,8 @@
         let order = [];
         let allMenuData = []; // Armazenará todos os itens do cardápio (pizzas e bebidas)
         let allPromotionsData = [];
-        let isSelectingPromotionalHalfPizza = false; // Nova flag para controlar a seleção de meia pizza promocional
+        let isSelectingHalfPizza = false; // Nova flag para controlar se o usuário está selecionando uma meia pizza (qualquer categoria)
+        let isFirstHalfPromotional = false; // Nova flag para indicar se a primeira metade foi promocional
 
         // Mapeamento de imagens para pizzas
         const pizzaImages = {
@@ -719,15 +720,6 @@
         function hideMessageModal() {
             messageModal.style.display = 'none';
         }
-
-        // Listeners para fechar o modal de mensagem (mantidos, mas a lógica principal está em showMessageModal)
-        // closeMessageModalBtn.addEventListener('click', hideMessageModal); // Removido para evitar conflito
-        // okMessageModalBtn.addEventListener('click', hideMessageModal); // Removido para evitar conflito
-        // window.addEventListener('click', function(event) { // Removido para evitar conflito
-        //     if (event.target == messageModal) {
-        //         hideMessageModal();
-        //     }
-        // });
 
         // Listeners para fechar o modal de seleção de pizza
         closePizzaOptionModalBtn.addEventListener('click', function() {
@@ -983,15 +975,30 @@
                                 // Constrói o HTML para exibição de preços dinamicamente
                                 let priceDisplayHtml = '';
                                 if (item.price4Slices > 0) {
-                                    priceDisplayHtml += `<span class="font-bold text-gray-800">4F:</span> <span class="font-bold text-red-600">R$ ${item.price4Slices.toFixed(2).replace('.', ',')}</span>`;
+                                    priceDisplayHtml += `
+                                        <span class="flex items-baseline gap-x-0.5">
+                                            <span class="font-bold text-gray-800">4F:</span>
+                                            <span class="font-bold text-red-600 text-lg">R$ ${item.price4Slices.toFixed(2).replace('.', ',')}</span>
+                                        </span>
+                                    `;
                                 }
                                 if (item.price6Slices > 0) {
-                                    if (priceDisplayHtml !== '') priceDisplayHtml += '<span class="mx-2 text-gray-400">|</span>';
-                                    priceDisplayHtml += `<span class="font-bold text-gray-800">6F:</span> <span class="font-bold text-red-600">R$ ${item.price6Slices.toFixed(2).replace('.', ',')}</span>`;
+                                    if (priceDisplayHtml !== '') priceDisplayHtml += `<span class="text-gray-400 px-1">|</span>`;
+                                    priceDisplayHtml += `
+                                        <span class="flex items-baseline gap-x-0.5">
+                                            <span class="font-bold text-gray-800">6F:</span>
+                                            <span class="font-bold text-red-600 text-lg">R$ ${item.price6Slices.toFixed(2).replace('.', ',')}</span>
+                                        </span>
+                                    `;
                                 }
                                 if (item.basePrice > 0) { // basePrice é para 8 fatias
-                                    if (priceDisplayHtml !== '') priceDisplayHtml += '<span class="mx-2 text-gray-400">|</span>';
-                                    priceDisplayHtml += `<span class="font-bold text-gray-800">8F:</span> <span class="font-bold text-red-600">R$ ${item.basePrice.toFixed(2).replace('.', ',')}</span>`;
+                                    if (priceDisplayHtml !== '') priceDisplayHtml += `<span class="text-gray-400 px-1">|</span>`;
+                                    priceDisplayHtml += `
+                                        <span class="flex items-baseline gap-x-0.5">
+                                            <span class="font-bold text-gray-800">8F:</span>
+                                            <span class="font-bold text-red-600 text-lg">R$ ${item.basePrice.toFixed(2).replace('.', ',')}</span>
+                                        </span>
+                                    `;
                                 }
                                 
                                 const imageUrl = item.imageUrl || defaultPizzaImage;
@@ -1001,7 +1008,8 @@
                                         <img src="${imageUrl}" alt="Pizza de ${item.name}" class="w-full h-40 object-cover" onerror="this.onerror=null;this.src='${defaultPizzaImage}';">
                                         <div class="p-6">
                                             <h3 class="text-xl font-bold text-gray-800 mb-2">${item.name}</h3>
-                                            <div class="flex flex-wrap gap-x-4 gap-y-1 items-center text-sm mb-4 justify-center">
+                                            <!-- Ajustado para alinhar à esquerda e reduzir espaçamento -->
+                                            <div class="flex flex-wrap gap-x-2 gap-y-1 items-center text-sm mb-4 justify-start">
                                                 ${priceDisplayHtml}
                                             </div>
                                             <p class="text-gray-600 text-sm mb-4">${item.description}</p>
@@ -1063,16 +1071,17 @@
                     const targetCategory = this.dataset.category;
                     const targetId = this.dataset.targetId;
 
-                    // Se estiver selecionando uma meia pizza promocional e tentar ir para outra categoria
-                    if (isSelectingPromotionalHalfPizza && targetCategory.toLowerCase() !== 'promocionais') {
-                        event.preventDefault(); // Previne a rolagem padrão
-                        showMessageModal('Para pizzas promocionais, a segunda metade deve ser também de uma pizza promocional.', () => {
-                            // Callback para o botão OK: rola para a categoria promocional
-                            document.getElementById('promocionais-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
-                            // Garante que o botão da categoria promocional esteja ativo
-                            setActiveCategoryButton('promocionais');
-                        });
-                        return; // Interrompe a execução posterior
+                    if (isSelectingHalfPizza && isFirstHalfPromotional) { // Se a primeira metade foi promocional, restringe a navegação
+                        if (targetCategory.toLowerCase() !== 'promocionais') {
+                            event.preventDefault(); // Previne a rolagem padrão
+                            showMessageModal('Para pizzas promocionais, a segunda metade deve ser também de uma pizza promocional.', () => {
+                                // Callback para o botão OK: rola para a categoria promocional
+                                document.getElementById('promocionais-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                // Garante que o botão da categoria promocional esteja ativo
+                                setActiveCategoryButton('promocionais');
+                            });
+                            return; // Interrompe a execução posterior
+                        }
                     }
 
                     setActiveCategoryButton(targetCategory);
@@ -1105,18 +1114,28 @@
                 const itemId = button.dataset.itemId;
                 const item = allMenuData.find(i => i.id === itemId);
 
-                if (enableAll) {
+                if (enableAll || !isSelectingHalfPizza) { // Se reativando tudo, ou não está no modo de meia pizza
                     button.removeAttribute('disabled');
                     button.classList.remove('opacity-50', 'cursor-not-allowed');
-                } else {
-                    // Desativa se não for uma pizza promocional OU se não for uma pizza (bebida)
-                    if (item && item.category.toLowerCase() !== 'promocionais') {
-                        button.setAttribute('disabled', 'true');
-                        button.classList.add('opacity-50', 'cursor-not-allowed');
-                    } else {
-                        // Garante que pizzas promocionais (e outras que não devem ser desativadas) permaneçam ativas
-                        button.removeAttribute('disabled'); 
-                        button.classList.remove('opacity-50', 'cursor-not-allowed');
+                } else { // isSelectingHalfPizza é true
+                    if (isFirstHalfPromotional) {
+                        // Primeira metade foi promocional: só habilita pizzas promocionais
+                        if (item && item.category.toLowerCase() === 'promocionais') {
+                            button.removeAttribute('disabled');
+                            button.classList.remove('opacity-50', 'cursor-not-allowed');
+                        } else {
+                            button.setAttribute('disabled', 'true');
+                            button.classList.add('opacity-50', 'cursor-not-allowed');
+                        }
+                    } else { // Primeira metade NÃO foi promocional
+                        // Desabilita pizzas promocionais
+                        if (item && item.category.toLowerCase() === 'promocionais') {
+                            button.setAttribute('disabled', 'true');
+                            button.classList.add('opacity-50', 'cursor-not-allowed');
+                        } else {
+                            button.removeAttribute('disabled'); // Habilita pizzas/bebidas não promocionais
+                            button.classList.remove('opacity-50', 'cursor-not-allowed');
+                        }
                     }
                 }
             });
@@ -1125,18 +1144,29 @@
         // Função para desativar/ativar botões de categoria
         function toggleCategoryButtons(enableAll = true) {
             document.querySelectorAll('.category-btn').forEach(button => {
-                if (enableAll) {
+                const category = button.dataset.category.toLowerCase();
+                if (enableAll || !isSelectingHalfPizza) { // Se reativando tudo, ou não está no modo de meia pizza
                     button.removeAttribute('disabled');
                     button.classList.remove('opacity-50', 'cursor-not-allowed');
-                } else {
-                    // Desativa se não for a categoria "promocionais"
-                    if (button.dataset.category.toLowerCase() !== 'promocionais') {
-                        button.setAttribute('disabled', 'true');
-                        button.classList.add('opacity-50', 'cursor-not-allowed');
-                    } else {
-                        // Garante que o botão promocional permaneça ativo
-                        button.removeAttribute('disabled'); 
-                        button.classList.remove('opacity-50', 'cursor-not-allowed');
+                } else { // isSelectingHalfPizza é true
+                    if (isFirstHalfPromotional) {
+                        // Primeira metade foi promocional: só habilita o botão da categoria promocional
+                        if (category === 'promocionais') {
+                            button.removeAttribute('disabled');
+                            button.classList.remove('opacity-50', 'cursor-not-allowed');
+                        } else {
+                            button.setAttribute('disabled', 'true');
+                            button.classList.add('opacity-50', 'cursor-not-allowed');
+                        }
+                    } else { // Primeira metade NÃO foi promocional
+                        // Desabilita o botão da categoria promocional
+                        if (category === 'promocionais') {
+                            button.setAttribute('disabled', 'true');
+                            button.classList.add('opacity-50', 'cursor-not-allowed');
+                        } else {
+                            button.removeAttribute('disabled'); // Habilita categorias não promocionais
+                            button.classList.remove('opacity-50', 'cursor-not-allowed');
+                        }
                     }
                 }
             });
@@ -1162,14 +1192,15 @@
                     return;
                 }
 
-                // NOVA REGRA: Se a primeira metade é promocional, a segunda também deve ser
-                if (firstHalfPizza.category.toLowerCase() === 'promocionais' && item.category.toLowerCase() !== 'promocionais') {
+                // Lógica de restrição para a segunda metade
+                if (isFirstHalfPromotional && item.category.toLowerCase() !== 'promocionais') {
                     showMessageModal('Para pizzas promocionais, a segunda metade deve ser também de uma pizza promocional.', () => {
-                        // Callback para o botão OK: rola para a categoria promocional
                         document.getElementById('promocionais-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        // Garante que o botão da categoria promocional esteja ativo
                         setActiveCategoryButton('promocionais');
                     });
+                    return;
+                } else if (!isFirstHalfPromotional && item.category.toLowerCase() === 'promocionais') {
+                    showMessageModal('Você começou a montar uma pizza meio a meio com um sabor não promocional. A segunda metade não pode ser de uma pizza promocional.');
                     return;
                 }
 
@@ -1202,12 +1233,10 @@
 
                 firstHalfPizza = null;
                 isSelectingSecondHalf = false;
-                // Ao adicionar a segunda metade, reativa tudo
-                if (isSelectingPromotionalHalfPizza) {
-                    isSelectingPromotionalHalfPizza = false;
-                    toggleAddItemButtons(true); // Reativa todos os botões "Adicionar"
-                    toggleCategoryButtons(true); // Reativa todos os botões de categoria
-                }
+                isSelectingHalfPizza = false; // Reseta a flag principal de seleção de meia pizza
+                isFirstHalfPromotional = false; // Reseta a flag de primeira metade promocional
+                toggleAddItemButtons(true); // Reativa todos os botões "Adicionar"
+                toggleCategoryButtons(true); // Reativa todos os botões de categoria
                 showTemporaryFeedback('Pizza meio a meio adicionada ao pedido!', 'bg-green-500'); // Usar feedback temporário
                 
             } else if (item.isPizza) {
@@ -1276,14 +1305,12 @@
                             category: currentPizzaData.category // Armazena a categoria da primeira metade
                         };
                         isSelectingSecondHalf = true;
+                        isSelectingHalfPizza = true; // Ativa a flag principal de seleção de meia pizza
+                        isFirstHalfPromotional = (currentPizzaData.category.toLowerCase() === 'promocionais'); // Define se a primeira metade foi promocional
                         pizzaOptionModal.style.display = 'none';
 
-                        // Se a primeira metade é promocional, ativa a flag e desativa outros botões
-                        if (firstHalfPizza.category.toLowerCase() === 'promocionais') {
-                            isSelectingPromotionalHalfPizza = true;
-                            toggleAddItemButtons(false); // Desativa botões "Adicionar" de não-promocionais
-                            toggleCategoryButtons(false); // Desativa botões de categoria de não-promocionais
-                        }
+                        toggleAddItemButtons(false); // Desativa/ativa botões "Adicionar" com base nas novas flags
+                        toggleCategoryButtons(false); // Desativa/ativa botões de categoria com base nas novas flags
                         
                         // Adiciona a meia pizza pendente ao pedido IMEDIATAMENTE
                         addToOrderOnly(
@@ -1460,11 +1487,10 @@
             if (removedItem && removedItem.id === 'pending-half-pizza') {
                 firstHalfPizza = null;
                 isSelectingSecondHalf = false;
-                if (isSelectingPromotionalHalfPizza) {
-                    isSelectingPromotionalHalfPizza = false;
-                    toggleAddItemButtons(true); // Reativa todos os botões "Adicionar"
-                    toggleCategoryButtons(true); // Reativa todos os botões de categoria
-                }
+                isSelectingHalfPizza = false; // Reseta a flag principal
+                isFirstHalfPromotional = false; // Reseta a flag promocional
+                toggleAddItemButtons(true); // Reativa todos os botões "Adicionar"
+                toggleCategoryButtons(true); // Reativa todos os botões de categoria
                 showTemporaryFeedback('Seleção de meia pizza cancelada.', 'bg-red-600'); // Mensagem e cor alteradas
             }
         }
@@ -1477,7 +1503,8 @@
             // Reseta o estado da meia pizza ao limpar o pedido
             firstHalfPizza = null;
             isSelectingSecondHalf = false;
-            isSelectingPromotionalHalfPizza = false; // Garante que a flag promocional seja resetada
+            isSelectingHalfPizza = false; // Garante que a flag principal seja resetada
+            isFirstHalfPromotional = false; // Garante que a flag promocional seja resetada
             toggleAddItemButtons(true); // Reativa todos os botões "Adicionar"
             toggleCategoryButtons(true); // Reativa todos os botões de categoria
         }
@@ -1526,7 +1553,8 @@
             // Garante que as flags de seleção de meia pizza sejam resetadas após o checkout
             firstHalfPizza = null;
             isSelectingSecondHalf = false;
-            isSelectingPromotionalHalfPizza = false;
+            isSelectingHalfPizza = false;
+            isFirstHalfPromotional = false;
             toggleAddItemButtons(true); // Reativa todos os botões "Adicionar"
             toggleCategoryButtons(true); // Reativa todos os botões de categoria
         }
@@ -1541,7 +1569,7 @@
             }
             
             // Verifica se há uma pizza meio a meio pendente
-            if (isSelectingSecondHalf) {
+            if (isSelectingHalfPizza) { // Usa a flag principal
                 showMessageModal('Por favor, escolha a segunda metade da sua pizza antes de finalizar o pedido.');
                 return;
             }
@@ -1811,29 +1839,23 @@
                     }
                 }
                 
-                // NOVA LÓGICA: Enforce promotional pizza rule on scroll
-                if (isSelectingPromotionalHalfPizza) {
+                // Lógica de restrição de rolagem baseada nas flags de meia pizza
+                if (isSelectingHalfPizza && isFirstHalfPromotional) { // Se a primeira metade foi promocional, restringe a navegação
                     if (newActiveCategory && newActiveCategory.toLowerCase() !== 'promocionais') {
-                        // Se o usuário rolou para uma categoria não-promocional enquanto selecionava meia pizza promocional
-                        setActiveCategoryButton('promocionais'); // Ativa o botão da categoria promocional
-                        currentActiveCategoryByScroll = 'promocionais'; // Atualiza o estado da categoria ativa
-                        isScrollingFromClick = true; // Define a flag para evitar que o observer reaja a esta rolagem programática
-                        document.getElementById('promocionais-section').scrollIntoView({ behavior: 'smooth', block: 'start' }); // Rola de volta para a seção promocional
-                        setTimeout(() => {
-                            isScrollingFromClick = false; // Reseta a flag após a rolagem
-                        }, 700);
-                        showMessageModal('Para pizzas promocionais, a segunda metade deve ser também de uma pizza promocional.');
-                        return; // Interrompe o processamento posterior da mudança de categoria
-                    } else if (!newActiveCategory || newActiveCategory.toLowerCase() === 'promocionais') {
-                        // Se newActiveCategory é nulo (ex: no topo da página, nenhuma seção ainda ativa) ou é 'promocionais'
-                        // Garante que 'promocionais' seja o botão ativo se estivermos neste estado
-                        setActiveCategoryButton('promocionais');
-                        currentActiveCategoryByScroll = 'promocionais';
+                        if (currentActiveCategoryByScroll.toLowerCase() !== 'promocionais') { 
+                            setActiveCategoryButton('promocionais');
+                            currentActiveCategoryByScroll = 'promocionais';
+                            isScrollingFromClick = true;
+                            document.getElementById('promocionais-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            setTimeout(() => { isScrollingFromClick = false; }, 700);
+                            showMessageModal('Para pizzas promocionais, a segunda metade deve ser também de uma pizza promocional.');
+                        }
+                        return;
                     }
                 }
 
-                // Ativação normal da categoria se não estiver no modo de seleção de meia pizza promocional
-                if (newActiveCategory && newActiveCategory !== currentActiveCategoryByScroll && !isSelectingPromotionalHalfPizza) {
+                // Ativação normal da categoria se não estiver no modo de seleção de meia pizza ou se as regras permitirem
+                if (newActiveCategory && newActiveCategory !== currentActiveCategoryByScroll) {
                     setActiveCategoryButton(newActiveCategory);
                     currentActiveCategoryByScroll = newActiveCategory;
                 }
