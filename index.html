@@ -955,9 +955,10 @@
                     // Cria a nova seção se ela não existir
                     sectionEl = document.createElement('div');
                     sectionEl.id = sectionId;
+                    // Adiciona classes para o fundo e padding ao título da categoria
                     sectionEl.className = 'pizza-category-section mb-8';
                     sectionEl.innerHTML = `
-                        <h3 class="text-xl font-bold text-gray-800 mb-4">${capitalizeFirstLetter(category)}</h3>
+                        <h3 class="text-xl font-bold text-gray-800 mb-4 bg-gray-100 p-2 rounded-md">${capitalizeFirstLetter(category)}</h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="${category}-items"></div>
                     `;
                     dynamicSectionsContainer.appendChild(sectionEl);
@@ -1097,7 +1098,7 @@
                                         originalCategorySection.scrollIntoView({ behavior: 'smooth', block: 'start' });
                                         setActiveCategoryButton(firstHalfPizza.category.toLowerCase());
                                     } else {
-                                        // Se a categoria original não existe (cenário improvável), apenas rola para o topo
+                                        // Fallback se firstHalfPizza não estiver definido corretamente
                                         document.getElementById('menu').scrollIntoView({ behavior: 'smooth', block: 'start' });
                                     }
                                 } else {
