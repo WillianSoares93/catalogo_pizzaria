@@ -595,21 +595,8 @@
         let isSelectingHalfPizza = false; // Nova flag para controlar se o usuário está selecionando uma meia pizza (qualquer categoria)
         let isFirstHalfPromotional = false; // Nova flag para indicar se a primeira metade foi promocional
 
-        // Mapeamento de imagens para pizzas
-        const pizzaImages = {
-            "Margherita": "https://rossopizza.com.br/salao/wp-content/uploads/2019/09/istock-181175167-900x600.jpg",
-            "Calabresa": "https://www.sabornamesa.com.br/media/k2/items/cache/513d7a0ab11e38f7bd117d760146fed3_XL.jpg",
-            "Quatro Queijos": "https://www.portalumami.com.br/app/uploads/2021/07/Pizza-4-queijos.jpg",
-            "Portuguesa": "https://www.ogastronomo.com.br/upload/389528334-curiosidades-sobre-a-pizza-portuguesa.jpg",
-            "Frango com Catupiry": "https://www.minhareceita.com.br/app/uploads/2020/09/Pizza-de-Frango-com-Catupiry-Caseira-desktop.jpg",
-            "Pepperoni": "https://www.minhareceita.com.br/app/uploads/2022/12/Dpizza-de-pepperoni-caseira-portal-minha-receita.jpg",
-            "Vegetariana": "https://guiadacozinha.com.br/wp-content/uploads/2020/01/pizza-vegetariana.jpg",
-            "Chocolate com Morango": "https://s2-receitas.glbimg.com/YacK9Sp4MTG3CGZAHdeKGnbGSFk=/0x0:1200x675/984x0/smart/filters:strip_icc()/i.s3.glbimg.com/v1/AUTH_1f540e0b94d8437dbbc39d567a1dee68/internal_photos/bs/2024/K/Y/FxiVXpRfePdyZnSeHpKQ/pizza-de-chocolate-com-morango.jpg",
-            "Romeu e Julieta": "https://magiadosaromas.com.br/wp-content/uploads/2023/06/pizza-romeu-e-julieta.jpg.webp",
-            "Banana Caramelada": "https://s2-receitas.glbimg.com/gwhIG-mUpHKhYSg8Zl21Zj_OXjA=/0x0:1280x800/984x0/smart/filters:strip_icc()/i.s3.glbimg.com/v1/AUTH_1f540e0b94d8437dbbc39d567a1dee68/internal_photos/bs/2022/M/q/GHOy3ZT9GjPxMJH7FYmw/pizza-doce-banana-receita.jpg",
-            "Bacon Supreme": "https://i.imgur.com/mcnffmE.png" // Nova imagem adicionada
-        };
-        const defaultPizzaImage = 'https://placehold.co/150x100/FF0000/FFFFFF?text=Pizza'; // Imagem padrão para pizzas
+        // Imagem padrão para pizzas sem link na planilha
+        const defaultPizzaImage = 'https://upload.wikimedia.org/wikipedia/commons/9/91/Pizza-3007395.jpg';
 
         // Referências para os elementos DOM
         const orderSidebar = document.getElementById('orderSidebar');
@@ -795,6 +782,7 @@
                         case 'Categoria': return 'category';
                         case 'É Pizza? (SIM/NÃO)': return 'isPizza';
                         case 'Disponível (SIM/NÃO)': return 'available'; 
+                        case 'Imagem': return 'imageUrl'; // Mapeia a coluna "Imagem"
                         default: return cleanedHeader.replace(/[^a-zA-Z0-9]+(.)?/g, (match, chr) => chr ? chr.toUpperCase() : '').replace(/^./, (match) => match.toLowerCase());
                     }
                 });
@@ -805,7 +793,7 @@
                     const rowValues = parseCsvLine(line);
                     if (rowValues.length === mappedHeaders.length) {
                         let item = {
-                            id: '', name: '', description: '', basePrice: 0, price6Slices: 0, price4Slices: 0, category: '', isPizza: false, available: false
+                            id: '', name: '', description: '', basePrice: 0, price6Slices: 0, price4Slices: 0, category: '', isPizza: false, available: false, imageUrl: '' // Adiciona imageUrl
                         };
                         for (let j = 0; j < mappedHeaders.length; j++) {
                             let headerKey = mappedHeaders[j];
@@ -817,13 +805,21 @@
                                 item[headerKey] = value.toUpperCase() === 'SIM';
                             } else if (headerKey === 'available') {
                                 item[headerKey] = value.toUpperCase() === 'SIM';
+                            } else if (headerKey === 'imageUrl') { // Trata a URL da imagem especificamente
+                                // Garante que a URL seja lida como string e trimada
+                                item[headerKey] = String(value).trim(); 
                             } else {
                                 item[headerKey] = value;
                             }
                         }
-                        // Adiciona a URL da imagem ao objeto item se for uma pizza
+                        // Se for pizza, usa a URL da imagem da planilha ou a imagem padrão
                         if (item.isPizza) {
-                            item.imageUrl = pizzaImages[item.name] || defaultPizzaImage;
+                            const trimmedUrl = String(item.imageUrl || '').trim();
+                            if (trimmedUrl.length > 0 && (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://'))) {
+                                item.imageUrl = trimmedUrl;
+                            } else {
+                                item.imageUrl = defaultPizzaImage;
+                            }
                         }
                         if (item.available) {
                             menuData.push(item);
@@ -994,9 +990,6 @@
                                         </div>
                                     `;
                                 }
-                                if (item.price6Slices > 0 && item.basePrice > 0) {
-                                    priceDisplayHtml += `<span class="text-gray-400 self-center">|</span>`;
-                                }
                                 if (item.basePrice > 0) { // basePrice é para 8 fatias
                                     priceDisplayHtml += `
                                         <div class="flex flex-col items-center text-center px-1 flex-shrink-0">
@@ -1006,7 +999,7 @@
                                     `;
                                 }
                                 
-                                const imageUrl = item.imageUrl || defaultPizzaImage;
+                                const imageUrl = item.imageUrl || defaultPizzaImage; // Usa a URL da planilha ou a padrão
 
                                 itemHtml = `
                                     <div class="flavor-card bg-white rounded-xl overflow-hidden shadow-lg transition duration-300">
