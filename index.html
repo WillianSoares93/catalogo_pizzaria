@@ -983,7 +983,7 @@
                                     `;
                                 }
                                 if (item.price6Slices > 0) {
-                                    if (priceDisplayHtml !== '') priceDisplayHtml += `<span class="text-gray-400 px-1">|</span>`;
+                                    if (priceDisplayHtml !== '') priceDisplayHtml += `<span class="text-gray-400 px-0.5">|</span>`; /* Reduzido o espaçamento aqui */
                                     priceDisplayHtml += `
                                         <span class="flex items-baseline gap-x-0.5">
                                             <span class="font-bold text-gray-800">6F:</span>
@@ -992,7 +992,7 @@
                                     `;
                                 }
                                 if (item.basePrice > 0) { // basePrice é para 8 fatias
-                                    if (priceDisplayHtml !== '') priceDisplayHtml += `<span class="text-gray-400 px-1">|</span>`;
+                                    if (priceDisplayHtml !== '') priceDisplayHtml += `<span class="text-gray-400 px-0.5">|</span>`; /* Reduzido o espaçamento aqui */
                                     priceDisplayHtml += `
                                         <span class="flex items-baseline gap-x-0.5">
                                             <span class="font-bold text-gray-800">8F:</span>
@@ -1008,8 +1008,8 @@
                                         <img src="${imageUrl}" alt="Pizza de ${item.name}" class="w-full h-40 object-cover" onerror="this.onerror=null;this.src='${defaultPizzaImage}';">
                                         <div class="p-6">
                                             <h3 class="text-xl font-bold text-gray-800 mb-2">${item.name}</h3>
-                                            <!-- Ajustado para alinhar à esquerda e reduzir espaçamento -->
-                                            <div class="flex flex-wrap gap-x-2 gap-y-1 items-center text-sm mb-4 justify-start">
+                                            <!-- Ajustado para alinhar à esquerda e reduzir espaçamento, e agora com flex-nowrap -->
+                                            <div class="flex flex-nowrap gap-x-1 items-center text-sm mb-4 justify-start overflow-hidden">
                                                 ${priceDisplayHtml}
                                             </div>
                                             <p class="text-gray-600 text-sm mb-4">${item.description}</p>
