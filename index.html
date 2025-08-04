@@ -976,19 +976,32 @@
                                 let priceDisplayHtml = '';
                                 if (item.price4Slices > 0) {
                                     priceDisplayHtml += `
-                                        <span class="font-bold text-gray-800 whitespace-nowrap">4F: <span class="text-red-600 text-lg">R$ ${item.price4Slices.toFixed(2).replace('.', ',')}</span></span>
+                                        <div class="flex flex-col items-center text-center px-1 flex-shrink-0">
+                                            <span class="font-bold text-gray-800 whitespace-nowrap">4F</span>
+                                            <span class="font-bold text-red-600 text-lg whitespace-nowrap">R$ ${item.price4Slices.toFixed(2).replace('.', ',')}</span>
+                                        </div>
                                     `;
+                                }
+                                if (item.price4Slices > 0 && (item.price6Slices > 0 || item.basePrice > 0)) {
+                                    priceDisplayHtml += `<span class="text-gray-400 self-center">|</span>`;
                                 }
                                 if (item.price6Slices > 0) {
-                                    if (priceDisplayHtml !== '') priceDisplayHtml += `<span class="text-gray-400 px-0.5">|</span>`; /* Reduzido o espaçamento aqui */
                                     priceDisplayHtml += `
-                                        <span class="font-bold text-gray-800 whitespace-nowrap">6F: <span class="text-red-600 text-lg">R$ ${item.price6Slices.toFixed(2).replace('.', ',')}</span></span>
+                                        <div class="flex flex-col items-center text-center px-1 flex-shrink-0">
+                                            <span class="font-bold text-gray-800 whitespace-nowrap">6F</span>
+                                            <span class="font-bold text-red-600 text-lg whitespace-nowrap">R$ ${item.price6Slices.toFixed(2).replace('.', ',')}</span>
+                                        </div>
                                     `;
                                 }
+                                if (item.price6Slices > 0 && item.basePrice > 0) {
+                                    priceDisplayHtml += `<span class="text-gray-400 self-center">|</span>`;
+                                }
                                 if (item.basePrice > 0) { // basePrice é para 8 fatias
-                                    if (priceDisplayHtml !== '') priceDisplayHtml += `<span class="text-gray-400 px-0.5">|</span>`; /* Reduzido o espaçamento aqui */
                                     priceDisplayHtml += `
-                                        <span class="font-bold text-gray-800 whitespace-nowrap">8F: <span class="text-red-600 text-lg">R$ ${item.basePrice.toFixed(2).replace('.', ',')}</span></span>
+                                        <div class="flex flex-col items-center text-center px-1 flex-shrink-0">
+                                            <span class="font-bold text-gray-800 whitespace-nowrap">8F</span>
+                                            <span class="font-bold text-red-600 text-lg whitespace-nowrap">R$ ${item.basePrice.toFixed(2).replace('.', ',')}</span>
+                                        </div>
                                     `;
                                 }
                                 
@@ -1000,7 +1013,7 @@
                                         <div class="p-6">
                                             <h3 class="text-xl font-bold text-gray-800 mb-2">${item.name}</h3>
                                             <!-- Ajustado para alinhar à esquerda e reduzir espaçamento, e agora com flex-nowrap -->
-                                            <div class="flex flex-nowrap gap-x-1 items-center text-sm mb-4 justify-start overflow-hidden">
+                                            <div class="flex justify-around items-start text-sm mb-4 w-full overflow-x-auto py-1">
                                                 ${priceDisplayHtml}
                                             </div>
                                             <p class="text-gray-600 text-sm mb-4">${item.description}</p>
