@@ -4,7 +4,7 @@
   "start_url": ".",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#dc2626",
+  "theme_color": "#ffffff",
   "description": "Cardápio online da Sâmia - Pizzaria Artesanal, com opção de PWA para instalação.",
   "icons": [
     {
