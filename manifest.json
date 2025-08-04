@@ -1,11 +1,11 @@
 {
-  "name": "Sâmia - Cardápio Online",
-  "short_name": "Sâmia Cardápio",
-  "description": "Cardápio digital da Pizzaria Sâmia. Peça online e receba suas pizzas favoritas!",
-  "start_url": "./",
+  "name": "Sâmia - Pizzaria Artesanal",
+  "short_name": "Sâmia",
+  "start_url": ".",
   "display": "standalone",
-  "background_color": "#FFFFFF",
-  "theme_color": "#FFFFFF",
+  "background_color": "#ffffff",
+  "theme_color": "#dc2626",
+  "description": "Cardápio online da Sâmia - Pizzaria Artesanal, com opção de PWA para instalação.",
   "icons": [
     {
       "src": "https://raw.githubusercontent.com/WillianSoares93/catalogo_pizzaria/refs/heads/main/logo.png",
@@ -15,6 +15,11 @@
     {
       "src": "https://raw.githubusercontent.com/WillianSoares93/catalogo_pizzaria/refs/heads/main/logo.png",
       "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/WillianSoares93/catalogo_pizzaria/refs/heads/main/logo.png",
+      "sizes": "1024x1024",
       "type": "image/png"
     }
   ]
