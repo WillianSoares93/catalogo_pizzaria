@@ -1812,25 +1812,28 @@
                 }
                 
                 // NOVA LÓGICA: Enforce promotional pizza rule on scroll
-                if (isSelectingPromotionalHalfPizza && newActiveCategory && newActiveCategory.toLowerCase() !== 'promocionais') {
-                    // Se estamos no modo de seleção de meia pizza promocional e a rolagem
-                    // tornaria outra categoria ativa, prevenimos e avisamos o usuário.
-                    if (currentActiveCategoryByScroll.toLowerCase() !== 'promocionais') { 
-                        // Força a categoria ativa de volta para 'promocionais'
+                if (isSelectingPromotionalHalfPizza) {
+                    if (newActiveCategory && newActiveCategory.toLowerCase() !== 'promocionais') {
+                        // Se o usuário rolou para uma categoria não-promocional enquanto selecionava meia pizza promocional
+                        setActiveCategoryButton('promocionais'); // Ativa o botão da categoria promocional
+                        currentActiveCategoryByScroll = 'promocionais'; // Atualiza o estado da categoria ativa
+                        isScrollingFromClick = true; // Define a flag para evitar que o observer reaja a esta rolagem programática
+                        document.getElementById('promocionais-section').scrollIntoView({ behavior: 'smooth', block: 'start' }); // Rola de volta para a seção promocional
+                        setTimeout(() => {
+                            isScrollingFromClick = false; // Reseta a flag após a rolagem
+                        }, 700);
+                        showMessageModal('Para pizzas promocionais, a segunda metade deve ser também de uma pizza promocional.');
+                        return; // Interrompe o processamento posterior da mudança de categoria
+                    } else if (!newActiveCategory || newActiveCategory.toLowerCase() === 'promocionais') {
+                        // Se newActiveCategory é nulo (ex: no topo da página, nenhuma seção ainda ativa) ou é 'promocionais'
+                        // Garante que 'promocionais' seja o botão ativo se estivermos neste estado
                         setActiveCategoryButton('promocionais');
                         currentActiveCategoryByScroll = 'promocionais';
-                        // Rola de volta para a seção promocional
-                        isScrollingFromClick = true; // Define a flag para evitar que o observer reaja a esta rolagem programática
-                        document.getElementById('promocionais-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        setTimeout(() => {
-                            isScrollingFromClick = false;
-                        }, 700); // Reseta a flag após a rolagem
-                        showMessageModal('Para pizzas promocionais, a segunda metade deve ser também de uma pizza promocional.');
                     }
-                    return; // Interrompe o processamento posterior da mudança de categoria
                 }
 
-                if (newActiveCategory && newActiveCategory !== currentActiveCategoryByScroll) {
+                // Ativação normal da categoria se não estiver no modo de seleção de meia pizza promocional
+                if (newActiveCategory && newActiveCategory !== currentActiveCategoryByScroll && !isSelectingPromotionalHalfPizza) {
                     setActiveCategoryButton(newActiveCategory);
                     currentActiveCategoryByScroll = newActiveCategory;
                 }
