@@ -962,9 +962,19 @@
                         if (item.available) { // Garante que o item está disponível
                             let itemHtml = '';
                             if (item.isPizza) {
-                                const price4F = (item.price4Slices !== undefined && item.price4Slices !== null) ? item.price4Slices.toFixed(2).replace('.', ',') : '0,00';
-                                const price6F = (item.price6Slices !== undefined && item.price6Slices !== null) ? item.price6Slices.toFixed(2).replace('.', ',') : '0,00';
-                                const price8F = (item.basePrice !== undefined && item.basePrice !== null) ? item.basePrice.toFixed(2).replace('.', ',') : '0,00';
+                                // Constrói o HTML para exibição de preços dinamicamente
+                                let priceDisplayHtml = '';
+                                if (item.price4Slices > 0) {
+                                    priceDisplayHtml += `<span class="font-bold text-gray-800">4F:</span> <span class="font-bold text-red-600">R$ ${item.price4Slices.toFixed(2).replace('.', ',')}</span>`;
+                                }
+                                if (item.price6Slices > 0) {
+                                    if (priceDisplayHtml !== '') priceDisplayHtml += '<span class="mx-2 text-gray-400">|</span>';
+                                    priceDisplayHtml += `<span class="font-bold text-gray-800">6F:</span> <span class="font-bold text-red-600">R$ ${item.price6Slices.toFixed(2).replace('.', ',')}</span>`;
+                                }
+                                if (item.basePrice > 0) { // basePrice é para 8 fatias
+                                    if (priceDisplayHtml !== '') priceDisplayHtml += '<span class="mx-2 text-gray-400">|</span>';
+                                    priceDisplayHtml += `<span class="font-bold text-gray-800">8F:</span> <span class="font-bold text-red-600">R$ ${item.basePrice.toFixed(2).replace('.', ',')}</span>`;
+                                }
                                 
                                 const imageUrl = item.imageUrl || defaultPizzaImage;
 
@@ -973,10 +983,8 @@
                                         <img src="${imageUrl}" alt="Pizza de ${item.name}" class="w-full h-40 object-cover" onerror="this.onerror=null;this.src='${defaultPizzaImage}';">
                                         <div class="p-6">
                                             <h3 class="text-xl font-bold text-gray-800 mb-2">${item.name}</h3>
-                                            <div class="flex justify-between items-center text-sm mb-4">
-                                                <span class="font-bold text-gray-800">4F:</span> <span class="font-bold text-red-600">R$ ${price4F}</span>
-                                                <span class="font-bold text-gray-800">6F:</span> <span class="font-bold text-red-600">R$ ${price6F}</span>
-                                                <span class="font-bold text-gray-800">8F:</span> <span class="font-bold text-red-600">R$ ${price8F}</span>
+                                            <div class="flex flex-wrap gap-x-4 gap-y-1 items-center text-sm mb-4 justify-center">
+                                                ${priceDisplayHtml}
                                             </div>
                                             <p class="text-gray-600 text-sm mb-4">${item.description}</p>
                                             <div class="flex justify-end mt-auto">
@@ -1118,12 +1126,14 @@
 
                 pizzaSizeOptions.innerHTML = '';
                 
-                sizes.forEach(size => {
-                    const sizePrice = currentPizzaData[size.priceKey]; // Usa a chave de preço direta
+                // Filtra os tamanhos para mostrar apenas aqueles com preço > 0
+                const availableSizes = sizes.filter(size => currentPizzaData[size.priceKey] > 0);
+
+                availableSizes.forEach(size => {
+                    const sizePrice = currentPizzaData[size.priceKey];
                     const optionDiv = document.createElement('div');
                     optionDiv.className = 'pizza-size-option';
                     optionDiv.innerHTML = `
-                        ${getGenericPizzaSliceImage()}
                         <span class="font-bold text-base text-gray-800">${size.label}</span>
                         <span class="text-red-600 font-bold text-lg">R$ ${sizePrice.toFixed(2).replace('.', ',')}</span>
                         <div class="flex flex-col gap-2 mt-2 w-full">
@@ -1628,8 +1638,8 @@
                     // Ensure the active button is visible in the scrollable category bar
                     btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
                 } else {
-                    btn.classList.remove('bg-red-600', 'text-white');
-                    btn.classList.add('bg-gray-200', 'text-gray-800');
+                    btn.classList.remove('bg-gray-200', 'text-gray-800');
+                    btn.classList.add('bg-gray-200', 'text-gray-800'); // Ensure non-active buttons are gray
                 }
             });
         }
