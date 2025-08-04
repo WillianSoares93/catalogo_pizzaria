@@ -585,8 +585,11 @@
 
     <script>
         // URLs das planilhas Google Sheets publicadas como CSV
-        const CARDAPIO_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=664943668&single=true&output=csv';
-        const PROMOCOES_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=600393470&single=true&output=csv'; 
+        // Estas URLs agora são buscadas pela função Serverless do Vercel
+        // e não são mais usadas diretamente no frontend para carregamento.
+        // Elas foram mantidas aqui apenas para referência.
+        const CARDAPIO_CSV_URL_REF = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=664943668&single=true&output=csv';
+        const PROMOCOES_CSV_URL_REF = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=600393470&single=true&output=csv'; 
 
         // Variáveis globais
         let order = [];
@@ -711,12 +714,14 @@
         // Listeners para fechar o modal de seleção de pizza
         closePizzaOptionModalBtn.addEventListener('click', function() {
             pizzaOptionModal.style.display = 'none';
+            updatePromotionButtonVisibility(); // Mostra o botão de promoção ao fechar o modal
         });
 
         // Fecha o modal se clicar fora do conteúdo do modal
         window.addEventListener('click', function(event) {
             if (event.target == pizzaOptionModal) {
                 pizzaOptionModal.style.display = 'none';
+                updatePromotionButtonVisibility(); // Mostra o botão de promoção ao fechar o modal
             }
         });
 
@@ -725,208 +730,109 @@
             return ''; // Retorna uma string vazia para remover a imagem
         }
 
-        // Funções para carregar dados das planilhas
-        async function loadMenuFromSheet() {
-            try {
-                const urlWithCacheBuster = `${CARDAPIO_CSV_URL}&_=${new Date().getTime()}`;
-                const response = await fetch(urlWithCacheBuster);
-                const csvText = await response.text();
-                const lines = csvText.split('\n').filter(line => line.trim() !== '');
+        // Função para parsear dados CSV
+        function parseCsvData(csvText, type) {
+            const lines = csvText.split('\n').filter(line => line.trim() !== '');
 
-                if (lines.length === 0) {
-                    console.warn("Nenhuma linha válida encontrada no CSV do Cardápio.");
-                    return [];
-                }
-
-                function parseCsvLine(line) {
-                    const values = [];
-                    let inQuote = false;
-                    let currentField = '';
-                    for (let i = 0; i < line.length; i++) {
-                        const char = line[i];
-                        if (char === '"') {
-                            if (inQuote && i + 1 < line.length && line[i + 1] === '"') {
-                                currentField += '"';
-                                i++;
-                            } else {
-                                inQuote = !inQuote;
-                            }
-                        } else if (char === ',' && !inQuote) {
-                            values.push(currentField);
-                            currentField = '';
-                        } else {
-                            currentField += char;
-                        }
-                    }
-                    values.push(currentField);
-                    return values.map(v => {
-                        if (v === undefined || v === null) return '';
-                        let processed = v;
-                        if (processed.startsWith('"') && processed.endsWith('"')) {
-                            processed = processed.substring(1, processed.length - 1);
-                        }
-                        return processed.replace(/""/g, '"').trim();
-                    });
-                }
-
-                const headersRaw = parseCsvLine(lines[0]);
-                const mappedHeaders = headersRaw.map(header => {
-                    let cleanedHeader = header.trim();
-                    switch (cleanedHeader) {
-                        case 'ID Item (único)': return 'id';
-                        case 'Nome do Item': return 'name';
-                        case 'Descrição': return 'description';
-                        case 'Preço 8 fatias': return 'basePrice';
-                        case 'Preço 6 fatias': return 'price6Slices';
-                        case 'Preço 4 fatias': return 'price4Slices';
-                        case 'Categoria': return 'category';
-                        case 'É Pizza? (SIM/NÃO)': return 'isPizza';
-                        case 'Disponível (SIM/NÃO)': return 'available'; 
-                        case 'Imagem': return 'imageUrl'; // Mapeia a coluna "Imagem"
-                        default: return cleanedHeader.replace(/[^a-zA-Z0-9]+(.)?/g, (match, chr) => chr ? chr.toUpperCase() : '').replace(/^./, (match) => match.toLowerCase());
-                    }
-                });
-                
-                const menuData = [];
-                for (let i = 1; i < lines.length; i++) {
-                    const line = lines[i];
-                    const rowValues = parseCsvLine(line);
-                    if (rowValues.length === mappedHeaders.length) {
-                        let item = {
-                            id: '', name: '', description: '', basePrice: 0, price6Slices: 0, price4Slices: 0, category: '', isPizza: false, available: false, imageUrl: '' // Adiciona imageUrl
-                        };
-                        for (let j = 0; j < mappedHeaders.length; j++) {
-                            let headerKey = mappedHeaders[j];
-                            let value = rowValues[j];
-                            if (headerKey === 'basePrice' || headerKey === 'price6Slices' || headerKey === 'price4Slices') {
-                                const parsedValue = parseFloat(String(value).replace(',', '.'));
-                                item[headerKey] = isNaN(parsedValue) ? 0 : parsedValue;
-                            } else if (headerKey === 'isPizza') {
-                                item[headerKey] = value.toUpperCase() === 'SIM';
-                            } else if (headerKey === 'available') {
-                                item[headerKey] = value.toUpperCase() === 'SIM';
-                            } else if (headerKey === 'imageUrl') { // Trata a URL da imagem especificamente
-                                // Garante que a URL seja lida como string e trimada
-                                item[headerKey] = String(value).trim(); 
-                            } else {
-                                item[headerKey] = value;
-                            }
-                        }
-                        // Se for pizza, usa a URL da imagem da planilha ou a imagem padrão
-                        if (item.isPizza) {
-                            const trimmedUrl = String(item.imageUrl || '').trim();
-                            if (trimmedUrl.length > 0 && (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://'))) {
-                                item.imageUrl = trimmedUrl;
-                            } else {
-                                item.imageUrl = defaultPizzaImage;
-                            }
-                        }
-                        if (item.available) {
-                            menuData.push(item);
-                        }
-                    } else {
-                        console.warn(`Linha ${i + 1} ignorada ou malformada (Cardápio - esperado ${mappedHeaders.length} colunas, encontrado ${rowValues.length}): "${line}"`);
-                    }
-                }
-                return menuData;
-
-            } catch (error) {
-                console.error('Erro ao carregar cardápio da planilha:', error);
+            if (lines.length === 0) {
+                console.warn(`Nenhuma linha válida encontrada no CSV de ${type}.`);
                 return [];
             }
-        }
 
-        async function loadPromotionsFromSheet() {
-            try {
-                const urlWithCacheBuster = `${PROMOCOES_CSV_URL}&_=${new Date().getTime()}`;
-                const response = await fetch(urlWithCacheBuster);
-                const csvText = await response.text();
-                const lines = csvText.split('\n').filter(line => line.trim() !== '');
-
-                if (lines.length === 0) {
-                    console.warn("Nenhuma linha válida encontrada no CSV de Promoções.");
-                    return [];
-                }
-
-                function parseCsvLine(line) {
-                    const values = [];
-                    let inQuote = false;
-                    let currentField = '';
-                    for (let i = 0; i < line.length; i++) {
-                        const char = line[i];
-                        if (char === '"') {
-                            if (inQuote && i + 1 < line.length && line[i + 1] === '"') {
-                                currentField += '"';
-                                i++;
-                            } else {
-                                inQuote = !inQuote;
-                            }
-                        } else if (char === ',' && !inQuote) {
-                            values.push(currentField);
-                            currentField = '';
+            function parseCsvLine(line) {
+                const values = [];
+                let inQuote = false;
+                let currentField = '';
+                for (let i = 0; i < line.length; i++) {
+                    const char = line[i];
+                    if (char === '"') {
+                        if (inQuote && i + 1 < line.length && line[i + 1] === '"') {
+                            currentField += '"';
+                            i++;
                         } else {
-                            currentField += char;
+                            inQuote = !inQuote;
                         }
-                    }
-                    values.push(currentField);
-                    return values.map(v => {
-                        if (v === undefined || v === null) return '';
-                        let processed = v;
-                        if (processed.startsWith('"') && processed.endsWith('"')) {
-                            processed = processed.substring(1, processed.length - 1);
-                        }
-                        return processed.replace(/""/g, '"').trim();
-                    });
-                }
-
-                const headersRaw = parseCsvLine(lines[0]);
-                const mappedHeaders = headersRaw.map(header => {
-                    let cleanedHeader = header.trim();
-                    switch (cleanedHeader) {
-                        case 'ID Promocao': return 'id';
-                        case 'Nome da Promocao': return 'name';
-                        case 'Descricao': return 'description';
-                        case 'Preco Promocional': return 'promoPrice';
-                        case 'ID Item Aplicavel': return 'itemId';
-                        case 'Ativo (SIM/NAO)': return 'active';
-                        default: return cleanedHeader.replace(/[^a-zA-Z0-9]+(.)?/g, (match, chr) => chr ? chr.toUpperCase() : '').replace(/^./, (match) => match.toLowerCase());
-                    }
-                });
-                
-                const promotionsData = [];
-                for (let i = 1; i < lines.length; i++) {
-                    const line = lines[i];
-                    const rowValues = parseCsvLine(line);
-                    if (rowValues.length === mappedHeaders.length) {
-                        let promo = {
-                            id: '', name: '', description: '', promoPrice: null, itemId: '', active: false
-                        };
-                        for (let j = 0; j < mappedHeaders.length; j++) {
-                            let headerKey = mappedHeaders[j];
-                            let value = rowValues[j];
-                            if (headerKey === 'promoPrice') {
-                                const parsedValue = parseFloat(String(value).replace(',', '.'));
-                                promo[headerKey] = isNaN(parsedValue) ? null : parsedValue;
-                            } else if (headerKey === 'active') {
-                                promo[headerKey] = value.toUpperCase() === 'SIM';
-                            } else {
-                                promo[headerKey] = value; 
-                            }
-                        }
-                        if (promo.active) {
-                            promotionsData.push(promo);
-                        }
+                    } else if (char === ',' && !inQuote) {
+                        values.push(currentField);
+                        currentField = '';
                     } else {
-                        console.warn(`Linha ${i + 1} ignorada ou malformada (Promoções - esperado ${mappedHeaders.length} colunas, encontrado ${rowValues.length}): "${line}"`);
+                        currentField += char;
                     }
                 }
-                return promotionsData;
-
-            } catch (error) {
-                console.error('Erro ao carregar promoções da planilha:', error);
-                return [];
+                values.push(currentField);
+                return values.map(v => {
+                    if (v === undefined || v === null) return '';
+                    let processed = v;
+                    if (processed.startsWith('"') && processed.endsWith('"')) {
+                        processed = processed.substring(1, processed.length - 1);
+                    }
+                    return processed.replace(/""/g, '"').trim();
+                });
             }
+
+            const headersRaw = parseCsvLine(lines[0]);
+            const mappedHeaders = headersRaw.map(header => {
+                let cleanedHeader = header.trim();
+                switch (cleanedHeader) {
+                    // Headers para Cardápio
+                    case 'ID Item (único)': return 'id';
+                    case 'Nome do Item': return 'name';
+                    case 'Descrição': return 'description';
+                    case 'Preço 8 fatias': return 'basePrice';
+                    case 'Preço 6 fatias': return 'price6Slices';
+                    case 'Preço 4 fatias': return 'price4Slices';
+                    case 'Categoria': return 'category';
+                    case 'É Pizza? (SIM/NÃO)': return 'isPizza';
+                    case 'Disponível (SIM/NÃO)': return 'available'; 
+                    case 'Imagem': return 'imageUrl'; // Mapeia a coluna "Imagem"
+                    // Headers para Promoções
+                    case 'ID Promocao': return 'id';
+                    case 'Nome da Promocao': return 'name';
+                    case 'Preco Promocional': return 'promoPrice';
+                    case 'ID Item Aplicavel': return 'itemId';
+                    case 'Ativo (SIM/NAO)': return 'active';
+                    default: return cleanedHeader.replace(/[^a-zA-Z0-9]+(.)?/g, (match, chr) => chr ? chr.toUpperCase() : '').replace(/^./, (match) => match.toLowerCase());
+                }
+            });
+            
+            const parsedData = [];
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i];
+                const rowValues = parseCsvLine(line);
+                if (rowValues.length === mappedHeaders.length) {
+                    let item = {};
+                    for (let j = 0; j < mappedHeaders.length; j++) {
+                        let headerKey = mappedHeaders[j];
+                        let value = rowValues[j];
+                        if (['basePrice', 'price6Slices', 'price4Slices', 'promoPrice'].includes(headerKey)) {
+                            const parsedValue = parseFloat(String(value).replace(',', '.'));
+                            item[headerKey] = isNaN(parsedValue) ? 0 : parsedValue;
+                        } else if (['isPizza', 'available', 'active'].includes(headerKey)) {
+                            item[headerKey] = value.toUpperCase() === 'SIM';
+                        } else {
+                            item[headerKey] = value;
+                        }
+                    }
+                    // Lógica específica para imageUrl em pizzas
+                    if (type === 'cardapio' && item.isPizza) {
+                        const trimmedUrl = String(item.imageUrl || '').trim();
+                        if (trimmedUrl.length > 0 && (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://'))) {
+                            item.imageUrl = trimmedUrl;
+                        } else {
+                            item.imageUrl = defaultPizzaImage;
+                        }
+                    }
+                    // Apenas adiciona se estiver disponível (para cardápio) ou ativo (para promoções)
+                    if ((type === 'cardapio' && item.available) || (type === 'promocoes' && item.active)) {
+                        parsedData.push(item);
+                    }
+                } else {
+                    console.warn(`Linha ${i + 1} ignorada ou malformada (${type} - esperado ${mappedHeaders.length} colunas, encontrado ${rowValues.length}): "${line}"`);
+                }
+            }
+            return parsedData;
         }
+
 
         // Função para popular o cardápio dinamicamente
         function populateMenu(menuItems, orderedCategories) {
@@ -1309,6 +1215,7 @@
                             selected_slices: selectedSlices
                         }, this, currentPizzaData.imageUrl); // Passa o botão clicado e a URL da imagem para a animação
                         pizzaOptionModal.style.display = 'none';
+                        updatePromotionButtonVisibility(); // Mostra o botão de promoção ao fechar o modal
                     });
 
                     optionDiv.querySelector('.add-half-size-pizza-btn').addEventListener('click', function() {
@@ -1327,6 +1234,7 @@
                         isSelectingHalfPizza = true; // Ativa a flag principal de seleção de meia pizza
                         isFirstHalfPromotional = (currentPizzaData.category.toLowerCase() === 'promocionais'); // Define se a primeira metade foi promocional
                         pizzaOptionModal.style.display = 'none';
+                        updatePromotionButtonVisibility(); // Mostra o botão de promoção ao fechar o modal
 
                         toggleAddItemButtons(false); // Desativa/ativa botões "Adicionar" com base nas novas flags
                         toggleCategoryButtons(false); // Desativa/ativa botões de categoria com base nas novas flags
@@ -1351,6 +1259,7 @@
                 });
 
                 pizzaOptionModal.style.display = 'flex';
+                promotionButton.style.display = 'none'; // Esconde o botão de promoção ao abrir o modal
             } else { // Para itens não-pizza (bebidas)
                 addToOrder({
                     type: 'full',
@@ -1905,36 +1814,55 @@
 
         // Initial setup and data loading
         document.addEventListener('DOMContentLoaded', async function() {
-            allMenuData = await loadMenuFromSheet(); // Carrega todos os itens do cardápio (pizzas e bebidas)
-            allPromotionsData = await loadPromotionsFromSheet(); // Carrega promoções
-            
-            // Extrai categorias únicas na ordem em que aparecem na planilha
-            let orderedUniqueCategories = [];
-            const seenCategories = new Set();
-            allMenuData.forEach(item => {
-                if (!seenCategories.has(item.category)) {
-                    seenCategories.add(item.category);
-                    orderedUniqueCategories.push(item.category);
+            try {
+                // Busca os dados da sua função Vercel
+                const response = await fetch('/api/menu');
+                if (!response.ok) {
+                    throw new Error(`Erro ao buscar dados da API: ${response.statusText}`);
                 }
-            });
-            
-            createCategoryButtons(orderedUniqueCategories); // Cria os botões de categoria
-            populateMenu(allMenuData, orderedUniqueCategories); // Popula o cardápio com todos os itens
-            
-            setupCategoryObserver(); // Configura o IntersectionObserver para as novas seções
+                const data = await response.json(); // Agora a resposta é um JSON com os dois CSVs
 
-            updatePromotionButtonVisibility(); // Atualiza a visibilidade do botão de promoção
-            updateCartCount(); // Garante que a contagem do carrinho esteja correta ao carregar
-            updateOrderDisplay(); // Garante que o pedido esteja correto ao carregar
+                // Parseia os dados CSV recebidos
+                const cardapioCsvText = data.cardapio;
+                const promocoesCsvText = data.promocoes;
 
-            // Garante que todos os botões e categorias estejam ativos no carregamento inicial
-            toggleAddItemButtons(true);
-            toggleCategoryButtons(true);
+                // Agora, use cardapioCsvText e promocoesCsvText para carregar seus dados
+                allMenuData = parseCsvData(cardapioCsvText, 'cardapio');
+                allPromotionsData = parseCsvData(promocoesCsvText, 'promocoes');
+                
+                // Extrai categorias únicas na ordem em que aparecem na planilha
+                let orderedUniqueCategories = [];
+                const seenCategories = new Set();
+                allMenuData.forEach(item => {
+                    if (!seenCategories.has(item.category)) {
+                        seenCategories.add(item.category);
+                        orderedUniqueCategories.push(item.category);
+                    }
+                });
+                
+                createCategoryButtons(orderedUniqueCategories); // Cria os botões de categoria
+                populateMenu(allMenuData, orderedUniqueCategories); // Popula o cardápio com todos os itens
+                
+                setupCategoryObserver(); // Configura o IntersectionObserver para as novas seções
 
-            // Dispara um evento de rolagem após um curto atraso para garantir que o observer seja executado
-            setTimeout(() => {
-                window.dispatchEvent(new Event('scroll'));
-            }, 100);
+                updatePromotionButtonVisibility(); // Atualiza a visibilidade do botão de promoção
+                updateCartCount(); // Garante que a contagem do carrinho esteja correta ao carregar
+                updateOrderDisplay(); // Garante que o pedido esteja correto ao carregar
+
+                // Garante que todos os botões e categorias estejam ativos no carregamento inicial
+                toggleAddItemButtons(true);
+                toggleCategoryButtons(true);
+
+                // Dispara um evento de rolagem após um curto atraso para garantir que o observer seja executado
+                setTimeout(() => {
+                    window.dispatchEvent(new Event('scroll'));
+                }, 100);
+
+            } catch (error) {
+                console.error('Erro ao carregar o cardápio:', error);
+                // Opcional: Mostrar uma mensagem de erro para o usuário
+                showMessageModal('Não foi possível carregar o cardápio no momento. Por favor, tente novamente mais tarde.');
+            }
         });
     </script>
 </body>
