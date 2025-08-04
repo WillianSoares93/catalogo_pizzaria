@@ -1714,7 +1714,7 @@
                     // Ensure the active button is visible in the scrollable category bar
                     btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
                 } else {
-                    btn.classList.remove('bg-red-600', 'text-white');
+                    btn.classList.remove('bg-gray-200', 'text-white');
                     btn.classList.add('bg-gray-200', 'text-gray-800'); // Ensure non-active buttons are gray
                 }
             });
@@ -1814,21 +1814,29 @@
 
         // Initial setup and data loading
         document.addEventListener('DOMContentLoaded', async function() {
+            // Dados de exemplo para o Canvas, pois chamadas de rede externas são restritas.
+            // ESTES DADOS NÃO SÃO USADOS NO SEU SITE ONLINE NO VERCEL.
+            // Eles servem apenas para a pré-visualização no ambiente do Canvas.
+            const mockCardapioCsvText = `ID Item (único),Nome do Item,Descrição,Preço 8 fatias,Preço 6 fatias,Preço 4 fatias,Categoria,É Pizza? (SIM/NÃO),Disponível (SIM/NÃO),Imagem
+PIZZA001,Margherita,"Molho de tomate, mussarela, manjericão fresco",35.90,61.50,29.90,tradicionais,SIM,SIM,https://rossopizza.com.br/salao/wp-content/uploads/2019/09/istock-181175167-900x600.jpg
+PIZZA002,Calabresa,"Molho de tomate, mussarela, calabresa, cebola",48.90,41.57,34.23,tradicionais,SIM,SIM,https://www.sabornamesa.com.br/media/k2/items/cache/513d7a0ab11e38f7bd117d760146fed3_XL.jpg
+PIZZA012,Apresuntado,"Apresuntado, mussarela e cebola",30.00,0,0,promocionais,SIM,SIM,https://placehold.co/1280x800/FF0000/FFFFFF?text=Pizza+Apresuntado
+PIZZA013,Calabresa Promo,"Calabresa, mussarela e cebola",30.00,0,0,promocionais,SIM,SIM,https://placehold.co/1280x800/00FF00/000000?text=Pizza+Calabresa+Promo
+BEBIDA001,Refrigerante 600ml,"Coca-Cola, Guaraná, Fanta, Sprite",8.90,0,0,bebidas,NÃO,SIM,
+BEBIDA002,Água Mineral,"Água mineral sem gás",3.00,0,0,bebidas,NÃO,SIM,
+`;
+
+            const mockPromocoesCsvText = `ID Promocao,Nome da Promocao,Descricao,Preco Promocional,ID Item Aplicavel,Ativo (SIM/NAO)
+PROMO001,Pizza do Mes,Pizza de Frango com Catupiry com 10% de desconto!,51.21,PIZZA005,SIM
+PROMO002,Combo Familia,2 pizzas grandes + refrigerante 2L por um preco especial!,89.90,,SIM
+PROMO004,Bebida Gratis,"Na compra de qualquer pizza, ganhe um refrigerante 600ml!",0,,SIM
+`;
+
             try {
-                // Busca os dados da sua função Vercel
-                const response = await fetch('/api/menu');
-                if (!response.ok) {
-                    throw new Error(`Erro ao buscar dados da API: ${response.statusText}`);
-                }
-                const data = await response.json(); // Agora a resposta é um JSON com os dois CSVs
-
-                // Parseia os dados CSV recebidos
-                const cardapioCsvText = data.cardapio;
-                const promocoesCsvText = data.promocoes;
-
-                // Agora, use cardapioCsvText e promocoesCsvText para carregar seus dados
-                allMenuData = parseCsvData(cardapioCsvText, 'cardapio');
-                allPromotionsData = parseCsvData(promocoesCsvText, 'promocoes');
+                // No ambiente do Canvas, usamos os dados de exemplo.
+                // No seu site Vercel, a chamada fetch('/api/menu') funciona normalmente.
+                allMenuData = parseCsvData(mockCardapioCsvText, 'cardapio');
+                allPromotionsData = parseCsvData(mockPromocoesCsvText, 'promocoes');
                 
                 // Extrai categorias únicas na ordem em que aparecem na planilha
                 let orderedUniqueCategories = [];
