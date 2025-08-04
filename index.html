@@ -10,6 +10,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Favicon: Define o logótipo como ícone da aba do navegador -->
     <link rel="icon" href="https://raw.githubusercontent.com/WillianSoares93/catalogo_pizzaria/refs/heads/main/logo.png" type="image/png">
+    
+    <!-- Adicionado para PWA: Link para o arquivo de manifesto -->
+    <link rel="manifest" href="/manifest.json">
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
         
@@ -1714,7 +1718,7 @@
                     // Ensure the active button is visible in the scrollable category bar
                     btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
                 } else {
-                    btn.classList.remove('bg-red-600', 'text-white');
+                    btn.classList.remove('bg-gray-200', 'text-white');
                     btn.classList.add('bg-gray-200', 'text-gray-800'); // Ensure non-active buttons are gray
                 }
             });
@@ -1815,12 +1819,13 @@
         // Initial setup and data loading
         document.addEventListener('DOMContentLoaded', async function() {
             try {
-                // Busca os dados da sua função Vercel
-                const response = await fetch('/api/menu');
+                // Busca os dados da sua função Vercel usando a URL relativa
+                // Esta é a chamada correta para o seu site online no Vercel
+                const response = await fetch('/api/menu'); 
                 if (!response.ok) {
                     throw new Error(`Erro ao buscar dados da API: ${response.statusText}`);
                 }
-                const data = await response.json(); // Agora a resposta é um JSON com os dois CSVs
+                const data = await response.json(); 
 
                 // Parseia os dados CSV recebidos
                 const cardapioCsvText = data.cardapio;
@@ -1864,6 +1869,19 @@
                 showMessageModal('Não foi possível carregar o cardápio no momento. Por favor, tente novamente mais tarde.');
             }
         });
+
+        // NOVO: Adicionado para registrar o Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => {
+                        console.log('Service Worker registado com sucesso. Scope:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('Falha no registo do Service Worker:', error);
+                    });
+            });
+        }
     </script>
 </body>
 </html>
