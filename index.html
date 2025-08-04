@@ -416,36 +416,16 @@
 
         <!-- Sticky Category Buttons Container -->
         <div class="category-bar-mobile-sticky lg:static lg:p-0">
-            <div class="flex space-x-2 mb-6 overflow-x-auto pb-2 
+            <!-- Os botões de categoria serão gerados dinamicamente aqui pelo JS -->
+            <div id="category-buttons-container" class="flex space-x-2 mb-6 overflow-x-auto pb-2 
                         lg:flex-row lg:space-x-2 lg:mb-6 lg:overflow-visible lg:pb-0">
-                <button class="category-btn px-4 py-2 rounded-full bg-red-600 text-white whitespace-nowrap lg:flex-grow-0 lg:flex-shrink-0" data-category="tradicionais" data-target-id="tradicionais-section">Pizzas Tradicionais</button>
-                <button class="category-btn px-4 py-2 rounded-full bg-gray-200 text-gray-800 whitespace-nowrap lg:flex-grow-0 lg:flex-shrink-0" data-category="especiais" data-target-id="especiais-section">Pizzas Especiais</button>
-                <button class="category-btn px-4 py-2 rounded-full bg-gray-200 text-gray-800 whitespace-nowrap lg:flex-grow-0 lg:flex-shrink-0" data-category="doces" data-target-id="doces-section">Pizzas Doces</button>
-                <button class="category-btn px-4 py-2 rounded-full bg-gray-200 text-gray-800 whitespace-nowrap lg:flex-grow-0 lg:flex-shrink-0" data-category="bebidas" data-target-id="bebidas-section">Bebidas</button>
             </div>
         </div>
         
         <!-- Lista de Itens do Cardápio -->
         <div id="pizza-list">
-            <div id="tradicionais-section" class="pizza-category-section mb-8">
-                <h3 class="text-xl font-bold text-gray-800 mb-4">Pizzas Tradicionais</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="tradicionais-items"></div>
-            </div>
-            
-            <div id="especiais-section" class="pizza-category-section mb-8">
-                <h3 class="text-xl font-bold text-gray-800 mb-4">Pizzas Especiais</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="especiais-items"></div>
-            </div>
-            
-            <div id="doces-section" class="pizza-category-section mb-8">
-                <h3 class="text-xl font-bold text-gray-800 mb-4">Pizzas Doces</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="doces-items"></div>
-            </div>
-            
-            <div id="bebidas-section" class="pizza-category-section mb-8">
-                <h3 class="text-xl font-bold text-gray-800 mb-4">Bebidas</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="bebidas-items"></div>
-            </div>
+            <!-- As seções de categoria e seus itens serão geradas dinamicamente aqui pelo JS -->
+            <div id="dynamic-pizza-sections"></div>
         </div>
     </section>
 
@@ -644,8 +624,6 @@
         const promotionsListEl = document.getElementById('promotions-list');
         const promotionButton = document.getElementById('promotion-button'); // Referência ao botão de promoção
         const cartButton = document.getElementById('cart-button'); // Adicionado ID ao botão do carrinho
-        const cuscuzListEl = document.getElementById('cuscuz-list'); // Este será o container principal para pizzas agora
-        const bebidasListEl = document.getElementById('bebidas-items'); // Container para bebidas
         const subtotalEl = document.getElementById('subtotal');
         const deliveryFeeEl = document.getElementById('deliveryFee');
         const totalEl = document.getElementById('total');
@@ -945,68 +923,133 @@
         }
 
         // Função para popular o cardápio dinamicamente
-        function populateMenu(menuItems) {
-            // Limpa as seções existentes antes de preencher
-            document.getElementById('tradicionais-items').innerHTML = '';
-            document.getElementById('especiais-items').innerHTML = '';
-            document.getElementById('doces-items').innerHTML = '';
-            document.getElementById('bebidas-items').innerHTML = '';
+        function populateMenu(menuItems, orderedCategories) {
+            const dynamicSectionsContainer = document.getElementById('dynamic-pizza-sections');
+            dynamicSectionsContainer.innerHTML = ''; // Limpa todas as seções existentes
 
+            // Agrupa os itens por categoria
+            const itemsByCategory = {};
             menuItems.forEach(item => {
-                const sectionItemsEl = document.getElementById(`${item.category}-items`);
-                if (sectionItemsEl && item.available) { // Garante que o item está disponível
-                    let itemHtml = '';
-                    if (item.isPizza) {
-                        // Usa os preços diretamente das propriedades do item
-                        const price4F = (item.price4Slices !== undefined && item.price4Slices !== null) ? item.price4Slices.toFixed(2).replace('.', ',') : '0,00';
-                        const price6F = (item.price6Slices !== undefined && item.price6Slices !== null) ? item.price6Slices.toFixed(2).replace('.', ',') : '0,00';
-                        const price8F = (item.basePrice !== undefined && item.basePrice !== null) ? item.basePrice.toFixed(2).replace('.', ',') : '0,00';
-                        
-                        const imageUrl = item.imageUrl || defaultPizzaImage; // Usa a URL da imagem do item ou a padrão
+                if (!itemsByCategory[item.category]) {
+                    itemsByCategory[item.category] = [];
+                }
+                itemsByCategory[item.category].push(item);
+            });
 
-                        itemHtml = `
-                            <div class="flavor-card bg-white rounded-xl overflow-hidden shadow-lg transition duration-300">
-                                <img src="${imageUrl}" alt="Pizza de ${item.name}" class="w-full h-40 object-cover" onerror="this.onerror=null;this.src='${defaultPizzaImage}';">
-                                <div class="p-6">
-                                    <h3 class="text-xl font-bold text-gray-800 mb-2">${item.name}</h3>
-                                    <div class="flex justify-between items-center text-sm mb-4">
-                                        <span class="font-bold text-gray-800">4F:</span> <span class="font-bold text-red-600">R$ ${price4F}</span>
-                                        <span class="font-bold text-gray-800">6F:</span> <span class="font-bold text-red-600">R$ ${price6F}</span>
-                                        <span class="font-bold text-gray-800">8F:</span> <span class="font-bold text-red-600">R$ ${price8F}</span>
+            // Cria e preenche as seções para cada categoria na ordem definida
+            orderedCategories.forEach(category => {
+                const sectionId = `${category}-section`;
+                let sectionEl = document.getElementById(sectionId);
+
+                if (!sectionEl) {
+                    // Cria a nova seção se ela não existir
+                    sectionEl = document.createElement('div');
+                    sectionEl.id = sectionId;
+                    sectionEl.className = 'pizza-category-section mb-8';
+                    sectionEl.innerHTML = `
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">${capitalizeFirstLetter(category)}</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="${category}-items"></div>
+                    `;
+                    dynamicSectionsContainer.appendChild(sectionEl);
+                }
+
+                const categoryItemsEl = document.getElementById(`${category}-items`);
+                categoryItemsEl.innerHTML = ''; // Limpa os itens da categoria antes de preencher
+
+                // Adiciona os itens da categoria, se existirem
+                if (itemsByCategory[category]) {
+                    itemsByCategory[category].forEach(item => {
+                        if (item.available) { // Garante que o item está disponível
+                            let itemHtml = '';
+                            if (item.isPizza) {
+                                const price4F = (item.price4Slices !== undefined && item.price4Slices !== null) ? item.price4Slices.toFixed(2).replace('.', ',') : '0,00';
+                                const price6F = (item.price6Slices !== undefined && item.price6Slices !== null) ? item.price6Slices.toFixed(2).replace('.', ',') : '0,00';
+                                const price8F = (item.basePrice !== undefined && item.basePrice !== null) ? item.basePrice.toFixed(2).replace('.', ',') : '0,00';
+                                
+                                const imageUrl = item.imageUrl || defaultPizzaImage;
+
+                                itemHtml = `
+                                    <div class="flavor-card bg-white rounded-xl overflow-hidden shadow-lg transition duration-300">
+                                        <img src="${imageUrl}" alt="Pizza de ${item.name}" class="w-full h-40 object-cover" onerror="this.onerror=null;this.src='${defaultPizzaImage}';">
+                                        <div class="p-6">
+                                            <h3 class="text-xl font-bold text-gray-800 mb-2">${item.name}</h3>
+                                            <div class="flex justify-between items-center text-sm mb-4">
+                                                <span class="font-bold text-gray-800">4F:</span> <span class="font-bold text-red-600">R$ ${price4F}</span>
+                                                <span class="font-bold text-gray-800">6F:</span> <span class="font-bold text-red-600">R$ ${price6F}</span>
+                                                <span class="font-bold text-gray-800">8F:</span> <span class="font-bold text-red-600">R$ ${price8F}</span>
+                                            </div>
+                                            <p class="text-gray-600 text-sm mb-4">${item.description}</p>
+                                            <div class="flex justify-end mt-auto">
+                                                <button class="add-item-btn bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full text-sm font-medium transition duration-300"
+                                                        data-item-id="${item.id}" data-image-url="${imageUrl}">
+                                                    Adicionar
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <p class="text-gray-600 text-sm mb-4">${item.description}</p>
-                                    <div class="flex justify-end mt-auto">
-                                        <button class="add-item-btn bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full text-sm font-medium transition duration-300"
-                                                data-item-id="${item.id}" data-image-url="${imageUrl}">
-                                            Adicionar
-                                        </button>
+                                `;
+                            } else { // Para bebidas
+                                itemHtml = `
+                                    <div class="flavor-card bg-white rounded-xl overflow-hidden shadow-lg transition duration-300">
+                                        <div class="p-6">
+                                            <h3 class="text-xl font-bold text-gray-800 mb-2">${item.name}</h3>
+                                            <p class="text-gray-600 text-sm mb-4">${item.description}</p>
+                                            <div class="flex justify-between items-center">
+                                                <span class="font-bold text-red-600 text-lg">R$ ${item.basePrice.toFixed(2).replace('.', ',')}</span>
+                                                <button class="add-item-btn bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full text-sm font-medium transition duration-300"
+                                                        data-item-id="${item.id}">
+                                                    Adicionar
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
-                        `;
-                    } else { // Para bebidas
-                        itemHtml = `
-                            <div class="flavor-card bg-white rounded-xl overflow-hidden shadow-lg transition duration-300">
-                                <div class="p-6">
-                                    <h3 class="text-xl font-bold text-gray-800 mb-2">${item.name}</h3>
-                                    <p class="text-gray-600 text-sm mb-4">${item.description}</p>
-                                    <div class="flex justify-between items-center">
-                                        <span class="font-bold text-red-600 text-lg">R$ ${item.basePrice.toFixed(2).replace('.', ',')}</span>
-                                        <button class="add-item-btn bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full text-sm font-medium transition duration-300"
-                                                data-item-id="${item.id}">
-                                            Adicionar
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                    }
-                    sectionItemsEl.insertAdjacentHTML('beforeend', itemHtml);
+                                `;
+                            }
+                            categoryItemsEl.insertAdjacentHTML('beforeend', itemHtml);
+                        }
+                    });
                 }
             });
 
             // Reanexa os event listeners após popular o cardápio
             attachAddButtonListeners();
+        }
+
+        // Função para capitalizar a primeira letra de uma string (útil para nomes de categoria)
+        function capitalizeFirstLetter(string) {
+            // Converte a primeira letra para maiúscula e o resto para minúscula para padronização
+            return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+        }
+
+        // Função para criar os botões de categoria dinamicamente
+        function createCategoryButtons(categories) {
+            const categoryButtonsContainer = document.getElementById('category-buttons-container');
+            categoryButtonsContainer.innerHTML = ''; // Limpa os botões existentes
+
+            categories.forEach((category, index) => {
+                const button = document.createElement('button');
+                button.className = 'category-btn px-4 py-2 rounded-full bg-gray-200 text-gray-800 whitespace-nowrap lg:flex-grow-0 lg:flex-shrink-0';
+                button.textContent = capitalizeFirstLetter(category);
+                button.dataset.category = category;
+                button.dataset.targetId = `${category}-section`;
+                
+                button.addEventListener('click', function() {
+                    const targetCategory = this.dataset.category;
+                    const targetId = this.dataset.targetId;
+                    setActiveCategoryButton(targetCategory);
+                    isScrollingFromClick = true;
+                    document.getElementById(targetId).scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    setTimeout(() => {
+                        isScrollingFromClick = false;
+                    }, 700); // Ajuste este tempo se a rolagem for muito rápida/lenta
+                });
+                categoryButtonsContainer.appendChild(button);
+
+                if (index === 0) { // Define o primeiro botão como ativo inicialmente
+                    setActiveCategoryButton(category);
+                    currentActiveCategoryByScroll = category;
+                }
+            });
         }
 
         // Função para anexar os event listeners aos botões "Adicionar"
@@ -1567,10 +1610,8 @@
 
 
         // Sticky category bar logic (re-implemented for pizza categories)
-        const categoryBtns = document.querySelectorAll('.category-btn');
-        const categorySections = document.querySelectorAll('.pizza-category-section');
         let isScrollingFromClick = false; 
-        let currentActiveCategoryByScroll = 'tradicionais'; 
+        let currentActiveCategoryByScroll = ''; // Inicialmente vazia, será definida no DOMContentLoaded
 
         function getStickyHeaderHeight() {
             const stickyHeader = document.querySelector('.category-bar-mobile-sticky');
@@ -1578,22 +1619,8 @@
             return stickyHeader ? stickyHeader.offsetHeight : 0;
         }
 
-        categoryBtns.forEach(btn => {
-            btn.addEventListener('click', function() {
-                const category = this.dataset.category;
-                const targetId = this.dataset.targetId;
-                setActiveCategoryButton(category);
-                isScrollingFromClick = true;
-                // Scroll to the target section, aligning its top with the start of the viewport
-                document.getElementById(targetId).scrollIntoView({ behavior: 'smooth', block: 'start' });
-                // Reset the flag after a short delay to allow the IntersectionObserver to work again
-                setTimeout(() => {
-                    isScrollingFromClick = false;
-                }, 700); // Adjust this time if scrolling is too fast/slow
-            });
-        });
-
         function setActiveCategoryButton(category) {
+            const categoryBtns = document.querySelectorAll('.category-btn'); // Re-seleciona os botões
             categoryBtns.forEach(btn => {
                 if (btn.dataset.category === category) {
                     btn.classList.remove('bg-gray-200', 'text-gray-800');
@@ -1607,85 +1634,94 @@
             });
         }
 
-        const categoryObserver = new IntersectionObserver((entries) => {
-            if (isScrollingFromClick) {
-                return;
+        let categoryObserver; // Declara a variável no escopo global/superior
+
+        function setupCategoryObserver() {
+            // Desconecta o observer antigo se existir
+            if (categoryObserver) {
+                categoryObserver.disconnect();
             }
 
-            const stickyHeaderHeight = getStickyHeaderHeight();
-            let newActiveCategory = null;
-            let minDistance = Infinity; // To find the section whose top is closest to the sticky header's bottom
+            const categorySections = document.querySelectorAll('.pizza-category-section'); // Re-seleciona as seções
 
-            // Iterate through all category sections to find the one that should be active
-            categorySections.forEach(section => {
-                const rect = section.getBoundingClientRect();
-                const category = section.id.replace('-section', '');
-
-                // A section is considered active if its top edge is at or just above the bottom of the sticky header,
-                // and its bottom edge is still below the sticky header (meaning it hasn't fully scrolled past).
-                // A small buffer (e.g., 5px) is added to `stickyHeaderHeight` for robustness against
-                // sub-pixel rendering or slight variations in scroll position.
-                if (rect.top <= stickyHeaderHeight + 5 && rect.bottom > stickyHeaderHeight) {
-                    const distance = Math.abs(rect.top - stickyHeaderHeight);
-                    if (distance < minDistance) {
-                        minDistance = distance;
-                        newActiveCategory = category;
-                    }
+            categoryObserver = new IntersectionObserver((entries) => {
+                if (isScrollingFromClick) {
+                    return;
                 }
-            });
 
-            // Fallback for the very top of the page or if no section perfectly aligns
-            if (!newActiveCategory && categorySections.length > 0) {
-                // If scrolled to the very top, default to the first category
-                if (window.scrollY <= stickyHeaderHeight + 20) { // Check if scroll position is near the absolute top
-                    newActiveCategory = 'tradicionais';
-                } else {
-                    // As a last resort, find the topmost section that is at least partially visible in the viewport.
-                    // This handles cases where precise alignment fails but a section is clearly the dominant one on screen.
-                    for (let i = 0; i < categorySections.length; i++) {
-                        const section = categorySections[i];
-                        const rect = section.getBoundingClientRect();
-                        if (rect.bottom > 0 && rect.top < window.innerHeight) { // If any part of the section is visible
-                            newActiveCategory = section.id.replace('-section', '');
-                            break; // Take the first one found (topmost visible)
+                const stickyHeaderHeight = getStickyHeaderHeight();
+                let newActiveCategory = null;
+                let minDistance = Infinity; 
+
+                categorySections.forEach(section => {
+                    const rect = section.getBoundingClientRect();
+                    const category = section.id.replace('-section', '');
+
+                    if (rect.top <= stickyHeaderHeight + 5 && rect.bottom > stickyHeaderHeight) {
+                        const distance = Math.abs(rect.top - stickyHeaderHeight);
+                        if (distance < minDistance) {
+                            minDistance = distance;
+                            newActiveCategory = category;
+                        }
+                    }
+                });
+
+                if (!newActiveCategory && categorySections.length > 0) {
+                    if (window.scrollY <= stickyHeaderHeight + 20) {
+                        newActiveCategory = categorySections[0].id.replace('-section', ''); // Pega a primeira categoria
+                    } else {
+                        for (let i = 0; i < categorySections.length; i++) {
+                            const section = categorySections[i];
+                            const rect = section.getBoundingClientRect();
+                            if (rect.bottom > 0 && rect.top < window.innerHeight) {
+                                newActiveCategory = section.id.replace('-section', '');
+                                break;
+                            }
                         }
                     }
                 }
-            }
-            
-            // Only update the active button if a new active category is determined and it's different from the current one
-            if (newActiveCategory && newActiveCategory !== currentActiveCategoryByScroll) {
-                setActiveCategoryButton(newActiveCategory);
-                currentActiveCategoryByScroll = newActiveCategory;
-            }
-        }, {
-            root: null, // The viewport is the root
-            // Using a rootMargin of 0 means the IntersectionObserver will fire callbacks
-            // based on the target element intersecting with the actual viewport edges.
-            // We then use manual `rect.top` checks relative to `stickyHeaderHeight` for precise control.
-            rootMargin: '0px 0px 0px 0px', 
-            // A threshold of 0 means the callback will fire as soon as one pixel of the target element
-            // enters or leaves the intersection root. This provides immediate feedback.
-            threshold: 0 
-        });
+                
+                if (newActiveCategory && newActiveCategory !== currentActiveCategoryByScroll) {
+                    setActiveCategoryButton(newActiveCategory);
+                    currentActiveCategoryByScroll = newActiveCategory;
+                }
+            }, {
+                root: null,
+                rootMargin: '0px 0px 0px 0px', 
+                threshold: 0 
+            });
 
-        // Observe each category section
-        categorySections.forEach(section => {
-            categoryObserver.observe(section);
-        });
+            categorySections.forEach(section => {
+                categoryObserver.observe(section);
+            });
+        }
+
 
         // Initial setup and data loading
         document.addEventListener('DOMContentLoaded', async function() {
             allMenuData = await loadMenuFromSheet(); // Carrega todos os itens do cardápio (pizzas e bebidas)
             allPromotionsData = await loadPromotionsFromSheet(); // Carrega promoções
             
-            populateMenu(allMenuData); // Popula o cardápio com todos os itens
+            // Extrai categorias únicas na ordem em que aparecem na planilha
+            let orderedUniqueCategories = [];
+            const seenCategories = new Set();
+            allMenuData.forEach(item => {
+                if (!seenCategories.has(item.category)) {
+                    seenCategories.add(item.category);
+                    orderedUniqueCategories.push(item.category);
+                }
+            });
+            
+            createCategoryButtons(orderedUniqueCategories); // Cria os botões de categoria
+            populateMenu(allMenuData, orderedUniqueCategories); // Popula o cardápio com todos os itens
+            
+            setupCategoryObserver(); // Configura o IntersectionObserver para as novas seções
+
             updatePromotionButtonVisibility(); // Atualiza a visibilidade do botão de promoção
             updateCartCount(); // Garante que a contagem do carrinho esteja correta ao carregar
             updateOrderDisplay(); // Garante que o pedido esteja correto ao carregar
 
             // Dispara um evento de rolagem após um curto atraso para garantir que o observer seja executado
-            // This is important to set the initial active category button correctly on page load.
             setTimeout(() => {
                 window.dispatchEvent(new Event('scroll'));
             }, 100);
