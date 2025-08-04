@@ -389,6 +389,51 @@
                 opacity: 0;
             }
         }
+
+        /* Estilos para as opções de pagamento no modal */
+        .payment-option {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border: 1px solid #e5e7eb; /* gray-200 */
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        .payment-option:hover {
+            background-color: #f9fafb; /* gray-50 */
+            border-color: #dc2626; /* red-600 */
+        }
+        .payment-option.selected {
+            background-color: #fee2e2; /* red-100 */
+            border-color: #dc2626; /* red-600 */
+            box-shadow: 0 2px 8px rgba(220, 38, 38, 0.2);
+        }
+        .payment-option input[type="radio"] {
+            margin-right: 12px;
+            accent-color: #dc2626; /* red-600 */
+        }
+        .payment-option .icon {
+            font-size: 1.5rem;
+            margin-right: 12px;
+            color: #4b5563; /* gray-600 */
+        }
+        .payment-option.selected .icon {
+            color: #dc2626; /* red-600 */
+        }
+        .payment-option .text-content {
+            flex-grow: 1;
+        }
+        .payment-option .text-content h4 {
+            font-weight: 600;
+            color: #1f2937; /* gray-900 */
+        }
+        .payment-option .text-content p {
+            font-size: 0.875rem;
+            color: #6b7280; /* gray-500 */
+        }
+
     </style>
 </head>
 <body>
@@ -461,6 +506,17 @@
                     <span>Total:</span>
                     <span id="total">R$ 5,00</span>
                 </div>
+            </div>
+
+            <!-- NOVO: Seção de Forma de Pagamento -->
+            <div id="paymentMethodDisplay" class="border-t border-gray-200 pt-4 mb-6 hidden">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-gray-600">Forma de Pagamento:</span>
+                    <span id="selectedPaymentMethodText" class="font-bold text-red-600">Não selecionado</span>
+                </div>
+                <button onclick="openPaymentMethodModal()" class="w-full py-2 bg-gray-200 text-gray-800 rounded-md text-sm hover:bg-gray-300 transition">
+                    Alterar Forma de Pagamento
+                </button>
             </div>
             
             <!-- Botão "Adicionar mais" -->
@@ -562,9 +618,46 @@
         <div class="modal-content">
             <span class="close-button" id="close-install-prompt-modal">&times;</span>
             <p class="text-lg font-semibold text-gray-800 mb-4">Instale o Sâmia Cardápio para uma experiência completa!</p>
-            <p class="text-gray-600 mb-6">Adicione nosso aplicativo à sua tela inicial para acesso rápido e fácil, mesmo offline.</p>
+            <p class="text-gray-600 mb-6">Adicione nosso aplicativo à sua tela inicial para acesso rápido e fácil.</p>
             <button id="install-app-button" class="px-6 py-3 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition w-full">
                 Instalar Aplicativo
+            </button>
+        </div>
+    </div>
+
+    <!-- NOVO: Modal de Seleção de Forma de Pagamento -->
+    <div id="payment-method-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="close-payment-method-modal">&times;</span>
+            <h3 class="text-xl font-bold text-gray-800 mb-4">Escolha a Forma de Pagamento</h3>
+            <div id="payment-options-container" class="flex flex-col gap-3 mb-6">
+                <label class="payment-option" data-method="Dinheiro">
+                    <input type="radio" name="paymentMethod" value="Dinheiro" class="form-radio">
+                    <i class="fas fa-money-bill-wave icon"></i>
+                    <div class="text-content">
+                        <h4>Dinheiro</h4>
+                        <p>Pagamento em espécie na entrega.</p>
+                    </div>
+                </label>
+                <label class="payment-option" data-method="Cartão de Crédito/Débito">
+                    <input type="radio" name="paymentMethod" value="Cartão de Crédito/Débito" class="form-radio">
+                    <i class="fas fa-credit-card icon"></i>
+                    <div class="text-content">
+                        <h4>Cartão de Crédito/Débito</h4>
+                        <p>Máquina de cartão na entrega (crédito ou débito).</p>
+                    </div>
+                </label>
+                <label class="payment-option" data-method="Pix">
+                    <input type="radio" name="paymentMethod" value="Pix" class="form-radio">
+                    <i class="fas fa-qrcode icon"></i>
+                    <div class="text-content">
+                        <h4>Pix</h4>
+                        <p>Pagamento via QR Code Pix na entrega.</p>
+                    </div>
+                </label>
+            </div>
+            <button id="confirm-payment-method-btn" class="px-6 py-3 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition w-full">
+                Confirmar Pagamento
             </button>
         </div>
     </div>
@@ -614,6 +707,7 @@
         let isSelectingHalfPizza = false; // Nova flag para controlar se o usuário está selecionando uma meia pizza (qualquer categoria)
         let isFirstHalfPromotional = false; // Nova flag para indicar se a primeira metade foi promocional
         let deferredPrompt; // Variável para armazenar o evento beforeinstallprompt
+        let selectedPaymentMethod = null; // NOVO: Variável para armazenar a forma de pagamento selecionada
 
         // Imagem padrão para pizzas sem link na planilha
         const defaultPizzaImage = 'https://upload.wikimedia.org/wikipedia/commons/9/91/Pizza-3007395.jpg';
@@ -659,6 +753,14 @@
         const installPromptModal = document.getElementById('install-prompt-modal');
         const closeInstallPromptModalBtn = document.getElementById('close-install-prompt-modal');
         const installAppButton = document.getElementById('install-app-button');
+
+        // NOVO: Referências para o modal de seleção de forma de pagamento
+        const paymentMethodModal = document.getElementById('payment-method-modal');
+        const closePaymentMethodModalBtn = document.getElementById('close-payment-method-modal');
+        const paymentOptionsContainer = document.getElementById('payment-options-container');
+        const confirmPaymentMethodBtn = document.getElementById('confirm-payment-method-btn');
+        const paymentMethodDisplay = document.getElementById('paymentMethodDisplay');
+        const selectedPaymentMethodText = document.getElementById('selectedPaymentMethodText');
 
 
         let currentPizzaData = {}; // Objeto para armazenar temporariamente os dados da pizza selecionada
@@ -1379,8 +1481,12 @@
                 
                 document.getElementById('subtotal').textContent = 'R$ 0,00';
                 document.getElementById('total').textContent = 'R$ ' + deliveryFee.toFixed(2).replace('.', ',');
+                paymentMethodDisplay.classList.add('hidden'); // Esconde a forma de pagamento se o pedido estiver vazio
+                selectedPaymentMethod = null; // Reseta a forma de pagamento
+                selectedPaymentMethodText.textContent = 'Não selecionado';
             } else {
                 emptyOrderMessage.classList.add('hidden');
+                paymentMethodDisplay.classList.remove('hidden'); // Mostra a forma de pagamento se houver itens
                 
                 let itemsHTML = '';
                 let subtotal = 0;
@@ -1491,6 +1597,12 @@
             message += `\nSubtotal: R$ ${subtotal.toFixed(2).replace('.', ',')}`;
             message += `\nTaxa de entrega: R$ ${deliveryFee.toFixed(2).replace('.', ',')}`;
             message += `\nTotal: R$ ${total.toFixed(2).replace('.', ',')}`;
+            
+            // NOVO: Adiciona a forma de pagamento à mensagem do WhatsApp
+            if (selectedPaymentMethod) {
+                message += `\nForma de Pagamento: ${selectedPaymentMethod}`;
+            }
+
             message += '\n\nObrigado!';
 
             const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
@@ -1507,6 +1619,8 @@
             isFirstHalfPromotional = false;
             toggleAddItemButtons(true); // Reativa todos os botões "Adicionar"
             toggleCategoryButtons(true); // Reativa todos os botões de categoria
+            selectedPaymentMethod = null; // Reseta a forma de pagamento após o checkout
+            selectedPaymentMethodText.textContent = 'Não selecionado';
         }
 
         // Função de finalização do pedido (chamada pelo botão "Finalizar Pedido")
@@ -1531,8 +1645,8 @@
                 return; // Interrompe o checkout para que o usuário possa escolher uma bebida
             }
 
-            // Se tudo estiver OK, prossegue para o WhatsApp
-            proceedToWhatsappCheckout();
+            // NOVO: Se tudo estiver OK e bebidas verificadas, abre o modal de seleção de pagamento
+            openPaymentMethodModal();
         }
 
         // Função para voltar ao menu
@@ -1670,7 +1784,8 @@
                                 category: item.category
                             }, this, null); // Passa o botão clicado e null para a imagem (bebidas não têm)
                             drinkSuggestionModal.style.display = 'none'; // Fecha o modal após adicionar
-                            checkout(); // Chama o checkout imediatamente após adicionar a bebida
+                            // NOVO: Após adicionar bebida, abre o modal de pagamento
+                            openPaymentMethodModal(); 
                         }
                     });
                 });
@@ -1701,7 +1816,8 @@
 
         confirmNoDrinkYesBtn.addEventListener('click', function() {
             confirmNoDrinkModal.style.display = 'none';
-            proceedToWhatsappCheckout(); // Prossegue com o pedido para o WhatsApp
+            // NOVO: Após confirmar que não quer bebida, abre o modal de pagamento
+            openPaymentMethodModal(); 
         });
 
         confirmNoDrinkNoBtn.addEventListener('click', function() { // Listener para o botão "Não!" corrigido
@@ -1716,6 +1832,61 @@
             }
         });
 
+        // NOVO: Funções para o modal de seleção de forma de pagamento
+        function openPaymentMethodModal() {
+            paymentMethodModal.style.display = 'flex';
+            // Se já houver um método selecionado, marca o rádio button correspondente
+            if (selectedPaymentMethod) {
+                const radio = document.querySelector(`input[name="paymentMethod"][value="${selectedPaymentMethod}"]`);
+                if (radio) {
+                    radio.checked = true;
+                    // Adiciona a classe 'selected' ao label pai
+                    radio.closest('.payment-option').classList.add('selected');
+                }
+            } else {
+                // Desmarca todos e remove a classe 'selected' se não houver método selecionado
+                document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
+                    radio.checked = false;
+                    radio.closest('.payment-option').classList.remove('selected');
+                });
+            }
+        }
+
+        function closePaymentMethodModal() {
+            paymentMethodModal.style.display = 'none';
+        }
+
+        // Listener para fechar o modal de forma de pagamento (botão X)
+        closePaymentMethodModalBtn.addEventListener('click', closePaymentMethodModal);
+
+        // Listener para o clique em qualquer opção de pagamento (para adicionar a classe 'selected')
+        paymentOptionsContainer.addEventListener('click', (event) => {
+            const label = event.target.closest('.payment-option');
+            if (label) {
+                // Remove a classe 'selected' de todas as opções
+                document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('selected'));
+                // Adiciona a classe 'selected' à opção clicada
+                label.classList.add('selected');
+                // Marca o radio button correspondente
+                const radio = label.querySelector('input[type="radio"]');
+                if (radio) {
+                    radio.checked = true;
+                }
+            }
+        });
+
+        // Listener para o botão "Confirmar Pagamento"
+        confirmPaymentMethodBtn.addEventListener('click', () => {
+            const selectedRadio = document.querySelector('input[name="paymentMethod"]:checked');
+            if (selectedRadio) {
+                selectedPaymentMethod = selectedRadio.value;
+                selectedPaymentMethodText.textContent = selectedPaymentMethod;
+                closePaymentMethodModal();
+                proceedToWhatsappCheckout(); // Prossegue para o WhatsApp após confirmar o pagamento
+            } else {
+                showMessageModal('Por favor, selecione uma forma de pagamento.');
+            }
+        });
 
         // Sticky category bar logic (re-implemented for pizza categories)
         let isScrollingFromClick = false; 
@@ -1941,7 +2112,7 @@
                 deferredPrompt.userChoice.then((choiceResult) => {
                     if (choiceResult.outcome === 'accepted') {
                         console.log('Usuário aceitou a instalação do PWA');
-                        showMessageModal('Sâmia Cardápio instalado com sucesso! 🎉');
+                        showMessageModal('Sâmia Cardápio está sendo instalado, logo ele aparecerá na sua tela de app.');
                     } else {
                         console.log('Usuário recusou a instalação do PWA');
                         showMessageModal('Você pode instalar o Sâmia Cardápio a qualquer momento pelo menu do navegador.');
