@@ -1082,6 +1082,27 @@
                             });
                             return; // Interrompe a execução posterior
                         }
+                    } else if (isSelectingHalfPizza && !isFirstHalfPromotional) { // NOVO: Se a primeira metade NÃO foi promocional
+                        if (targetCategory.toLowerCase() === 'promocionais') {
+                            event.preventDefault(); // Previne a rolagem padrão
+                            showMessageModal('Você começou a montar uma pizza meio a meio com um sabor não promocional. A segunda metade não pode ser de uma pizza promocional.', () => {
+                                // Tenta rolar de volta para a categoria da primeira metade, se ela ainda existir
+                                if (firstHalfPizza && firstHalfPizza.category) {
+                                    const originalCategorySection = document.getElementById(`${firstHalfPizza.category.toLowerCase()}-section`);
+                                    if (originalCategorySection) {
+                                        originalCategorySection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                        setActiveCategoryButton(firstHalfPizza.category.toLowerCase());
+                                    } else {
+                                        // Se a categoria original não existe (cenário improvável), apenas rola para o topo
+                                        document.getElementById('menu').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                    }
+                                } else {
+                                    // Fallback se firstHalfPizza não estiver definido corretamente
+                                    document.getElementById('menu').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                }
+                            });
+                            return; // Interrompe a execução posterior
+                        }
                     }
 
                     setActiveCategoryButton(targetCategory);
@@ -1840,17 +1861,30 @@
                 }
                 
                 // Lógica de restrição de rolagem baseada nas flags de meia pizza
-                if (isSelectingHalfPizza && isFirstHalfPromotional) { // Se a primeira metade foi promocional, restringe a navegação
-                    if (newActiveCategory && newActiveCategory.toLowerCase() !== 'promocionais') {
-                        if (currentActiveCategoryByScroll.toLowerCase() !== 'promocionais') { 
+                if (isSelectingHalfPizza) { // Check if any half pizza selection is in progress
+                    if (isFirstHalfPromotional) { // Case 1: First half was promotional
+                        if (newActiveCategory && newActiveCategory.toLowerCase() !== 'promocionais') {
+                            // If user scrolled to a non-promotional category, force them back to 'promocionais'
                             setActiveCategoryButton('promocionais');
-                            currentActiveCategoryByScroll = 'promocionais';
-                            isScrollingFromClick = true;
+                            currentActiveCategoryByScroll = 'promocionais'; // Update this immediately
+                            isScrollingFromClick = true; // Flag to prevent observer re-triggering during forced scroll
                             document.getElementById('promocionais-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
-                            setTimeout(() => { isScrollingFromClick = false; }, 700);
+                            setTimeout(() => { isScrollingFromClick = false; }, 700); // Reset flag after scroll
                             showMessageModal('Para pizzas promocionais, a segunda metade deve ser também de uma pizza promocional.');
+                            return; // Stop further category processing
                         }
-                        return;
+                    } else { // Case 2: First half was NOT promotional
+                        if (newActiveCategory && newActiveCategory.toLowerCase() === 'promocionais') {
+                            // If user scrolled to a promotional category, force them back to original category
+                            const originalCategory = firstHalfPizza.category.toLowerCase();
+                            setActiveCategoryButton(originalCategory);
+                            currentActiveCategoryByScroll = originalCategory; // Update this immediately
+                            isScrollingFromClick = true; // Flag to prevent observer re-triggering during forced scroll
+                            document.getElementById(`${originalCategory}-section`).scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            setTimeout(() => { isScrollingFromClick = false; }, 700); // Reset flag after scroll
+                            showMessageModal('Você começou a montar uma pizza meio a meio com um sabor não promocional. A segunda metade não pode ser de uma pizza promocional.');
+                            return; // Stop further category processing
+                        }
                     }
                 }
 
