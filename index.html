@@ -927,7 +927,7 @@
             const lines = csvText.split('\n').filter(line => line.trim() !== '');
 
             if (lines.length === 0) {
-                console.warn(`Nenhuma linha válida encontrada no CSV de ${type}.`);
+                console.warn(`DEBUG: Nenhuma linha válida encontrada no CSV de ${type}.`);
                 return [];
             }
 
@@ -1002,10 +1002,10 @@
                         if (['basePrice', 'price6Slices', 'price4Slices', 'promoPrice'].includes(headerKey)) { 
                             const parsedValue = parseFloat(String(value).replace(',', '.'));
                             item[headerKey] = isNaN(parsedValue) ? 0 : parsedValue;
-                        } else if (headerKey === 'deliveryFee') { // Specific handling for deliveryFee
+                        } else if (headerKey === 'deliveryFee') { 
                             const parsedValue = parseFloat(String(value).replace(',', '.'));
                             item[headerKey] = isNaN(parsedValue) ? 0 : parsedValue;
-                            console.log(`DEBUG: parseCsvData - Processed deliveryFee for ${item.neighborhood}: raw='${value}', parsed=${item[headerKey]}, type=${typeof item[headerKey]}`);
+                            console.log(`DEBUG: parseCsvData - Processed deliveryFee for ${item.neighborhood || 'unknown'}: raw='${value}', parsed=${item[headerKey]}, type=${typeof item[headerKey]}`);
                         } else if (['isPizza', 'available', 'active'].includes(headerKey)) {
                             item[headerKey] = value.toUpperCase() === 'SIM';
                         } else {
@@ -1027,7 +1027,7 @@
                         parsedData.push(item);
                     }
                 } else {
-                    console.warn(`Linha ${i + 1} ignorada ou malformada (${type} - esperado ${mappedHeaders.length} colunas, encontrado ${rowValues.length}): "${line}"`);
+                    console.warn(`DEBUG: Linha ${i + 1} ignorada ou malformada (${type} - esperado ${mappedHeaders.length} colunas, encontrado ${rowValues.length}): "${line}"`);
                 }
             }
             return parsedData;
@@ -1280,7 +1280,7 @@
             const item = allMenuData.find(i => i.id === itemId);
 
             if (!item) {
-                console.error('Item não encontrado:', itemId);
+                console.error('DEBUG: Item não encontrado:', itemId);
                 return;
             }
 
@@ -1560,7 +1560,7 @@
                 subtotalEl.textContent = 'R$ ' + subtotal.toFixed(2).replace('.', ',');
                 
                 // NOVO: Logs de depuração para selectedAddress.deliveryFee
-                console.log('--- INSIDE updateOrderDisplay ---');
+                console.log('--- DEBUG: INSIDE updateOrderDisplay ---');
                 console.log('DEBUG: Current selectedAddress object at start of updateOrderDisplay:', JSON.stringify(selectedAddress));
                 console.log('DEBUG: selectedAddress.deliveryFee (raw value at start of updateOrderDisplay):', selectedAddress.deliveryFee);
 
@@ -1609,7 +1609,7 @@
                         </div>
                     `);
                 }
-                console.log('--- END OF updateOrderDisplay ---');
+                console.log('--- DEBUG: END OF updateOrderDisplay ---');
             }
             updateDrinkSuggestionButtons(); 
         }
@@ -1775,7 +1775,7 @@
 
         // NOVO: Função para confirmar o endereço
         function confirmAddress() {
-            console.log('--- CONFIRM ADDRESS CALLED ---');
+            console.log('--- DEBUG: CONFIRM ADDRESS CALLED ---');
             const neighborhood = neighborhoodSelect.value;
             const street = streetInput.value.trim();
             const number = numberInput.value.trim();
@@ -1821,7 +1821,7 @@
             
             // Continua o fluxo de checkout após a confirmação do endereço
             handleCheckoutFlow();
-            console.log('--- END OF CONFIRM ADDRESS ---');
+            console.log('--- DEBUG: END OF CONFIRM ADDRESS ---');
         }
 
         // NOVO: Popula o dropdown de bairros
@@ -1850,7 +1850,7 @@
 
         // Listener para o dropdown de bairro para atualizar a taxa de entrega
         neighborhoodSelect.addEventListener('change', () => {
-            console.log('--- NEIGHBORHOOD CHANGE EVENT FIRED ---');
+            console.log('--- DEBUG: NEIGHBORHOOD CHANGE EVENT FIRED ---');
             const selectedNeighborhoodName = neighborhoodSelect.value;
             console.log('DEBUG: Selected neighborhood in dropdown (raw value):', selectedNeighborhoodName);
             const selectedFeeData = deliveryFeesData.find(item => item.neighborhood === selectedNeighborhoodName);
@@ -1868,7 +1868,7 @@
             console.log('DEBUG: Full selectedAddress object after change event:', JSON.stringify(selectedAddress));
 
             updateOrderDisplay(); // Update the total in the sidebar
-            console.log('--- NEIGHBORHOOD CHANGE EVENT ENDED ---');
+            console.log('--- DEBUG: NEIGHBORHOOD CHANGE EVENT ENDED ---');
         });
 
 
@@ -1936,7 +1936,7 @@
                 }
                 showTemporaryFeedback(`Promoção "${promotion.name}" adicionada ao pedido!`, 'bg-green-500'); 
             } else {
-                console.error('Promoção não encontrada:', promoId);
+                console.error('DEBUG: Promoção não encontrada:', promoId);
                 showMessageModal('Erro ao adicionar promoção. Por favor, tente novamente.');
             }
         }
@@ -2311,9 +2311,8 @@
             try {
                 const response = await fetch('/api/menu'); 
                 if (!response.ok) {
-                    // Log the full response status and text for debugging
                     const errorText = await response.text();
-                    console.error('Erro ao buscar dados da API:', response.status, errorText);
+                    console.error('DEBUG: Erro ao buscar dados da API:', response.status, errorText);
                     throw new Error(`Erro ao buscar dados da API: ${response.statusText || errorText}`);
                 }
                 const data = await response.json(); 
@@ -2355,7 +2354,7 @@
                 }, 100);
 
             } catch (error) {
-                console.error('Erro ao carregar o cardápio:', error);
+                console.error('DEBUG: Erro ao carregar o cardápio:', error);
                 showMessageModal('Não foi possível carregar o cardápio no momento. Por favor, tente novamente mais tarde.');
             }
         });
@@ -2364,10 +2363,10 @@
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/service-worker.js')
                     .then(registration => {
-                        console.log('Service Worker registado com sucesso. Scope:', registration.scope);
+                        console.log('DEBUG: Service Worker registado com sucesso. Scope:', registration.scope);
                     })
                     .catch(error => {
-                        console.log('Falha no registo do Service Worker:', error);
+                        console.log('DEBUG: Falha no registo do Service Worker:', error);
                     });
             });
         }
@@ -2400,10 +2399,10 @@
                 deferredPrompt.prompt();
                 deferredPrompt.userChoice.then((choiceResult) => {
                     if (choiceResult.outcome === 'accepted') {
-                        console.log('Usuário aceitou a instalação do PWA');
+                        console.log('DEBUG: Usuário aceitou a instalação do PWA');
                         showMessageModal('Sâmia Cardápio está sendo instalado, logo ele aparecerá na sua tela de app.');
                     } else {
-                        console.log('Usuário recusou a instalação do PWA');
+                        console.log('DEBUG: Usuário recusou a instalação do PWA');
                         showMessageModal('Você pode instalar o Sâmia Cardápio a qualquer momento pelo menu do navegador.');
                     }
                     deferredPrompt = null; 
@@ -2417,7 +2416,7 @@
 
         window.addEventListener('appinstalled', () => {
             installPromptModal.style.display = 'none';
-            console.log('PWA Sâmia Cardápio foi instalado!');
+            console.log('DEBUG: PWA Sâmia Cardápio foi instalado!');
         });
 
         window.addEventListener('load', () => {
