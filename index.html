@@ -1483,13 +1483,10 @@
                 
                 document.getElementById('subtotal').textContent = 'R$ 0,00';
                 document.getElementById('total').textContent = 'R$ ' + deliveryFee.toFixed(2).replace('.', ',');
-                // paymentMethodDisplay.classList.add('hidden'); // Removido
                 selectedPaymentMethod = null; // Reseta a forma de pagamento
-                // selectedPaymentMethodText.textContent = 'Não selecionado'; // Removido
             } else {
                 console.log("DEBUG: Order not empty, selectedPaymentMethod is:", selectedPaymentMethod);
                 emptyOrderMessage.classList.add('hidden');
-                // paymentMethodDisplay.classList.remove('hidden'); // Removido
                 
                 let itemsHTML = '';
                 let subtotal = 0;
@@ -1510,8 +1507,13 @@
                         itemName = `<b>${sizeLabel}</b>: ${item.name}`;
                     }
                     
+                    // Aplica a borda inferior apenas se não for o último item do pedido E não for a forma de pagamento
+                    const isLastItem = (index === order.length - 1);
+                    const borderClass = isLastItem && !selectedPaymentMethod ? '' : 'border-b border-gray-100';
+
+
                     itemsHTML += `
-                        <div class="flex justify-between items-center py-3 border-b border-gray-100">
+                        <div class="flex justify-between items-center py-3 ${borderClass}">
                             <div class="flex-1">
                                 <p class="font-medium">${itemName}</p>
                                 <p class="text-sm text-gray-500">${itemDescription}</p>
@@ -1529,7 +1531,7 @@
                 // Adiciona a forma de pagamento ao resumo do pedido se selecionada
                 if (selectedPaymentMethod) {
                     itemsHTML += `
-                        <div class="flex justify-between items-center py-3 border-b border-gray-100">
+                        <div class="flex justify-between items-center py-3"> <!-- Removida a borda inferior aqui -->
                             <div class="flex-1">
                                 <p class="font-medium text-gray-600">Forma de Pagamento:</p>
                             </div>
@@ -1638,7 +1640,6 @@
             toggleAddItemButtons(true); // Reativa todos os botões "Adicionar"
             toggleCategoryButtons(true); // Reativa todos os botões de categoria
             selectedPaymentMethod = null; // Reseta a forma de pagamento após o checkout
-            // selectedPaymentMethodText.textContent = 'Não selecionado'; // Removido
         }
 
         // Função de finalização do pedido (chamada pelo botão "Finalizar Pedido")
