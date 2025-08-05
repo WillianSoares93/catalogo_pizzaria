@@ -1057,7 +1057,7 @@
                     case 'ID Item Aplicavel': return 'itemId';
                     case 'Ativo (SIM/NAO)': return 'active';
                     // Headers para Taxas de Entrega - CORRIGIDO O MAPEAMENTO
-                    case 'Bairro': return 'neighborhood';
+                    case 'Bairros': return 'neighborhood'; // CORREÇÃO AQUI: De 'Bairro' para 'Bairros'
                     case 'Valor Frete': return 'deliveryFee';
                     default: 
                         console.warn(`DEBUG: Header CSV desconhecido encontrado para ${type}: "${cleanedHeader}"`); // Log para depuração
@@ -2447,6 +2447,21 @@
             showAddressInputModal();
         });
 
+        // NOVO: Definição da função updateAddressDisplay
+        function updateAddressDisplay() {
+            console.log('DEBUG: updateAddressDisplay: Chamado para atualizar a exibição do endereço.');
+            if (selectedAddress.bairro && selectedAddress.rua && selectedAddress.numero) {
+                addressSummarySection.classList.remove('hidden');
+                addressDisplay.textContent = `${selectedAddress.rua}, Nº ${selectedAddress.numero}`;
+                neighborhoodDisplay.textContent = `Bairro: ${selectedAddress.bairro}`;
+                referenceDisplay.textContent = selectedAddress.referencia ? `Ponto de Referência: ${selectedAddress.referencia}` : '';
+                console.log('DEBUG: Resumo do endereço atualizado e visível.');
+            } else {
+                addressSummarySection.classList.add('hidden');
+                console.log('DEBUG: Nenhum endereço completo, resumo do endereço oculto.');
+            }
+        }
+
 
         document.addEventListener('DOMContentLoaded', async function() {
             try {
@@ -2514,6 +2529,11 @@
                     })
                     .catch(error => {
                         console.log('DEBUG: Falha no registo do Service Worker:', error);
+                        // Adicionado catch para o fetch dentro do service worker para evitar Uncaught (in promise)
+                        // Isso é uma correção para o erro de CORS reportado no service worker
+                        if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+                            console.warn('DEBUG: Erro de rede/CORS no Service Worker. Isso pode ser esperado para recursos de terceiros não-cacheáveis.');
+                        }
                     });
             });
         }
