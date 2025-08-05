@@ -1,6 +1,6 @@
 // Este arquivo é uma função Serverless para o Vercel.
-// Ele é responsável por buscar os dados do cardápio e promoções de planilhas Google Sheets
-// publicadas como CSV e retorná-los para a aplicação front-end.
+// Ele é responsável por buscar os dados do cardápio, promoções e taxas de entrega
+// de planilhas Google Sheets publicadas como CSV e retorná-los para a aplicação front-end.
 //
 // Para garantir que o Node.js no ambiente Vercel trate este arquivo como um módulo ES (permitindo 'import'),
 // você deve ter "type": "module" no seu arquivo package.json.
@@ -12,9 +12,8 @@ import fetch from 'node-fetch'; // Importa a biblioteca 'node-fetch' para fazer 
 // para serem "Visíveis para qualquer pessoa com o link".
 const CARDAPIO_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=664943668&single=true&output=csv'; 
 const PROMOCOES_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=600393470&single=true&output=csv'; 
-
-// ATENÇÃO: Não há nenhuma URL ou lógica relacionada a taxas de entrega neste arquivo.
-// A funcionalidade de frete dinâmico foi completamente removida desta função Serverless.
+// NOVA URL para a planilha de taxas de entrega
+const DELIVERY_FEES_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=1695668250&single=true&output=csv';
 
 // A função principal que será exportada e executada pelo Vercel.
 // 'req' é o objeto de requisição (request) e 'res' é o objeto de resposta (response).
@@ -59,12 +58,26 @@ export default async (req, res) => {
         const promocoesData = await promocoesResponse.text();
         console.log('Vercel Function: Dados das Promoções buscados com sucesso.');
 
-        // --- 3. Envia a resposta de sucesso ---
-        console.log('Vercel Function: Todos os dados (cardápio e promoções) foram buscados com sucesso. Enviando resposta JSON.');
+        // --- 3. Busca os dados das Taxas de Entrega ---
+        console.log('Vercel Function: Tentando buscar dados das Taxas de Entrega da URL:', DELIVERY_FEES_CSV_URL);
+        const deliveryFeesResponse = await fetch(DELIVERY_FEES_CSV_URL);
+
+        // Verifica se a requisição das taxas de entrega foi bem-sucedida
+        if (!deliveryFeesResponse.ok) {
+            const errorText = await deliveryFeesResponse.text();
+            console.error(`Vercel Function: Erro HTTP ao buscar Taxas de Entrega. Status: ${deliveryFeesResponse.status}, StatusText: ${deliveryFeesResponse.statusText}. Corpo da Resposta (parcial): ${errorText.substring(0, 200)}...`);
+            throw new Error(`Falha ao buscar as taxas de entrega: ${deliveryFeesResponse.statusText || 'Erro desconhecido'}`);
+        }
+        const deliveryFeesData = await deliveryFeesResponse.text();
+        console.log('Vercel Function: Dados das Taxas de Entrega buscados com sucesso.');
+
+
+        // --- 4. Envia a resposta de sucesso ---
+        console.log('Vercel Function: Todos os dados (cardápio, promoções e taxas de entrega) foram buscados com sucesso. Enviando resposta JSON.');
         res.status(200).json({
-            cardapio: cardapioData,  // Inclui os dados CSV do cardápio
-            promocoes: promocoesData // Inclui os dados CSV das promoções
-            // Não há mais o campo 'deliveryFees' aqui.
+            cardapio: cardapioData,      // Inclui os dados CSV do cardápio
+            promocoes: promocoesData,    // Inclui os dados CSV das promoções
+            deliveryFees: deliveryFeesData // Inclui os dados CSV das taxas de entrega
         });
 
     } catch (error) {
