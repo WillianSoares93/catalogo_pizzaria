@@ -11,6 +11,7 @@ import fetch from 'node-fetch';
 const CARDAPIO_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=664943668&single=true&output=csv'; 
 const PROMOCOES_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=600393470&single=true&output=csv'; 
 // A constante DELIVERY_FEES_CSV_URL FOI REMOVIDA COMPLETAMENTE.
+// NÃO HÁ MAIS NENHUMA REFERÊNCIA À PLANILHA DE FRETES NESTE ARQUIVO.
 
 export default async (req, res) => {
     res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate'); 
