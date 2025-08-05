@@ -630,7 +630,10 @@
     <div id="payment-method-modal" class="modal">
         <div class="modal-content">
             <span class="close-button" id="close-payment-method-modal">&times;</span>
-            <h3 class="text-xl font-bold text-gray-800 mb-4">Escolha a Forma de Pagamento</h3>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Escolha a Forma de Pagamento</h3>
+            <!-- NOVO: Exibição do total do pedido -->
+            <p class="text-gray-600 text-lg mb-4">Total Pedido: <span id="payment-modal-total" class="font-bold text-red-600">R$ 0,00</span></p>
+
             <div id="payment-options-container" class="flex flex-col gap-3 mb-6">
                 <label class="payment-option" data-method="Dinheiro">
                     <input type="radio" name="paymentMethod" value="Dinheiro" class="form-radio">
@@ -776,6 +779,7 @@
         const trocoInputContainer = document.getElementById('troco-input-container'); // NOVO: container do input de troco
         const trocoParaInput = document.getElementById('trocoPara'); // NOVO: input de troco
         const trocoTotalDisplay = document.getElementById('trocoTotalDisplay'); // NOVO: display do troco total
+        const paymentModalTotal = document.getElementById('payment-modal-total'); // NOVO: elemento para exibir o total do pedido no modal
 
         let currentPizzaData = {}; // Objeto para armazenar temporariamente os dados da pizza selecionada
         let firstHalfPizza = null; // Armazena os dados da primeira metade de uma pizza dividida
@@ -1930,6 +1934,10 @@
             isCheckoutInitiated = fromCheckout; // Define a flag global
             paymentMethodModal.style.display = 'flex';
             
+            // Atualiza o total do pedido no modal de pagamento
+            const totalOrder = calculateOrderTotal();
+            paymentModalTotal.textContent = `R$ ${totalOrder.toFixed(2).replace('.', ',')}`;
+
             // Esconde o container do troco por padrão ao abrir o modal
             trocoInputContainer.classList.add('hidden');
             trocoParaInput.value = ''; // Limpa o valor do input
@@ -1950,7 +1958,6 @@
                         trocoInputContainer.classList.remove('hidden');
                         if (typeof selectedPaymentMethod === 'object' && selectedPaymentMethod.trocoPara) {
                             trocoParaInput.value = selectedPaymentMethod.trocoPara;
-                            const totalOrder = calculateOrderTotal(); // Recalcula o total do pedido
                             const trocoCalculado = selectedPaymentMethod.trocoPara - totalOrder;
                             trocoTotalDisplay.textContent = `R$ ${trocoCalculado.toFixed(2).replace('.', ',')}`;
                         }
