@@ -999,9 +999,13 @@
                     for (let j = 0; j < mappedHeaders.length; j++) {
                         let headerKey = mappedHeaders[j];
                         let value = rowValues[j];
-                        if (['basePrice', 'price6Slices', 'price4Slices', 'promoPrice', 'deliveryFee'].includes(headerKey)) { 
+                        if (['basePrice', 'price6Slices', 'price4Slices', 'promoPrice'].includes(headerKey)) { 
                             const parsedValue = parseFloat(String(value).replace(',', '.'));
                             item[headerKey] = isNaN(parsedValue) ? 0 : parsedValue;
+                        } else if (headerKey === 'deliveryFee') { // Specific handling for deliveryFee
+                            const parsedValue = parseFloat(String(value).replace(',', '.'));
+                            item[headerKey] = isNaN(parsedValue) ? 0 : parsedValue;
+                            console.log(`DEBUG: parseCsvData - Processed deliveryFee for ${item.neighborhood}: raw='${value}', parsed=${item[headerKey]}, type=${typeof item[headerKey]}`);
                         } else if (['isPizza', 'available', 'active'].includes(headerKey)) {
                             item[headerKey] = value.toUpperCase() === 'SIM';
                         } else {
@@ -1021,9 +1025,6 @@
                     // Para deliveryFees, todos os itens são adicionados se a linha for válida
                     if ((type === 'cardapio' && item.available) || (type === 'promocoes' && item.active) || type === 'deliveryFees') {
                         parsedData.push(item);
-                        if (type === 'deliveryFees') {
-                            console.log('Parsed delivery fee item:', item); 
-                        }
                     }
                 } else {
                     console.warn(`Linha ${i + 1} ignorada ou malformada (${type} - esperado ${mappedHeaders.length} colunas, encontrado ${rowValues.length}): "${line}"`);
@@ -1560,20 +1561,24 @@
                 
                 // NOVO: Logs de depuração para selectedAddress.deliveryFee
                 console.log('--- INSIDE updateOrderDisplay ---');
-                console.log('Current selectedAddress object at start of updateOrderDisplay:', selectedAddress);
-                console.log('selectedAddress.deliveryFee (raw value at start of updateOrderDisplay):', selectedAddress.deliveryFee);
+                console.log('DEBUG: Current selectedAddress object at start of updateOrderDisplay:', JSON.stringify(selectedAddress));
+                console.log('DEBUG: selectedAddress.deliveryFee (raw value at start of updateOrderDisplay):', selectedAddress.deliveryFee);
 
                 // Garante que selectedAddress.deliveryFee é um número antes de chamar toFixed
                 let currentDeliveryFeeValue = selectedAddress.deliveryFee;
                 if (currentDeliveryFeeValue === undefined || currentDeliveryFeeValue === null) {
                     currentDeliveryFeeValue = 0;
-                    console.warn('selectedAddress.deliveryFee was undefined/null in updateOrderDisplay, reset to 0 for calculation.');
+                    console.warn('DEBUG: updateOrderDisplay - selectedAddress.deliveryFee was undefined/null, reset to 0 for calculation.');
                 }
                 const currentDeliveryFee = parseFloat(currentDeliveryFeeValue); 
-                console.log('currentDeliveryFee (after parseFloat and check):', currentDeliveryFee, 'Type:', typeof currentDeliveryFee);
-                console.trace('Call stack for toFixed error point (if it happens)'); // Add this
+                console.log('DEBUG: updateOrderDisplay - currentDeliveryFee (after parseFloat and check):', currentDeliveryFee, 'Type:', typeof currentDeliveryFee);
+                
+                // This is the line 1559 where the error is reported
+                // Ensure the value passed to toFixed is always a number
+                const feeToDisplay = isNaN(currentDeliveryFee) ? 0 : currentDeliveryFee;
+                dynamicDeliveryFeeEl.textContent = 'R$ ' + feeToDisplay.toFixed(2).replace('.', ',');
+                console.trace('DEBUG: Call stack for toFixed error point (if it happens)'); // Add this
 
-                dynamicDeliveryFeeEl.textContent = 'R$ ' + (isNaN(currentDeliveryFee) ? 0 : currentDeliveryFee).toFixed(2).replace('.', ',');
                 const total = subtotal + (isNaN(currentDeliveryFee) ? 0 : currentDeliveryFee);
                 totalEl.textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
 
@@ -1778,7 +1783,7 @@
 
             if (!neighborhood || !street || !number) {
                 showMessageModal('Por favor, preencha o bairro, rua e número do endereço.');
-                console.log('Address validation failed: missing neighborhood, street, or number.');
+                console.log('DEBUG: Address validation failed: missing neighborhood, street, or number.');
                 return;
             }
 
@@ -1789,7 +1794,7 @@
             if (selectedFeeData && typeof selectedFeeData.deliveryFee === 'number') {
                 fee = selectedFeeData.deliveryFee;
             } else {
-                console.warn(`Delivery fee data for '${neighborhood}' is invalid or not found in deliveryFeesData. Setting to 0.`);
+                console.warn(`DEBUG: Delivery fee data for '${neighborhood}' is invalid or not found in deliveryFeesData. Setting to 0.`);
             }
 
             selectedAddress = {
@@ -1799,11 +1804,11 @@
                 reference: reference,
                 deliveryFee: fee // Usa o valor já tratado
             };
-            console.log('Selected neighborhood for fee (in confirmAddress):', neighborhood);
-            console.log('Found selectedFeeData (in confirmAddress):', selectedFeeData);
-            console.log('Calculated fee (in confirmAddress, after assignment):', selectedAddress.deliveryFee);
-            console.log('Type of selectedAddress.deliveryFee (in confirmAddress, after assignment):', typeof selectedAddress.deliveryFee);
-            console.log('Full selectedAddress object (in confirmAddress):', selectedAddress);
+            console.log('DEBUG: Selected neighborhood for fee (in confirmAddress):', neighborhood);
+            console.log('DEBUG: Found selectedFeeData (in confirmAddress):', selectedFeeData);
+            console.log('DEBUG: Calculated fee (in confirmAddress, after assignment):', selectedAddress.deliveryFee);
+            console.log('DEBUG: Type of selectedAddress.deliveryFee (in confirmAddress, after assignment):', typeof selectedAddress.deliveryFee);
+            console.log('DEBUG: Full selectedAddress object (in confirmAddress):', JSON.stringify(selectedAddress));
             
             // Atualiza a exibição do resumo do endereço
             addressDisplay.textContent = `Rua: ${selectedAddress.street}, Nº ${selectedAddress.number}`;
@@ -1823,9 +1828,9 @@
         function populateNeighborhoodDropdown() {
             neighborhoodSelect.innerHTML = '<option value="">Selecione um bairro</option>';
             // NOVO: Log para depuração
-            console.log('Populating neighborhood dropdown with data:', deliveryFeesData);
+            console.log('DEBUG: populateNeighborhoodDropdown called. deliveryFeesData length:', deliveryFeesData.length);
             if (deliveryFeesData.length === 0) {
-                console.warn('deliveryFeesData está vazio ao tentar popular o dropdown de bairros.');
+                console.warn('DEBUG: deliveryFeesData está vazio ao tentar popular o dropdown de bairros. Verifique a busca da API e a análise do CSV.');
             }
             deliveryFeesData.forEach(item => {
                 const option = document.createElement('option');
@@ -1847,20 +1852,20 @@
         neighborhoodSelect.addEventListener('change', () => {
             console.log('--- NEIGHBORHOOD CHANGE EVENT FIRED ---');
             const selectedNeighborhoodName = neighborhoodSelect.value;
-            console.log('Selected neighborhood in dropdown (raw value):', selectedNeighborhoodName);
+            console.log('DEBUG: Selected neighborhood in dropdown (raw value):', selectedNeighborhoodName);
             const selectedFeeData = deliveryFeesData.find(item => item.neighborhood === selectedNeighborhoodName);
-            console.log('Found selectedFeeData for this neighborhood:', selectedFeeData);
+            console.log('DEBUG: Found selectedFeeData for this neighborhood:', selectedFeeData);
 
             // Ensure selectedAddress.deliveryFee is always a number
             if (selectedFeeData && typeof selectedFeeData.deliveryFee === 'number') {
                 selectedAddress.deliveryFee = selectedFeeData.deliveryFee;
             } else {
                 selectedAddress.deliveryFee = 0; // Default to 0 if data is not found or not a number
-                console.warn(`Delivery fee data for '${selectedNeighborhoodName}' is invalid or not found. Setting to 0.`);
+                console.warn(`DEBUG: Delivery fee data for '${selectedNeighborhoodName}' is invalid or not found. Setting to 0.`);
             }
             
-            console.log('selectedAddress.deliveryFee after assignment in change event:', selectedAddress.deliveryFee, 'Type:', typeof selectedAddress.deliveryFee);
-            console.log('Full selectedAddress object after change event:', selectedAddress);
+            console.log('DEBUG: selectedAddress.deliveryFee after assignment in change event:', selectedAddress.deliveryFee, 'Type:', typeof selectedAddress.deliveryFee);
+            console.log('DEBUG: Full selectedAddress object after change event:', JSON.stringify(selectedAddress));
 
             updateOrderDisplay(); // Update the total in the sidebar
             console.log('--- NEIGHBORHOOD CHANGE EVENT ENDED ---');
@@ -2321,7 +2326,7 @@
                 allPromotionsData = parseCsvData(promocoesCsvText, 'promocoes');
                 deliveryFeesData = parseCsvData(deliveryFeesCsvText, 'deliveryFees'); 
                 
-                console.log('Delivery Fees Data loaded:', deliveryFeesData);
+                console.log('DEBUG: Delivery Fees Data loaded (final state):', deliveryFeesData);
 
                 let orderedUniqueCategories = [];
                 const seenCategories = new Set();
