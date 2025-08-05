@@ -444,6 +444,34 @@
             box-shadow: 0 5px 15px rgba(34, 197, 94, 0.4);
         }
 
+        /* Estilos para o modal de endereço */
+        .address-modal {
+            display: none; /* Oculto por padrão */
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .address-modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            position: relative;
+            animation: fadeIn 0.3s ease-out;
+            border: 2px solid #ef4444;
+        }
+
     </style>
 </head>
 <body>
@@ -508,16 +536,27 @@
                     <span class="text-gray-600">Subtotal:</span>
                     <span id="subtotal" class="font-bold">R$ 0,00</span>
                 </div>
-                <!-- Seção de taxa de entrega fixa -->
-                <div class="flex justify-between mb-2">
+                <!-- Seção de taxa de entrega dinâmica -->
+                <div id="deliveryFeeSection" class="flex justify-between mb-2">
                     <span class="text-gray-600">Taxa de entrega:</span>
-                    <span id="fixedDeliveryFeeDisplay" class="font-bold">R$ 5,00</span>
+                    <span id="deliveryFeeDisplay" class="font-bold">R$ 0,00</span>
                 </div>
                 
                 <div class="flex justify-between text-lg font-bold">
                     <span>Total:</span>
                     <span id="total">R$ 0,00</span>
                 </div>
+            </div>
+
+            <!-- Seção de Resumo do Endereço -->
+            <div id="address-summary-section" class="border border-gray-200 rounded-lg p-4 mb-6 bg-gray-50 hidden">
+                <h4 class="font-bold text-gray-800 mb-2">Endereço de Entrega:</h4>
+                <p id="address-display" class="text-gray-700 text-sm"></p>
+                <p id="neighborhood-display" class="text-gray-600 text-sm"></p>
+                <p id="reference-display" class="text-gray-600 text-sm italic"></p>
+                <button id="editAddressBtn" class="mt-3 px-4 py-2 bg-blue-500 text-white rounded-md text-sm hover:bg-blue-600 transition">
+                    Editar Endereço
+                </button>
             </div>
 
             <!-- Botão "Adicionar mais" -->
@@ -679,6 +718,44 @@
         </div>
     </div>
 
+    <!-- NOVO: Modal de Input de Endereço -->
+    <div id="address-input-modal" class="address-modal">
+        <div class="address-modal-content">
+            <span class="close-button" id="close-address-modal">&times;</span>
+            <h3 class="text-xl font-bold text-gray-800 mb-4">Informe seu Endereço</h3>
+            <div class="mb-4">
+                <label for="neighborhoodSelect" class="block text-gray-700 text-sm font-bold mb-2">
+                    Bairro:
+                </label>
+                <select id="neighborhoodSelect" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                    <option value="">Selecione um bairro</option>
+                    <!-- Opções de bairro serão carregadas via JS -->
+                </select>
+            </div>
+            <div class="mb-4">
+                <label for="streetInput" class="block text-gray-700 text-sm font-bold mb-2">
+                    Rua:
+                </label>
+                <input type="text" id="streetInput" placeholder="Nome da Rua" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            </div>
+            <div class="mb-4">
+                <label for="numberInput" class="block text-gray-700 text-sm font-bold mb-2">
+                    Número:
+                </label>
+                <input type="text" id="numberInput" placeholder="Número" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            </div>
+            <div class="mb-6">
+                <label for="referencePointInput" class="block text-gray-700 text-sm font-bold mb-2">
+                    Ponto de Referência (Opcional):
+                </label>
+                <input type="text" id="referencePointInput" placeholder="Ex: Próximo à praça" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            </div>
+            <button id="confirmAddressBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-full w-full transition duration-300">
+                Confirmar Endereço
+            </button>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="bg-gray-800 text-white py-8 px-4">
         <div class="max-w-6xl mx-auto">
@@ -713,27 +790,31 @@
         // URLs das planilhas Google Sheets publicadas como CSV
         const CARDAPIO_CSV_URL_REF = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=664943668&single=true&output=csv';
         const PROMOCOES_CSV_URL_REF = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=600393470&single=true&output=csv'; 
-        // A URL de DELIVERY_FEES_CSV_URL_REF foi REMOVIDA.
+        const DELIVERY_FEES_CSV_URL_REF = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=1695668250&single=true&output=csv';
 
         // Variáveis globais
         let order = [];
         let allMenuData = []; // Armazenará todos os itens do cardápio (pizzas e bebidas)
         let allPromotionsData = [];
-        // A variável deliveryFeesData foi REMOVIDA.
+        let deliveryFeesData = []; // NOVO: Armazenará os dados de taxas de entrega
         let isSelectingHalfPizza = false; 
         let isFirstHalfPromotional = false; 
         let deferredPrompt; 
         let selectedPaymentMethod = null; 
         let isCheckoutInitiated = false; 
         
-        // NOVO: Taxa de entrega fixa
-        const fixedDeliveryFee = 5.00; 
+        // REMOVIDO: Taxa de entrega fixa
+        // const fixedDeliveryFee = 5.00; 
 
-        // O objeto selectedAddress foi SIMPLIFICADO para conter apenas a taxa fixa.
+        // NOVO: Objeto para armazenar o endereço selecionado e sua taxa de entrega
         let selectedAddress = {
-            deliveryFee: fixedDeliveryFee // Usa a taxa fixa
+            bairro: null,
+            rua: null,
+            numero: null,
+            referencia: null,
+            deliveryFee: 0.00 // Inicializa com 0, será atualizado dinamicamente
         };
-        // A variável isAddressInputVisible foi REMOVIDA.
+        let isAddressInputVisible = false; // NOVO: Controla a visibilidade do modal de endereço
 
         // Imagem padrão para pizzas sem link na planilha
         const defaultPizzaImage = 'https://upload.wikimedia.org/wikipedia/commons/9/91/Pizza-3007395.jpg';
@@ -753,7 +834,7 @@
         const promotionButton = document.getElementById('promotion-button'); 
         const cartButton = document.getElementById('cart-button'); 
         const subtotalEl = document.getElementById('subtotal');
-        const fixedDeliveryFeeDisplay = document.getElementById('fixedDeliveryFeeDisplay'); // Elemento para a taxa de entrega fixa
+        const deliveryFeeDisplay = document.getElementById('deliveryFeeDisplay'); // NOVO: Elemento para a taxa de entrega dinâmica
         const totalEl = document.getElementById('total');
         const checkoutButton = document.getElementById('checkoutButton'); // Referência ao botão Finalizar Pedido
 
@@ -774,7 +855,7 @@
         const confirmNoDrinkModal = document.getElementById('confirm-no-drink-modal');
         const closeConfirmNoDrinkModalBtn = document.getElementById('close-confirm-no-drink-modal');
         const confirmNoDrinkYesBtn = document.getElementById('confirm-no-drink-yes');
-        const confirmNoDrinkNoBtn = document.getElementById('confirm-no-drink-no-btn'); // CORREÇÃO AQUI: ID do elemento HTML era 'confirm-no-drink-no-btn'
+        const confirmNoDrinkNoBtn = document.getElementById('confirm-no-drink-no-btn');
 
         // Referências para o modal de instalação do PWA
         const installPromptModal = document.getElementById('install-prompt-modal');
@@ -791,17 +872,20 @@
         const trocoTotalDisplay = document.getElementById('trocoTotalDisplay'); 
         const paymentModalTotal = document.getElementById('payment-modal-total'); 
 
-        // TODAS AS REFERÊNCIAS A ELEMENTOS DE ENDEREÇO FORAM REMOVIDAS DO HTML E JS.
-        // const addressInputSection = document.getElementById('address-input-section');
-        // const neighborhoodSelect = document.getElementById('neighborhoodSelect');
-        // const streetInput = document.getElementById('streetInput');
-        // const numberInput = document.getElementById('numberInput');
-        // const referencePointInput = document.getElementById('referencePointInput');
-        // const confirmAddressBtn = document.getElementById('confirmAddressBtn');
-        // const addressSummarySection = document.getElementById('address-summary-section');
-        // const addressDisplay = document.getElementById('address-display');
-        // const neighborhoodDisplay = document.getElementById('neighborhood-display');
-        // const referenceDisplay = document.getElementById('reference-display');
+        // NOVO: Referências para elementos do modal de endereço
+        const addressInputModal = document.getElementById('address-input-modal');
+        const closeAddressModalBtn = document.getElementById('close-address-modal');
+        const neighborhoodSelect = document.getElementById('neighborhoodSelect');
+        const streetInput = document.getElementById('streetInput');
+        const numberInput = document.getElementById('numberInput');
+        const referencePointInput = document.getElementById('referencePointInput');
+        const confirmAddressBtn = document.getElementById('confirmAddressBtn');
+        const addressSummarySection = document.getElementById('address-summary-section');
+        const addressDisplay = document.getElementById('address-display');
+        const neighborhoodDisplay = document.getElementById('neighborhood-display');
+        const referenceDisplay = document.getElementById('reference-display');
+        const editAddressBtn = document.getElementById('editAddressBtn');
+
 
         let currentPizzaData = {}; 
         let firstHalfPizza = null; 
@@ -947,7 +1031,9 @@
                     case 'Preco Promocional': return 'promoPrice';
                     case 'ID Item Aplicavel': return 'itemId';
                     case 'Ativo (SIM/NAO)': return 'active';
-                    // NÃO HÁ MAIS HEADERS PARA TAXAS DE ENTREGA AQUI.
+                    // Headers para Taxas de Entrega
+                    case 'Bairro': return 'neighborhood';
+                    case 'Valor Frete': return 'deliveryFee';
                     default: return cleanedHeader.replace(/[^a-zA-Z0-9]+(.)?/g, (match, chr) => chr ? chr.toUpperCase() : '').replace(/^./, (match) => match.toLowerCase());
                 }
             });
@@ -961,7 +1047,7 @@
                     for (let j = 0; j < mappedHeaders.length; j++) {
                         let headerKey = mappedHeaders[j];
                         let value = rowValues[j];
-                        if (['basePrice', 'price6Slices', 'price4Slices', 'promoPrice'].includes(headerKey)) { 
+                        if (['basePrice', 'price6Slices', 'price4Slices', 'promoPrice', 'deliveryFee'].includes(headerKey)) { // Adicionado 'deliveryFee'
                             const parsedValue = parseFloat(String(value).replace(',', '.'));
                             item[headerKey] = isNaN(parsedValue) ? 0 : parsedValue;
                         } else if (['isPizza', 'available', 'active'].includes(headerKey)) {
@@ -980,8 +1066,8 @@
                         }
                     }
                     // Apenas adiciona se estiver disponível (para cardápio) ou ativo (para promoções)
-                    // Não há mais lógica para 'deliveryFees' aqui.
-                    if ((type === 'cardapio' && item.available) || (type === 'promocoes' && item.active)) {
+                    // Para deliveryFees, adiciona todos os bairros
+                    if ((type === 'cardapio' && item.available) || (type === 'promocoes' && item.active) || type === 'deliveryFees') {
                         parsedData.push(item);
                     }
                 } else {
@@ -1467,10 +1553,11 @@
                 orderItemsContainer.appendChild(emptyOrderMessage);
                 
                 document.getElementById('subtotal').textContent = 'R$ 0,00';
-                fixedDeliveryFeeDisplay.textContent = 'R$ ' + fixedDeliveryFee.toFixed(2).replace('.', ','); // Exibe a taxa fixa
+                deliveryFeeDisplay.textContent = 'R$ 0,00'; // Reseta a taxa de entrega
                 totalEl.textContent = 'R$ 0,00'; // Reseta total
                 selectedPaymentMethod = null; 
-                selectedAddress.deliveryFee = fixedDeliveryFee; // Garante que o objeto de endereço tenha a taxa fixa
+                selectedAddress.deliveryFee = 0.00; // Garante que o objeto de endereço tenha a taxa 0
+                hideAddressSummary(); // Esconde o resumo do endereço
             } else {
                 emptyOrderMessage.classList.add('hidden');
                 
@@ -1494,7 +1581,7 @@
                     }
                     
                     const isLastItem = (index === order.length - 1);
-                    const borderClass = isLastItem && !selectedPaymentMethod ? '' : 'border-b border-gray-100';
+                    const borderClass = isLastItem && !selectedPaymentMethod && !selectedAddress.bairro ? '' : 'border-b border-gray-100';
 
 
                     itemsHTML += `
@@ -1516,9 +1603,10 @@
                 orderItemsContainer.innerHTML = itemsHTML;
                 subtotalEl.textContent = 'R$ ' + subtotal.toFixed(2).replace('.', ',');
                 
-                fixedDeliveryFeeDisplay.textContent = 'R$ ' + fixedDeliveryFee.toFixed(2).replace('.', ','); // Exibe a taxa fixa
+                // Atualiza a exibição da taxa de entrega
+                deliveryFeeDisplay.textContent = 'R$ ' + selectedAddress.deliveryFee.toFixed(2).replace('.', ',');
                 
-                const total = subtotal + fixedDeliveryFee; // Soma a taxa fixa
+                const total = subtotal + selectedAddress.deliveryFee; // Soma a taxa dinâmica
                 totalEl.textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
 
                 // Adiciona a forma de pagamento ao resumo do pedido se selecionada
@@ -1550,6 +1638,7 @@
                 }
             }
             updateDrinkSuggestionButtons(); 
+            updateAddressDisplay(); // Garante que o resumo do endereço esteja atualizado
         }
         
         function removeItem(index) {
@@ -1579,10 +1668,15 @@
             isFirstHalfPromotional = false; 
             toggleAddItemButtons(true); 
             toggleCategoryButtons(true);
-            selectedAddress = { // Reseta o objeto de endereço com a taxa fixa
-                deliveryFee: fixedDeliveryFee
+            selectedAddress = { // Reseta o objeto de endereço
+                bairro: null,
+                rua: null,
+                numero: null,
+                referencia: null,
+                deliveryFee: 0.00
             };
             updateCheckoutButtonText(); // Atualiza o texto do botão de checkout
+            hideAddressSummary(); // Esconde o resumo do endereço
         }
         
         function updateCartCount() {
@@ -1610,13 +1704,24 @@
                 subtotal += item.price;
             });
 
-            const total = subtotal + fixedDeliveryFee; // Usa a taxa fixa
+            const total = subtotal + selectedAddress.deliveryFee; // Usa a taxa dinâmica
 
             message += `\nSubtotal: R$ ${subtotal.toFixed(2).replace('.', ',')}`;
-            message += `\nTaxa de entrega: R$ ${fixedDeliveryFee.toFixed(2).replace('.', ',')}`; // Mensagem de taxa fixa
+            message += `\nTaxa de entrega (${selectedAddress.bairro || 'Não informado'}): R$ ${selectedAddress.deliveryFee.toFixed(2).replace('.', ',')}`; // Mensagem de taxa dinâmica
             message += `\nTotal: R$ ${total.toFixed(2).replace('.', ',')}`;
             
-            // AS INFORMAÇÕES DE ENDEREÇO FORAM REMOVIDAS DA MENSAGEM DO WHATSAPP.
+            // INFORMAÇÕES DE ENDEREÇO NA MENSAGEM DO WHATSAPP
+            if (selectedAddress.bairro && selectedAddress.rua && selectedAddress.numero) {
+                message += `\n\nEndereço de Entrega:\n`;
+                message += `Bairro: ${selectedAddress.bairro}\n`;
+                message += `Rua: ${selectedAddress.rua}, Nº ${selectedAddress.numero}\n`;
+                if (selectedAddress.referencia) {
+                    message += `Ponto de Referência: ${selectedAddress.referencia}\n`;
+                }
+            } else {
+                message += `\n\nEndereço de Entrega: Não informado. Por favor, confirme o endereço com o cliente.`
+            }
+
 
             if (selectedPaymentMethod) {
                 if (typeof selectedPaymentMethod === 'object' && selectedPaymentMethod.method === 'Dinheiro') {
@@ -1636,7 +1741,7 @@
             clearOrder(); // Limpa o pedido após finalizar
         }
 
-        // Função para gerenciar o fluxo de checkout (SIMPLIFICADA)
+        // Função para gerenciar o fluxo de checkout (ATUALIZADA)
         function handleCheckoutFlow() {
             if (order.length === 0) {
                 showMessageModal('O seu pedido está vazio. Adicione itens antes de finalizar.');
@@ -1648,7 +1753,11 @@
                 return;
             }
 
-            // A lógica de verificação de endereço foi REMOVIDA.
+            // NOVO: Verifica se o endereço foi informado
+            if (!selectedAddress.bairro || !selectedAddress.rua || !selectedAddress.numero) {
+                showAddressInputModal();
+                return;
+            }
 
             const hasDrinks = order.some(item => item.category === 'bebidas');
             if (!hasDrinks) {
@@ -1663,14 +1772,6 @@
                 proceedToWhatsappCheckout();
             }
         }
-
-        // TODAS AS FUNÇÕES RELACIONADAS AO ENDEREÇO FORAM REMOVIDAS.
-        // function showAddressInputSection() { ... }
-        // function hideAddressInputSection() { ... }
-        // function hideAddressSummary() { ... }
-        // function confirmAddress() { ... }
-        // function populateNeighborhoodDropdown() { ... }
-        // neighborhoodSelect.addEventListener('change', () => { ... });
 
         // Função para atualizar o texto do botão de checkout (SIMPLIFICADA)
         function updateCheckoutButtonText() {
@@ -1963,7 +2064,7 @@
             order.forEach(item => {
                 currentSubtotal += item.price;
             });
-            return currentSubtotal + fixedDeliveryFee; // Soma a taxa de entrega fixa
+            return currentSubtotal + selectedAddress.deliveryFee; // Soma a taxa de entrega DINÂMICA
         }
 
         confirmPaymentMethodBtn.addEventListener('click', () => {
@@ -2112,6 +2213,101 @@
             });
         }
 
+        // --- Funções para o Modal de Endereço ---
+        function showAddressInputModal() {
+            addressInputModal.style.display = 'flex';
+            promotionButton.style.display = 'none'; // Esconde o botão de promoção ao abrir o modal de endereço
+
+            // Preenche os campos se já houver dados no selectedAddress
+            if (selectedAddress.bairro) {
+                neighborhoodSelect.value = selectedAddress.bairro;
+            } else {
+                neighborhoodSelect.value = ""; // Reseta para "Selecione um bairro"
+            }
+            streetInput.value = selectedAddress.rua || '';
+            numberInput.value = selectedAddress.numero || '';
+            referencePointInput.value = selectedAddress.referencia || '';
+        }
+
+        function hideAddressInputModal() {
+            addressInputModal.style.display = 'none';
+            updatePromotionButtonVisibility(); // Reexibe o botão de promoção se aplicável
+        }
+
+        closeAddressModalBtn.addEventListener('click', hideAddressInputModal);
+        window.addEventListener('click', function(event) {
+            if (event.target == addressInputModal) {
+                hideAddressInputModal();
+            }
+        });
+
+        function populateNeighborhoodDropdown(feesData) {
+            neighborhoodSelect.innerHTML = '<option value="">Selecione um bairro</option>';
+            feesData.forEach(fee => {
+                const option = document.createElement('option');
+                option.value = fee.neighborhood;
+                option.textContent = `${fee.neighborhood} (R$ ${fee.deliveryFee.toFixed(2).replace('.', ',')})`;
+                neighborhoodSelect.appendChild(option);
+            });
+        }
+
+        confirmAddressBtn.addEventListener('click', function() {
+            const bairro = neighborhoodSelect.value;
+            const rua = streetInput.value.trim();
+            const numero = numberInput.value.trim();
+            const referencia = referencePointInput.value.trim();
+
+            if (!bairro || !rua || !numero) {
+                showMessageModal('Por favor, preencha o bairro, a rua e o número para continuar.');
+                return;
+            }
+
+            const selectedFee = deliveryFeesData.find(fee => fee.neighborhood === bairro);
+            if (!selectedFee) {
+                showMessageModal('Bairro selecionado inválido. Por favor, selecione um bairro da lista.');
+                return;
+            }
+
+            selectedAddress = {
+                bairro: bairro,
+                rua: rua,
+                numero: numero,
+                referencia: referencia,
+                deliveryFee: selectedFee.deliveryFee
+            };
+
+            hideAddressInputModal();
+            updateOrderDisplay(); // Atualiza o resumo do pedido com a nova taxa
+            showAddressSummary(); // Mostra o resumo do endereço
+            
+            // Se o checkout foi iniciado e o endereço foi confirmado, continua o fluxo
+            if (isCheckoutInitiated) {
+                handleCheckoutFlow();
+            }
+        });
+
+        function showAddressSummary() {
+            if (selectedAddress.bairro) {
+                addressSummarySection.classList.remove('hidden');
+                addressDisplay.textContent = `${selectedAddress.rua}, Nº ${selectedAddress.numero}`;
+                neighborhoodDisplay.textContent = `Bairro: ${selectedAddress.bairro}`;
+                referenceDisplay.textContent = selectedAddress.referencia ? `Ponto de Referência: ${selectedAddress.referencia}` : '';
+            } else {
+                hideAddressSummary();
+            }
+        }
+
+        function hideAddressSummary() {
+            addressSummarySection.classList.add('hidden');
+            addressDisplay.textContent = '';
+            neighborhoodDisplay.textContent = '';
+            referenceDisplay.textContent = '';
+        }
+
+        editAddressBtn.addEventListener('click', function() {
+            showAddressInputModal();
+        });
+
 
         document.addEventListener('DOMContentLoaded', async function() {
             try {
@@ -2125,11 +2321,11 @@
 
                 const cardapioCsvText = data.cardapio;
                 const promocoesCsvText = data.promocoes;
-                // deliveryFeesCsvText NÃO é mais esperado do backend.
+                const deliveryFeesCsvText = data.deliveryFees; // NOVO: Recebe os dados de frete
 
                 allMenuData = parseCsvData(cardapioCsvText, 'cardapio');
                 allPromotionsData = parseCsvData(promocoesCsvText, 'promocoes');
-                // deliveryFeesData NÃO é mais parseado.
+                deliveryFeesData = parseCsvData(deliveryFeesCsvText, 'deliveryFees'); // NOVO: Parseia os dados de frete
                 
                 let orderedUniqueCategories = [];
                 const seenCategories = new Set();
@@ -2142,12 +2338,14 @@
                 
                 createCategoryButtons(orderedUniqueCategories); 
                 populateMenu(allMenuData, orderedUniqueCategories); 
+                populateNeighborhoodDropdown(deliveryFeesData); // NOVO: Popula o dropdown de bairros
                 setupCategoryObserver(); 
 
                 updatePromotionButtonVisibility(); 
                 updateCartCount(); 
                 updateOrderDisplay(); 
                 updateCheckoutButtonText(); 
+                showAddressSummary(); // NOVO: Exibe o resumo do endereço se já houver dados
 
                 toggleAddItemButtons(true);
                 toggleCategoryButtons(true);
