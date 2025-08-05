@@ -713,13 +713,13 @@
         // URLs das planilhas Google Sheets publicadas como CSV
         const CARDAPIO_CSV_URL_REF = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=664943668&single=true&output=csv';
         const PROMOCOES_CSV_URL_REF = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=600393470&single=true&output=csv'; 
-        // A URL de DELIVERY_FEES_CSV_URL_REF foi removida.
+        // A URL de DELIVERY_FEES_CSV_URL_REF foi REMOVIDA.
 
         // Variáveis globais
         let order = [];
         let allMenuData = []; // Armazenará todos os itens do cardápio (pizzas e bebidas)
         let allPromotionsData = [];
-        // A variável deliveryFeesData foi removida.
+        // A variável deliveryFeesData foi REMOVIDA.
         let isSelectingHalfPizza = false; 
         let isFirstHalfPromotional = false; 
         let deferredPrompt; 
@@ -729,16 +729,11 @@
         // NOVO: Taxa de entrega fixa
         const fixedDeliveryFee = 5.00; 
 
-        // As variáveis para o endereço foram removidas.
-        // selectedAddress não é mais necessário para frete dinâmico, mas mantido com valor padrão.
+        // O objeto selectedAddress foi SIMPLIFICADO para conter apenas a taxa fixa.
         let selectedAddress = {
-            neighborhood: 'Entrega Fixa', // Valor padrão
-            street: '',
-            number: '',
-            reference: '',
             deliveryFee: fixedDeliveryFee // Usa a taxa fixa
         };
-        // A variável isAddressInputVisible foi removida.
+        // A variável isAddressInputVisible foi REMOVIDA.
 
         // Imagem padrão para pizzas sem link na planilha
         const defaultPizzaImage = 'https://upload.wikimedia.org/wikipedia/commons/9/91/Pizza-3007395.jpg';
@@ -758,7 +753,7 @@
         const promotionButton = document.getElementById('promotion-button'); 
         const cartButton = document.getElementById('cart-button'); 
         const subtotalEl = document.getElementById('subtotal');
-        const fixedDeliveryFeeDisplay = document.getElementById('fixedDeliveryFeeDisplay'); // NOVO: Elemento para a taxa de entrega fixa
+        const fixedDeliveryFeeDisplay = document.getElementById('fixedDeliveryFeeDisplay'); // Elemento para a taxa de entrega fixa
         const totalEl = document.getElementById('total');
         const checkoutButton = document.getElementById('checkoutButton'); // Referência ao botão Finalizar Pedido
 
@@ -796,7 +791,7 @@
         const trocoTotalDisplay = document.getElementById('trocoTotalDisplay'); 
         const paymentModalTotal = document.getElementById('payment-modal-total'); 
 
-        // As referências para os elementos de endereço na sidebar foram removidas.
+        // TODAS AS REFERÊNCIAS A ELEMENTOS DE ENDEREÇO FORAM REMOVIDAS DO HTML E JS.
         // const addressInputSection = document.getElementById('address-input-section');
         // const neighborhoodSelect = document.getElementById('neighborhoodSelect');
         // const streetInput = document.getElementById('streetInput');
@@ -952,6 +947,7 @@
                     case 'Preco Promocional': return 'promoPrice';
                     case 'ID Item Aplicavel': return 'itemId';
                     case 'Ativo (SIM/NAO)': return 'active';
+                    // NÃO HÁ MAIS HEADERS PARA TAXAS DE ENTREGA AQUI.
                     default: return cleanedHeader.replace(/[^a-zA-Z0-9]+(.)?/g, (match, chr) => chr ? chr.toUpperCase() : '').replace(/^./, (match) => match.toLowerCase());
                 }
             });
@@ -984,6 +980,7 @@
                         }
                     }
                     // Apenas adiciona se estiver disponível (para cardápio) ou ativo (para promoções)
+                    // Não há mais lógica para 'deliveryFees' aqui.
                     if ((type === 'cardapio' && item.available) || (type === 'promocoes' && item.active)) {
                         parsedData.push(item);
                     }
@@ -1582,11 +1579,7 @@
             isFirstHalfPromotional = false; 
             toggleAddItemButtons(true); 
             toggleCategoryButtons(true);
-            selectedAddress = { // Reseta o endereço também
-                neighborhood: 'Entrega Fixa',
-                street: '',
-                number: '',
-                reference: '',
+            selectedAddress = { // Reseta o objeto de endereço com a taxa fixa
                 deliveryFee: fixedDeliveryFee
             };
             updateCheckoutButtonText(); // Atualiza o texto do botão de checkout
@@ -1623,7 +1616,7 @@
             message += `\nTaxa de entrega: R$ ${fixedDeliveryFee.toFixed(2).replace('.', ',')}`; // Mensagem de taxa fixa
             message += `\nTotal: R$ ${total.toFixed(2).replace('.', ',')}`;
             
-            // As informações de endereço foram removidas.
+            // AS INFORMAÇÕES DE ENDEREÇO FORAM REMOVIDAS DA MENSAGEM DO WHATSAPP.
 
             if (selectedPaymentMethod) {
                 if (typeof selectedPaymentMethod === 'object' && selectedPaymentMethod.method === 'Dinheiro') {
@@ -1643,7 +1636,7 @@
             clearOrder(); // Limpa o pedido após finalizar
         }
 
-        // NOVO: Função para gerenciar o fluxo de checkout
+        // Função para gerenciar o fluxo de checkout (SIMPLIFICADA)
         function handleCheckoutFlow() {
             if (order.length === 0) {
                 showMessageModal('O seu pedido está vazio. Adicione itens antes de finalizar.');
@@ -1655,7 +1648,7 @@
                 return;
             }
 
-            // A lógica de verificação de endereço foi removida.
+            // A lógica de verificação de endereço foi REMOVIDA.
 
             const hasDrinks = order.some(item => item.category === 'bebidas');
             if (!hasDrinks) {
@@ -1671,25 +1664,19 @@
             }
         }
 
-        // As funções para mostrar/esconder a seção de input de endereço foram removidas.
+        // TODAS AS FUNÇÕES RELACIONADAS AO ENDEREÇO FORAM REMOVIDAS.
         // function showAddressInputSection() { ... }
         // function hideAddressInputSection() { ... }
         // function hideAddressSummary() { ... }
-
-        // NOVO: Função para atualizar o texto do botão de checkout
-        function updateCheckoutButtonText() {
-            // A lógica de texto do botão baseada na visibilidade do endereço foi removida.
-            checkoutButton.textContent = 'Finalizar Pedido';
-            checkoutButton.onclick = handleCheckoutFlow; // Volta para a função principal do checkout
-        }
-
-        // A função para confirmar o endereço foi removida.
         // function confirmAddress() { ... }
-
-        // As funções para popular e lidar com o dropdown de bairros foram removidas.
         // function populateNeighborhoodDropdown() { ... }
         // neighborhoodSelect.addEventListener('change', () => { ... });
 
+        // Função para atualizar o texto do botão de checkout (SIMPLIFICADA)
+        function updateCheckoutButtonText() {
+            checkoutButton.textContent = 'Finalizar Pedido';
+            checkoutButton.onclick = handleCheckoutFlow; // Volta para a função principal do checkout
+        }
 
         function backToMenu() {
             closeOrderSidebar();
@@ -2138,11 +2125,11 @@
 
                 const cardapioCsvText = data.cardapio;
                 const promocoesCsvText = data.promocoes;
-                // deliveryFeesCsvText não é mais esperado do backend.
+                // deliveryFeesCsvText NÃO é mais esperado do backend.
 
                 allMenuData = parseCsvData(cardapioCsvText, 'cardapio');
                 allPromotionsData = parseCsvData(promocoesCsvText, 'promocoes');
-                // deliveryFeesData não é mais parseado.
+                // deliveryFeesData NÃO é mais parseado.
                 
                 let orderedUniqueCategories = [];
                 const seenCategories = new Set();
