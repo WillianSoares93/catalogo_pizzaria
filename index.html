@@ -508,18 +508,6 @@
                     <span class="text-gray-600">Subtotal:</span>
                     <span id="subtotal" class="font-bold">R$ 0,00</span>
                 </div>
-                <!-- Seção de endereço e taxa de entrega dinâmica -->
-                <div id="address-summary-section" class="hidden">
-                    <div class="flex justify-between mb-2">
-                        <span class="text-gray-600">Taxa de entrega:</span>
-                        <span id="dynamicDeliveryFee" class="font-bold">R$ 0,00</span>
-                    </div>
-                    <div class="text-sm text-gray-500 mb-2">
-                        <p id="address-display"></p>
-                        <p id="neighborhood-display"></p>
-                        <p id="reference-display"></p>
-                    </div>
-                </div>
                 
                 <div class="flex justify-between text-lg font-bold">
                     <span>Total:</span>
@@ -527,33 +515,6 @@
                 </div>
             </div>
 
-            <!-- Seção de input de endereço (inicialmente oculta) -->
-            <div id="address-input-section" class="hidden bg-gray-50 p-4 rounded-lg mb-6 shadow-inner">
-                <h4 class="text-lg font-bold text-gray-800 mb-4">Informar Endereço</h4>
-                <div class="mb-4">
-                    <label for="neighborhoodSelect" class="block text-gray-700 text-sm font-bold mb-2">Bairro:</label>
-                    <select id="neighborhoodSelect" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                        <option value="">Selecione um bairro</option>
-                        <!-- Opções de bairro serão carregadas via JS -->
-                    </select>
-                </div>
-                <div class="mb-4">
-                    <label for="streetInput" class="block text-gray-700 text-sm font-bold mb-2">Rua:</label>
-                    <input type="text" id="streetInput" placeholder="Ex: Rua das Flores" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                </div>
-                <div class="mb-4">
-                    <label for="numberInput" class="block text-gray-700 text-sm font-bold mb-2">Número:</label>
-                    <input type="text" id="numberInput" placeholder="Ex: 123" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                </div>
-                <div class="mb-4">
-                    <label for="referencePointInput" class="block text-gray-700 text-sm font-bold mb-2">Ponto de Referência (Opcional):</label>
-                    <input type="text" id="referencePointInput" placeholder="Ex: Ao lado da padaria" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                </div>
-                <button id="confirmAddressBtn" onclick="confirmAddress()" class="btn-order w-full py-3 text-white font-bold rounded-full">
-                    Confirmar Endereço
-                </button>
-            </div>
-            
             <!-- Botão "Adicionar mais" -->
             <button onclick="backToMenu()" class="btn-add-more w-full py-3 text-white font-bold rounded-full mb-4">
                 Adicionar mais
@@ -746,30 +707,29 @@
     <script>
         // URLs das planilhas Google Sheets publicadas como CSV
         const CARDAPIO_CSV_URL_REF = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=664943668&single=true&output=csv';
-        const PROMOCOES_CSV_URL_REF = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5V8OSL/pub?gid=600393470&single=true&output=csv'; 
-        // NOVO: URL para a planilha de taxas de entrega
-        const DELIVERY_FEES_CSV_URL_REF = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=1843654910&single=true&output=csv'; // <<<< URL DA PLANILHA DE FRETES >>>>
+        const PROMOCOES_CSV_URL_REF = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=600393470&single=true&output=csv'; 
+        // A URL de DELIVERY_FEES_CSV_URL_REF foi removida.
 
         // Variáveis globais
         let order = [];
         let allMenuData = []; // Armazenará todos os itens do cardápio (pizzas e bebidas)
         let allPromotionsData = [];
-        let deliveryFeesData = []; // NOVO: Armazenará os dados de taxas de entrega
+        // A variável deliveryFeesData foi removida.
         let isSelectingHalfPizza = false; 
         let isFirstHalfPromotional = false; 
         let deferredPrompt; 
         let selectedPaymentMethod = null; 
         let isCheckoutInitiated = false; 
 
-        // NOVO: Variáveis para o endereço
+        // As variáveis para o endereço foram removidas.
         let selectedAddress = {
             neighborhood: null,
             street: '',
             number: '',
             reference: '',
-            deliveryFee: 0 // Inicializa com 0 para evitar undefined
+            deliveryFee: 0 // Mantido para compatibilidade, mas não será usado.
         };
-        let isAddressInputVisible = false; // Controla a visibilidade da seção de input de endereço
+        // A variável isAddressInputVisible foi removida.
 
         // Imagem padrão para pizzas sem link na planilha
         const defaultPizzaImage = 'https://upload.wikimedia.org/wikipedia/commons/9/91/Pizza-3007395.jpg';
@@ -789,7 +749,7 @@
         const promotionButton = document.getElementById('promotion-button'); 
         const cartButton = document.getElementById('cart-button'); 
         const subtotalEl = document.getElementById('subtotal');
-        const dynamicDeliveryFeeEl = document.getElementById('dynamicDeliveryFee'); // NOVO: Elemento para a taxa de entrega dinâmica
+        // dynamicDeliveryFeeEl foi removido.
         const totalEl = document.getElementById('total');
         const checkoutButton = document.getElementById('checkoutButton'); // Referência ao botão Finalizar Pedido
 
@@ -827,17 +787,17 @@
         const trocoTotalDisplay = document.getElementById('trocoTotalDisplay'); 
         const paymentModalTotal = document.getElementById('payment-modal-total'); 
 
-        // NOVO: Referências para os elementos de endereço na sidebar
-        const addressInputSection = document.getElementById('address-input-section');
-        const neighborhoodSelect = document.getElementById('neighborhoodSelect');
-        const streetInput = document.getElementById('streetInput');
-        const numberInput = document.getElementById('numberInput');
-        const referencePointInput = document.getElementById('referencePointInput');
-        const confirmAddressBtn = document.getElementById('confirmAddressBtn');
-        const addressSummarySection = document.getElementById('address-summary-section');
-        const addressDisplay = document.getElementById('address-display');
-        const neighborhoodDisplay = document.getElementById('neighborhood-display');
-        const referenceDisplay = document.getElementById('reference-display');
+        // As referências para os elementos de endereço na sidebar foram removidas.
+        // const addressInputSection = document.getElementById('address-input-section');
+        // const neighborhoodSelect = document.getElementById('neighborhoodSelect');
+        // const streetInput = document.getElementById('streetInput');
+        // const numberInput = document.getElementById('numberInput');
+        // const referencePointInput = document.getElementById('referencePointInput');
+        // const confirmAddressBtn = document.getElementById('confirmAddressBtn');
+        // const addressSummarySection = document.getElementById('address-summary-section');
+        // const addressDisplay = document.getElementById('address-display');
+        // const neighborhoodDisplay = document.getElementById('neighborhood-display');
+        // const referenceDisplay = document.getElementById('reference-display');
 
         let currentPizzaData = {}; 
         let firstHalfPizza = null; 
@@ -983,9 +943,6 @@
                     case 'Preco Promocional': return 'promoPrice';
                     case 'ID Item Aplicavel': return 'itemId';
                     case 'Ativo (SIM/NAO)': return 'active';
-                    // NOVO: Headers para Taxas de Entrega
-                    case 'Bairro': return 'neighborhood';
-                    case 'Valor Frete': return 'deliveryFee'; 
                     default: return cleanedHeader.replace(/[^a-zA-Z0-9]+(.)?/g, (match, chr) => chr ? chr.toUpperCase() : '').replace(/^./, (match) => match.toLowerCase());
                 }
             });
@@ -1002,10 +959,6 @@
                         if (['basePrice', 'price6Slices', 'price4Slices', 'promoPrice'].includes(headerKey)) { 
                             const parsedValue = parseFloat(String(value).replace(',', '.'));
                             item[headerKey] = isNaN(parsedValue) ? 0 : parsedValue;
-                        } else if (headerKey === 'deliveryFee') { 
-                            const parsedValue = parseFloat(String(value).replace(',', '.'));
-                            item[headerKey] = isNaN(parsedValue) ? 0 : parsedValue;
-                            console.log(`DEBUG: parseCsvData - Processed deliveryFee for ${item.neighborhood || 'unknown'}: raw='${value}', parsed=${item[headerKey]}, type=${typeof item[headerKey]}`);
                         } else if (['isPizza', 'available', 'active'].includes(headerKey)) {
                             item[headerKey] = value.toUpperCase() === 'SIM';
                         } else {
@@ -1022,8 +975,7 @@
                         }
                     }
                     // Apenas adiciona se estiver disponível (para cardápio) ou ativo (para promoções)
-                    // Para deliveryFees, todos os itens são adicionados se a linha for válida
-                    if ((type === 'cardapio' && item.available) || (type === 'promocoes' && item.active) || type === 'deliveryFees') {
+                    if ((type === 'cardapio' && item.available) || (type === 'promocoes' && item.active)) {
                         parsedData.push(item);
                     }
                 } else {
@@ -1509,11 +1461,11 @@
                 orderItemsContainer.appendChild(emptyOrderMessage);
                 
                 document.getElementById('subtotal').textContent = 'R$ 0,00';
-                dynamicDeliveryFeeEl.textContent = 'R$ 0,00'; // Reseta taxa de entrega
+                // dynamicDeliveryFeeEl.textContent = 'R$ 0,00'; // Reseta taxa de entrega
                 totalEl.textContent = 'R$ 0,00'; // Reseta total
                 selectedPaymentMethod = null; 
                 selectedAddress.deliveryFee = 0; // Reseta taxa de entrega no objeto de endereço
-                hideAddressSummary(); // Esconde o resumo do endereço
+                // hideAddressSummary(); // Esconde o resumo do endereço
             } else {
                 emptyOrderMessage.classList.add('hidden');
                 
@@ -1575,11 +1527,10 @@
                 
                 // This is the line 1559 where the error is reported
                 // Ensure the value passed to toFixed is always a number
-                const feeToDisplay = isNaN(currentDeliveryFee) ? 0 : currentDeliveryFee;
-                dynamicDeliveryFeeEl.textContent = 'R$ ' + feeToDisplay.toFixed(2).replace('.', ',');
+                // dynamicDeliveryFeeEl.textContent = 'R$ ' + feeToDisplay.toFixed(2).replace('.', ','); // Removido
                 console.trace('DEBUG: Call stack for toFixed error point (if it happens)'); // Add this
 
-                const total = subtotal + (isNaN(currentDeliveryFee) ? 0 : currentDeliveryFee);
+                const total = subtotal; // Removido selectedAddress.deliveryFee
                 totalEl.textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
 
                 // Adiciona a forma de pagamento ao resumo do pedido se selecionada
@@ -1648,7 +1599,7 @@
                 reference: '',
                 deliveryFee: 0
             };
-            hideAddressSummary(); // Esconde o resumo do endereço
+            // hideAddressSummary(); // Esconde o resumo do endereço
             updateCheckoutButtonText(); // Atualiza o texto do botão de checkout
         }
         
@@ -1677,19 +1628,12 @@
                 subtotal += item.price;
             });
 
-            const total = subtotal + selectedAddress.deliveryFee; // Usa a taxa de entrega do endereço
+            const total = subtotal; // Removido selectedAddress.deliveryFee
 
             message += `\nSubtotal: R$ ${subtotal.toFixed(2).replace('.', ',')}`;
-            message += `\nTaxa de entrega (${selectedAddress.neighborhood}): R$ ${selectedAddress.deliveryFee.toFixed(2).replace('.', ',')}`;
             message += `\nTotal: R$ ${total.toFixed(2).replace('.', ',')}`;
             
-            // Adiciona o endereço completo
-            message += `\n\nEndereço de Entrega:\n`;
-            message += `Rua: ${selectedAddress.street}, Nº ${selectedAddress.number}\n`;
-            message += `Bairro: ${selectedAddress.neighborhood}\n`;
-            if (selectedAddress.reference) {
-                message += `Ponto de Referência: ${selectedAddress.reference}\n`;
-            }
+            // As informações de endereço foram removidas.
 
             if (selectedPaymentMethod) {
                 if (typeof selectedPaymentMethod === 'object' && selectedPaymentMethod.method === 'Dinheiro') {
@@ -1721,13 +1665,8 @@
                 return;
             }
 
-            // Se o endereço não foi informado, mostra a seção de input
-            if (!selectedAddress.neighborhood || !selectedAddress.street || !selectedAddress.number) {
-                showAddressInputSection();
-                return; // Interrompe o fluxo para que o usuário preencha o endereço
-            }
+            // A lógica de verificação de endereço foi removida.
 
-            // Se chegou aqui, o endereço já foi preenchido
             const hasDrinks = order.some(item => item.category === 'bebidas');
             if (!hasDrinks) {
                 displayDrinkSuggestionModal(); 
@@ -1742,134 +1681,24 @@
             }
         }
 
-        // NOVO: Funções para mostrar/esconder a seção de input de endereço
-        function showAddressInputSection() {
-            addressInputSection.classList.remove('hidden');
-            addressSummarySection.classList.add('hidden'); // Esconde o resumo do endereço
-            isAddressInputVisible = true;
-            updateCheckoutButtonText(); // Atualiza o texto do botão
-            orderSidebar.scrollTop = orderSidebar.scrollHeight; // Rola para o final para mostrar o formulário
-        }
-
-        function hideAddressInputSection() {
-            addressInputSection.classList.add('hidden');
-            addressSummarySection.classList.remove('hidden'); // Mostra o resumo do endereço
-            isAddressInputVisible = false;
-            updateCheckoutButtonText(); // Atualiza o texto do botão
-        }
-
-        function hideAddressSummary() {
-            addressSummarySection.classList.add('hidden');
-        }
+        // As funções para mostrar/esconder a seção de input de endereço foram removidas.
+        // function showAddressInputSection() { ... }
+        // function hideAddressInputSection() { ... }
+        // function hideAddressSummary() { ... }
 
         // NOVO: Função para atualizar o texto do botão de checkout
         function updateCheckoutButtonText() {
-            if (isAddressInputVisible) {
-                checkoutButton.textContent = 'Confirmar Endereço';
-                checkoutButton.onclick = confirmAddress; // Altera a função do botão
-            } else {
-                checkoutButton.textContent = 'Finalizar Pedido';
-                checkoutButton.onclick = handleCheckoutFlow; // Volta para a função principal do checkout
-            }
+            // A lógica de texto do botão baseada na visibilidade do endereço foi removida.
+            checkoutButton.textContent = 'Finalizar Pedido';
+            checkoutButton.onclick = handleCheckoutFlow; // Volta para a função principal do checkout
         }
 
-        // NOVO: Função para confirmar o endereço
-        function confirmAddress() {
-            console.log('--- DEBUG: CONFIRM ADDRESS CALLED ---');
-            const neighborhood = neighborhoodSelect.value;
-            const street = streetInput.value.trim();
-            const number = numberInput.value.trim();
-            const reference = referencePointInput.value.trim();
+        // A função para confirmar o endereço foi removida.
+        // function confirmAddress() { ... }
 
-            if (!neighborhood || !street || !number) {
-                showMessageModal('Por favor, preencha o bairro, rua e número do endereço.');
-                console.log('DEBUG: Address validation failed: missing neighborhood, street, or number.');
-                return;
-            }
-
-            const selectedFeeData = deliveryFeesData.find(item => item.neighborhood === neighborhood);
-            
-            // Garante que a taxa de entrega é um número no momento da atribuição
-            let fee = 0;
-            if (selectedFeeData && typeof selectedFeeData.deliveryFee === 'number') {
-                fee = selectedFeeData.deliveryFee;
-            } else {
-                console.warn(`DEBUG: Delivery fee data for '${neighborhood}' is invalid or not found in deliveryFeesData. Setting to 0.`);
-            }
-
-            selectedAddress = {
-                neighborhood: neighborhood,
-                street: street,
-                number: number,
-                reference: reference,
-                deliveryFee: fee // Usa o valor já tratado
-            };
-            console.log('DEBUG: Selected neighborhood for fee (in confirmAddress):', neighborhood);
-            console.log('DEBUG: Found selectedFeeData (in confirmAddress):', selectedFeeData);
-            console.log('DEBUG: Calculated fee (in confirmAddress, after assignment):', selectedAddress.deliveryFee);
-            console.log('DEBUG: Type of selectedAddress.deliveryFee (in confirmAddress, after assignment):', typeof selectedAddress.deliveryFee);
-            console.log('DEBUG: Full selectedAddress object (in confirmAddress):', JSON.stringify(selectedAddress));
-            
-            // Atualiza a exibição do resumo do endereço
-            addressDisplay.textContent = `Rua: ${selectedAddress.street}, Nº ${selectedAddress.number}`;
-            neighborhoodDisplay.textContent = `Bairro: ${selectedAddress.neighborhood}`;
-            referenceDisplay.textContent = selectedAddress.reference ? `Ponto de Ref.: ${selectedAddress.reference}` : '';
-
-            updateOrderDisplay(); // Recalcula o total com a nova taxa de entrega
-            hideAddressInputSection(); // Esconde a seção de input e mostra o resumo
-            showMessageModal('Endereço confirmado!');
-            
-            // Continua o fluxo de checkout após a confirmação do endereço
-            handleCheckoutFlow();
-            console.log('--- DEBUG: END OF CONFIRM ADDRESS ---');
-        }
-
-        // NOVO: Popula o dropdown de bairros
-        function populateNeighborhoodDropdown() {
-            neighborhoodSelect.innerHTML = '<option value="">Selecione um bairro</option>';
-            // NOVO: Log para depuração
-            console.log('DEBUG: populateNeighborhoodDropdown called. deliveryFeesData length:', deliveryFeesData.length);
-            if (deliveryFeesData.length === 0) {
-                console.warn('DEBUG: deliveryFeesData está vazio ao tentar popular o dropdown de bairros. Verifique a busca da API e a análise do CSV.');
-            }
-            deliveryFeesData.forEach(item => {
-                const option = document.createElement('option');
-                option.value = item.neighborhood;
-                option.textContent = item.neighborhood;
-                neighborhoodSelect.appendChild(option);
-            });
-
-            // Se já houver um bairro selecionado, pré-seleciona
-            if (selectedAddress.neighborhood) {
-                neighborhoodSelect.value = selectedAddress.neighborhood;
-                streetInput.value = selectedAddress.street;
-                numberInput.value = selectedAddress.number;
-                referencePointInput.value = selectedAddress.reference;
-            }
-        }
-
-        // Listener para o dropdown de bairro para atualizar a taxa de entrega
-        neighborhoodSelect.addEventListener('change', () => {
-            console.log('--- DEBUG: NEIGHBORHOOD CHANGE EVENT FIRED ---');
-            const selectedNeighborhoodName = neighborhoodSelect.value;
-            console.log('DEBUG: Selected neighborhood in dropdown (raw value):', selectedNeighborhoodName);
-            const selectedFeeData = deliveryFeesData.find(item => item.neighborhood === selectedNeighborhoodName);
-            console.log('DEBUG: Found selectedFeeData for this neighborhood:', selectedFeeData);
-
-            // Ensure selectedAddress.deliveryFee is always a number
-            if (selectedFeeData && typeof selectedFeeData.deliveryFee === 'number') {
-                selectedAddress.deliveryFee = selectedFeeData.deliveryFee;
-            } else {
-                selectedAddress.deliveryFee = 0; // Default to 0 if data is not found or not a number
-                console.warn(`DEBUG: Delivery fee data for '${selectedNeighborhoodName}' is invalid or not found. Setting to 0.`);
-            }
-            
-            console.log('DEBUG: selectedAddress.deliveryFee after assignment in change event:', selectedAddress.deliveryFee, 'Type:', typeof selectedAddress.deliveryFee);
-            console.log('DEBUG: Full selectedAddress object after change event:', JSON.stringify(selectedAddress));
-
-            updateOrderDisplay(); // Update the total in the sidebar
-            console.log('--- DEBUG: NEIGHBORHOOD CHANGE EVENT ENDED ---');
-        });
+        // As funções para popular e lidar com o dropdown de bairros foram removidas.
+        // function populateNeighborhoodDropdown() { ... }
+        // neighborhoodSelect.addEventListener('change', () => { ... });
 
 
         function backToMenu() {
@@ -2157,7 +1986,7 @@
             order.forEach(item => {
                 currentSubtotal += item.price;
             });
-            return currentSubtotal + selectedAddress.deliveryFee; // Usa a taxa de entrega do endereço
+            return currentSubtotal; // Removido selectedAddress.deliveryFee
         }
 
         confirmPaymentMethodBtn.addEventListener('click', () => {
@@ -2319,13 +2148,13 @@
 
                 const cardapioCsvText = data.cardapio;
                 const promocoesCsvText = data.promocoes;
-                const deliveryFeesCsvText = data.deliveryFees; 
+                // deliveryFeesCsvText foi removida.
 
                 allMenuData = parseCsvData(cardapioCsvText, 'cardapio');
                 allPromotionsData = parseCsvData(promocoesCsvText, 'promocoes');
-                deliveryFeesData = parseCsvData(deliveryFeesCsvText, 'deliveryFees'); 
+                // deliveryFeesData = parseCsvData(deliveryFeesCsvText, 'deliveryFees'); // Removido
                 
-                console.log('DEBUG: Delivery Fees Data loaded (final state):', deliveryFeesData);
+                // console.log('DEBUG: Delivery Fees Data loaded (final state):', deliveryFeesData); // Removido
 
                 let orderedUniqueCategories = [];
                 const seenCategories = new Set();
@@ -2338,7 +2167,7 @@
                 
                 createCategoryButtons(orderedUniqueCategories); 
                 populateMenu(allMenuData, orderedUniqueCategories); 
-                populateNeighborhoodDropdown(); 
+                // populateNeighborhoodDropdown(); // Removido
                 setupCategoryObserver(); 
 
                 updatePromotionButtonVisibility(); 
