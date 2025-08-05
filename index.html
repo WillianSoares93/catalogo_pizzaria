@@ -508,24 +508,59 @@
                     <span class="text-gray-600">Subtotal:</span>
                     <span id="subtotal" class="font-bold">R$ 0,00</span>
                 </div>
-                <div class="flex justify-between mb-2">
-                    <span class="text-gray-600">Taxa de entrega:</span>
-                    <span id="deliveryFee" class="font-bold">R$ 5,00</span>
+                <!-- Seção de endereço e taxa de entrega dinâmica -->
+                <div id="address-summary-section" class="hidden">
+                    <div class="flex justify-between mb-2">
+                        <span class="text-gray-600">Taxa de entrega:</span>
+                        <span id="dynamicDeliveryFee" class="font-bold">R$ 0,00</span>
+                    </div>
+                    <div class="text-sm text-gray-500 mb-2">
+                        <p id="address-display"></p>
+                        <p id="neighborhood-display"></p>
+                        <p id="reference-display"></p>
+                    </div>
                 </div>
+                
                 <div class="flex justify-between text-lg font-bold">
                     <span>Total:</span>
-                    <span id="total">R$ 5,00</span>
+                    <span id="total">R$ 0,00</span>
                 </div>
             </div>
 
-            <!-- Seção de Forma de Pagamento removida daqui -->
+            <!-- Seção de input de endereço (inicialmente oculta) -->
+            <div id="address-input-section" class="hidden bg-gray-50 p-4 rounded-lg mb-6 shadow-inner">
+                <h4 class="text-lg font-bold text-gray-800 mb-4">Informar Endereço</h4>
+                <div class="mb-4">
+                    <label for="neighborhoodSelect" class="block text-gray-700 text-sm font-bold mb-2">Bairro:</label>
+                    <select id="neighborhoodSelect" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                        <option value="">Selecione um bairro</option>
+                        <!-- Opções de bairro serão carregadas via JS -->
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label for="streetInput" class="block text-gray-700 text-sm font-bold mb-2">Rua:</label>
+                    <input type="text" id="streetInput" placeholder="Ex: Rua das Flores" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+                <div class="mb-4">
+                    <label for="numberInput" class="block text-gray-700 text-sm font-bold mb-2">Número:</label>
+                    <input type="text" id="numberInput" placeholder="Ex: 123" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+                <div class="mb-4">
+                    <label for="referencePointInput" class="block text-gray-700 text-sm font-bold mb-2">Ponto de Referência (Opcional):</label>
+                    <input type="text" id="referencePointInput" placeholder="Ex: Ao lado da padaria" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+                <button id="confirmAddressBtn" class="btn-order w-full py-3 text-white font-bold rounded-full">
+                    Confirmar Endereço
+                </button>
+            </div>
             
             <!-- Botão "Adicionar mais" -->
             <button onclick="backToMenu()" class="btn-add-more w-full py-3 text-white font-bold rounded-full mb-4">
                 Adicionar mais
             </button>
 
-            <button onclick="checkout()" class="btn-order w-full py-3 text-white font-bold rounded-full mb-4">
+            <!-- Botão de Finalizar Pedido (texto mudará dinamicamente) -->
+            <button id="checkoutButton" onclick="handleCheckoutFlow()" class="btn-order w-full py-3 text-white font-bold rounded-full mb-4">
                 Finalizar Pedido
             </button>
             
@@ -540,7 +575,7 @@
             <h3 class="text-xl font-bold text-gray-800 mb-4" id="modal-pizza-name"></h3>
             <p class="text-gray-600 mb-6" id="modal-pizza-description"></p>
             <div id="pizza-size-options" class="grid grid-cols-1 sm:grid-cols-3 gap-2 justify-items-center">
-                <!-- Opções de tamanho e "meia a meia" serão inseridas aqui pelo JS -->
+                <!-- Opções de bairro serão carregadas via JS -->
             </div>
         </div>
     </div>
@@ -710,21 +745,31 @@
 
     <script>
         // URLs das planilhas Google Sheets publicadas como CSV
-        // Estas URLs agora são buscadas pela função Serverless do Vercel
-        // e não são mais usadas diretamente no frontend para carregamento.
-        // Elas foram mantidas aqui apenas para referência.
         const CARDAPIO_CSV_URL_REF = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=664943668&single=true&output=csv';
         const PROMOCOES_CSV_URL_REF = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5V8OSL/pub?gid=600393470&single=true&output=csv'; 
+        // NOVO: URL para a planilha de taxas de entrega
+        const DELIVERY_FEES_CSV_URL_REF = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=45140418&single=true&output=csv'; // <<<< URL DA PLANILHA DE FRETES >>>>
 
         // Variáveis globais
         let order = [];
         let allMenuData = []; // Armazenará todos os itens do cardápio (pizzas e bebidas)
         let allPromotionsData = [];
-        let isSelectingHalfPizza = false; // Nova flag para controlar se o usuário está selecionando uma meia pizza (qualquer categoria)
-        let isFirstHalfPromotional = false; // Nova flag para indicar se a primeira metade foi promocional
-        let deferredPrompt; // Variável para armazenar o evento beforeinstallprompt
-        let selectedPaymentMethod = null; // Variável para armazenar a forma de pagamento selecionada
-        let isCheckoutInitiated = false; // NOVO: Flag para controlar se o modal de pagamento foi aberto pelo checkout
+        let deliveryFeesData = []; // NOVO: Armazenará os dados de taxas de entrega
+        let isSelectingHalfPizza = false; 
+        let isFirstHalfPromotional = false; 
+        let deferredPrompt; 
+        let selectedPaymentMethod = null; 
+        let isCheckoutInitiated = false; 
+
+        // NOVO: Variáveis para o endereço
+        let selectedAddress = {
+            neighborhood: null,
+            street: '',
+            number: '',
+            reference: '',
+            deliveryFee: 0
+        };
+        let isAddressInputVisible = false; // Controla a visibilidade da seção de input de endereço
 
         // Imagem padrão para pizzas sem link na planilha
         const defaultPizzaImage = 'https://upload.wikimedia.org/wikipedia/commons/9/91/Pizza-3007395.jpg';
@@ -732,7 +777,7 @@
         // Referências para os elementos DOM
         const orderSidebar = document.getElementById('orderSidebar');
         const cartCount = document.getElementById('cartCount');
-        const emptyOrderMessage = document.getElementById('emptyOrderMessage');
+        const emptyOrderMessage = document.getElementById('orderItems').querySelector('#emptyOrderMessage'); // Ajustado para pegar dentro de orderItems
         const messageModal = document.getElementById('message-modal');
         const closeMessageModalBtn = document.getElementById('close-message-modal');
         const okMessageModalBtn = document.getElementById('ok-message-modal');
@@ -741,11 +786,12 @@
         const closePromotionPopupBtn = document.getElementById('close-promotion-popup');
         const closePromotionPopupBtnBottom = document.getElementById('close-promotion-popup-btn');
         const promotionsListEl = document.getElementById('promotions-list');
-        const promotionButton = document.getElementById('promotion-button'); // Referência ao botão de promoção
-        const cartButton = document.getElementById('cart-button'); // Adicionado ID ao botão do carrinho
+        const promotionButton = document.getElementById('promotion-button'); 
+        const cartButton = document.getElementById('cart-button'); 
         const subtotalEl = document.getElementById('subtotal');
-        const deliveryFeeEl = document.getElementById('deliveryFee');
+        const dynamicDeliveryFeeEl = document.getElementById('dynamicDeliveryFee'); // NOVO: Elemento para a taxa de entrega dinâmica
         const totalEl = document.getElementById('total');
+        const checkoutButton = document.getElementById('checkoutButton'); // Referência ao botão Finalizar Pedido
 
         // Referências para o modal de seleção de pizza
         const pizzaOptionModal = document.getElementById('pizza-option-modal');
@@ -758,7 +804,7 @@
         const drinkSuggestionModal = document.getElementById('drink-suggestion-modal');
         const closeDrinkSuggestionModalBtn = document.getElementById('close-drink-suggestion-modal');
         const suggestedDrinksList = document.getElementById('suggested-drinks-list');
-        const proceedWithoutDrinksBtn = document.getElementById('proceed-without-drinks'); // Botão dinâmico
+        const proceedWithoutDrinksBtn = document.getElementById('proceed-without-drinks'); 
 
         // Referências para o modal de confirmação de pedido sem bebida
         const confirmNoDrinkModal = document.getElementById('confirm-no-drink-modal');
@@ -776,24 +822,34 @@
         const closePaymentMethodModalBtn = document.getElementById('close-payment-method-modal');
         const paymentOptionsContainer = document.getElementById('payment-options-container');
         const confirmPaymentMethodBtn = document.getElementById('confirm-payment-method-btn');
-        const trocoInputContainer = document.getElementById('troco-input-container'); // NOVO: container do input de troco
-        const trocoParaInput = document.getElementById('trocoPara'); // NOVO: input de troco
-        const trocoTotalDisplay = document.getElementById('trocoTotalDisplay'); // NOVO: display do troco total
-        const paymentModalTotal = document.getElementById('payment-modal-total'); // NOVO: elemento para exibir o total do pedido no modal
+        const trocoInputContainer = document.getElementById('troco-input-container'); 
+        const trocoParaInput = document.getElementById('trocoPara'); 
+        const trocoTotalDisplay = document.getElementById('trocoTotalDisplay'); 
+        const paymentModalTotal = document.getElementById('payment-modal-total'); 
 
-        let currentPizzaData = {}; // Objeto para armazenar temporariamente os dados da pizza selecionada
-        let firstHalfPizza = null; // Armazena os dados da primeira metade de uma pizza dividida
-        let isSelectingSecondHalf = false; // Flag para indicar se o usuário está escolhendo a segunda metade
+        // NOVO: Referências para os elementos de endereço na sidebar
+        const addressInputSection = document.getElementById('address-input-section');
+        const neighborhoodSelect = document.getElementById('neighborhoodSelect');
+        const streetInput = document.getElementById('streetInput');
+        const numberInput = document.getElementById('numberInput');
+        const referencePointInput = document.getElementById('referencePointInput');
+        const confirmAddressBtn = document.getElementById('confirmAddressBtn');
+        const addressSummarySection = document.getElementById('address-summary-section');
+        const addressDisplay = document.getElementById('address-display');
+        const neighborhoodDisplay = document.getElementById('neighborhood-display');
+        const referenceDisplay = document.getElementById('reference-display');
+
+        let currentPizzaData = {}; 
+        let firstHalfPizza = null; 
+        let isSelectingSecondHalf = false; 
 
         // Define tamanhos e seus multiplicadores de preço em relação ao preço de 8 fatias
         const sizes = [
             { slices: 4, label: '4 Fatias', priceKey: 'price4Slices' },
             { slices: 6, label: '6 Fatias', priceKey: 'price6Slices' },
-            { slices: 8, label: '8 Fatias', priceKey: 'basePrice' } // basePrice é o preço de 8 fatias
+            { slices: 8, label: '8 Fatias', priceKey: 'basePrice' } 
         ];
 
-        // Taxa de entrega fixa
-        const deliveryFee = 5.00; 
         const whatsappNumber = '5587996070638'; 
 
         // Funções de controle de modais e sidebar
@@ -801,14 +857,10 @@
             orderSidebar.classList.toggle('translate-x-full');
             orderSidebar.classList.toggle('translate-x-0');
 
-            // Controla a visibilidade do botão de promoção
             if (orderSidebar.classList.contains('translate-x-0')) {
-                // Se a sidebar está abrindo, esconde o botão de promoção
                 promotionButton.style.display = 'none';
-                // Rola para o final da sidebar
-                orderSidebar.scrollTop = orderSidebar.scrollHeight;
+                orderSidebar.scrollTop = orderSidebar.scrollHeight; // Rola para o final ao abrir
             } else {
-                // Se a sidebar está fechando, mostra o botão de promoção (se houver promoções ativas)
                 updatePromotionButtonVisibility();
             }
         }
@@ -816,17 +868,16 @@
         function closeOrderSidebar() {
             orderSidebar.classList.add('translate-x-full');
             orderSidebar.classList.remove('translate-x-0');
-            updatePromotionButtonVisibility(); // Garante que o botão de promoção reapareça ao fechar
+            updatePromotionButtonVisibility(); 
         }
         
         function showMessageModal(message, onOkCallback = null) {
             messageModalText.textContent = message;
             messageModal.style.display = 'flex';
 
-            // Limpa listeners anteriores para evitar duplicação
             okMessageModalBtn.removeEventListener('click', hideMessageModal);
             closeMessageModalBtn.removeEventListener('click', hideMessageModal);
-            messageModal.onclick = null; // Remove o listener de clique externo
+            messageModal.onclick = null; 
 
             if (onOkCallback) {
                 const specificAction = () => {
@@ -855,26 +906,23 @@
             messageModal.style.display = 'none';
         }
 
-        // Listeners para fechar o modal de seleção de pizza
         closePizzaOptionModalBtn.addEventListener('click', function() {
             pizzaOptionModal.style.display = 'none';
-            updatePromotionButtonVisibility(); // Mostra o botão de promoção ao fechar o modal
+            updatePromotionButtonVisibility(); 
         });
 
-        // Fecha o modal se clicar fora do conteúdo do modal
         window.addEventListener('click', function(event) {
             if (event.target == pizzaOptionModal) {
                 pizzaOptionModal.style.display = 'none';
-                updatePromotionButtonVisibility(); // Mostra o botão de promoção ao fechar o modal
+                updatePromotionButtonVisibility(); 
             }
         });
 
-        // Função para gerar a imagem de uma fatia de pizza (vazia, apenas para estrutura)
         function getGenericPizzaSliceImage() {
-            return ''; // Retorna uma string vazia para remover a imagem
+            return ''; 
         }
 
-        // Função para parsear dados CSV
+        // Função para parsear dados CSV (agora mais genérica para diferentes tipos de dados)
         function parseCsvData(csvText, type) {
             const lines = csvText.split('\n').filter(line => line.trim() !== '');
 
@@ -928,13 +976,16 @@
                     case 'Categoria': return 'category';
                     case 'É Pizza? (SIM/NÃO)': return 'isPizza';
                     case 'Disponível (SIM/NÃO)': return 'available'; 
-                    case 'Imagem': return 'imageUrl'; // Mapeia a coluna "Imagem"
+                    case 'Imagem': return 'imageUrl'; 
                     // Headers para Promoções
                     case 'ID Promocao': return 'id';
                     case 'Nome da Promocao': return 'name';
                     case 'Preco Promocional': return 'promoPrice';
                     case 'ID Item Aplicavel': return 'itemId';
                     case 'Ativo (SIM/NAO)': return 'active';
+                    // NOVO: Headers para Taxas de Entrega
+                    case 'Bairro': return 'neighborhood';
+                    case 'Valor_Frete': return 'deliveryFee';
                     default: return cleanedHeader.replace(/[^a-zA-Z0-9]+(.)?/g, (match, chr) => chr ? chr.toUpperCase() : '').replace(/^./, (match) => match.toLowerCase());
                 }
             });
@@ -948,7 +999,7 @@
                     for (let j = 0; j < mappedHeaders.length; j++) {
                         let headerKey = mappedHeaders[j];
                         let value = rowValues[j];
-                        if (['basePrice', 'price6Slices', 'price4Slices', 'promoPrice'].includes(headerKey)) {
+                        if (['basePrice', 'price6Slices', 'price4Slices', 'promoPrice', 'deliveryFee'].includes(headerKey)) { // Adicionado 'deliveryFee'
                             const parsedValue = parseFloat(String(value).replace(',', '.'));
                             item[headerKey] = isNaN(parsedValue) ? 0 : parsedValue;
                         } else if (['isPizza', 'available', 'active'].includes(headerKey)) {
@@ -967,7 +1018,8 @@
                         }
                     }
                     // Apenas adiciona se estiver disponível (para cardápio) ou ativo (para promoções)
-                    if ((type === 'cardapio' && item.available) || (type === 'promocoes' && item.active)) {
+                    // Para deliveryFees, todos os itens são adicionados se a linha for válida
+                    if ((type === 'cardapio' && item.available) || (type === 'promocoes' && item.active) || type === 'deliveryFees') {
                         parsedData.push(item);
                     }
                 } else {
@@ -981,9 +1033,8 @@
         // Função para popular o cardápio dinamicamente
         function populateMenu(menuItems, orderedCategories) {
             const dynamicSectionsContainer = document.getElementById('dynamic-pizza-sections');
-            dynamicSectionsContainer.innerHTML = ''; // Limpa todas as seções existentes
+            dynamicSectionsContainer.innerHTML = ''; 
 
-            // Agrupa os itens por categoria
             const itemsByCategory = {};
             menuItems.forEach(item => {
                 if (!itemsByCategory[item.category]) {
@@ -992,16 +1043,13 @@
                 itemsByCategory[item.category].push(item);
             });
 
-            // Cria e preenche as seções para cada categoria na ordem definida
             orderedCategories.forEach(category => {
                 const sectionId = `${category}-section`;
                 let sectionEl = document.getElementById(sectionId);
 
                 if (!sectionEl) {
-                    // Cria a nova seção se ela não existir
                     sectionEl = document.createElement('div');
                     sectionEl.id = sectionId;
-                    // Adiciona classes para o fundo e padding ao título da categoria
                     sectionEl.className = 'pizza-category-section mb-8';
                     sectionEl.innerHTML = `
                         <h3 class="text-xl font-bold text-white p-2 rounded-md bg-red-600 mb-6">${capitalizeFirstLetter(category)}</h3>
@@ -1011,15 +1059,13 @@
                 }
 
                 const categoryItemsEl = document.getElementById(`${category}-items`);
-                categoryItemsEl.innerHTML = ''; // Limpa os itens da categoria antes de preencher
+                categoryItemsEl.innerHTML = ''; 
 
-                // Adiciona os itens da categoria, se existirem
                 if (itemsByCategory[category]) {
                     itemsByCategory[category].forEach(item => {
-                        if (item.available) { // Garante que o item está disponível
+                        if (item.available) { 
                             let itemHtml = '';
                             if (item.isPizza) {
-                                // Constrói o HTML para exibição de preços dinamicamente
                                 let priceDisplayHtml = '';
                                 if (item.price4Slices > 0) {
                                     priceDisplayHtml += `
@@ -1040,7 +1086,7 @@
                                         </div>
                                     `;
                                 }
-                                if (item.basePrice > 0) { // basePrice é para 8 fatias
+                                if (item.basePrice > 0) { 
                                     priceDisplayHtml += `
                                         <div class="flex flex-col items-center text-center px-1 flex-shrink-0">
                                             <span class="font-bold text-gray-800 whitespace-nowrap">8F</span>
@@ -1049,14 +1095,13 @@
                                     `;
                                 }
                                 
-                                const imageUrl = item.imageUrl || defaultPizzaImage; // Usa a URL da planilha ou a padrão
+                                const imageUrl = item.imageUrl || defaultPizzaImage; 
 
                                 itemHtml = `
                                     <div class="flavor-card bg-white rounded-xl overflow-hidden shadow-lg transition duration-300">
                                         <img src="${imageUrl}" alt="Pizza de ${item.name}" class="w-full h-40 object-cover" onerror="this.onerror=null;this.src='${defaultPizzaImage}';">
                                         <div class="p-6">
                                             <h3 class="text-xl font-bold text-gray-800 mb-2">${item.name}</h3>
-                                            <!-- Ajustado para alinhar à esquerda e reduzir espaçamento, e agora com flex-nowrap -->
                                             <div class="flex justify-around items-start text-sm mb-4 w-full overflow-x-auto py-1">
                                                 ${priceDisplayHtml}
                                             </div>
@@ -1070,7 +1115,7 @@
                                         </div>
                                     </div>
                                 `;
-                            } else { // Para bebidas
+                            } else { 
                                 itemHtml = `
                                     <div class="flavor-card bg-white rounded-xl overflow-hidden shadow-lg transition duration-300">
                                         <div class="p-6">
@@ -1093,20 +1138,16 @@
                 }
             });
 
-            // Reanexa os event listeners após popular o cardápio
             attachAddButtonListeners();
         }
 
-        // Função para capitalizar a primeira letra de uma string (útil para nomes de categoria)
         function capitalizeFirstLetter(string) {
-            // Converte a primeira letra para maiúscula e o resto para minúscula para padronização
             return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
         }
 
-        // Função para criar os botões de categoria dinamicamente
         function createCategoryButtons(categories) {
             const categoryButtonsContainer = document.getElementById('category-buttons-container');
-            categoryButtonsContainer.innerHTML = ''; // Limpa os botões existentes
+            categoryButtonsContainer.innerHTML = ''; 
 
             categories.forEach((category, index) => {
                 const button = document.createElement('button');
@@ -1115,41 +1156,36 @@
                 button.dataset.category = category;
                 button.dataset.targetId = `${category}-section`;
                 
-                button.addEventListener('click', function(event) { // Passa o objeto de evento
+                button.addEventListener('click', function(event) { 
                     const targetCategory = this.dataset.category;
                     const targetId = this.dataset.targetId;
 
-                    if (isSelectingHalfPizza && isFirstHalfPromotional) { // Se a primeira metade foi promocional, restringe a navegação
+                    if (isSelectingHalfPizza && isFirstHalfPromotional) { 
                         if (targetCategory.toLowerCase() !== 'promocionais') {
-                            event.preventDefault(); // Previne a rolagem padrão
+                            event.preventDefault(); 
                             showMessageModal('Para pizzas promocionais, a segunda metade deve ser também de uma pizza promocional.', () => {
-                                // Callback para o botão OK: rola para a categoria promocional
                                 document.getElementById('promocionais-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                // Garante que o botão da categoria promocional esteja ativo
                                 setActiveCategoryButton('promocionais');
                             });
-                            return; // Interrompe a execução posterior
+                            return; 
                         }
-                    } else if (isSelectingHalfPizza && !isFirstHalfPromotional) { // NOVO: Se a primeira metade NÃO foi promocional
+                    } else if (isSelectingHalfPizza && !isFirstHalfPromotional) { 
                         if (targetCategory.toLowerCase() === 'promocionais') {
-                            event.preventDefault(); // Previne a rolagem padrão
+                            event.preventDefault(); 
                             showMessageModal('Você começou a montar uma pizza meio a meio com um sabor não promocional. A segunda metade não pode ser de uma pizza promocional.', () => {
-                                // Tenta rolar de volta para a categoria da primeira metade, se ela ainda existir
                                 if (firstHalfPizza && firstHalfPizza.category) {
                                     const originalCategorySection = document.getElementById(`${firstHalfPizza.category.toLowerCase()}-section`);
                                     if (originalCategorySection) {
                                         originalCategorySection.scrollIntoView({ behavior: 'smooth', block: 'start' });
                                         setActiveCategoryButton(firstHalfPizza.category.toLowerCase());
                                     } else {
-                                        // Fallback se firstHalfPizza não estiver definido corretamente
                                         document.getElementById('menu').scrollIntoView({ behavior: 'smooth', block: 'start' });
                                     }
                                 } else {
-                                    // Fallback se firstHalfPizza não estiver definido corretamente
                                     document.getElementById('menu').scrollIntoView({ behavior: 'smooth', block: 'start' });
                                 }
                             });
-                            return; // Interrompe a execução posterior
+                            return; 
                         }
                     }
 
@@ -1158,37 +1194,34 @@
                     document.getElementById(targetId).scrollIntoView({ behavior: 'smooth', block: 'start' });
                     setTimeout(() => {
                         isScrollingFromClick = false;
-                    }, 700); // Ajuste este tempo se a rolagem for muito rápida/lenta
+                    }, 700); 
                 });
                 categoryButtonsContainer.appendChild(button);
 
-                if (index === 0) { // Define o primeiro botão como ativo inicialmente
+                if (index === 0) { 
                     setActiveCategoryButton(category);
                     currentActiveCategoryByScroll = category;
                 }
             });
         }
 
-        // Função para anexar os event listeners aos botões "Adicionar"
         function attachAddButtonListeners() {
             document.querySelectorAll('.add-item-btn').forEach(button => {
-                button.removeEventListener('click', handleAddButtonClick); // Evita duplicações
+                button.removeEventListener('click', handleAddButtonClick); 
                 button.addEventListener('click', handleAddButtonClick);
             });
         }
 
-        // Função para desativar/ativar botões "Adicionar" de outras categorias
         function toggleAddItemButtons(enableAll = true) {
             document.querySelectorAll('.add-item-btn').forEach(button => {
                 const itemId = button.dataset.itemId;
                 const item = allMenuData.find(i => i.id === itemId);
 
-                if (enableAll || !isSelectingHalfPizza) { // Se reativando tudo, ou não está no modo de meia pizza
+                if (enableAll || !isSelectingHalfPizza) { 
                     button.removeAttribute('disabled');
                     button.classList.remove('opacity-50', 'cursor-not-allowed');
-                } else { // isSelectingHalfPizza é true
+                } else { 
                     if (isFirstHalfPromotional) {
-                        // Primeira metade foi promocional: só habilita pizzas promocionais
                         if (item && item.category.toLowerCase() === 'promocionais') {
                             button.removeAttribute('disabled');
                             button.classList.remove('opacity-50', 'cursor-not-allowed');
@@ -1196,13 +1229,12 @@
                             button.setAttribute('disabled', 'true');
                             button.classList.add('opacity-50', 'cursor-not-allowed');
                         }
-                    } else { // Primeira metade NÃO foi promocional
-                        // Desabilita pizzas promocionais
+                    } else { 
                         if (item && item.category.toLowerCase() === 'promocionais') {
                             button.setAttribute('disabled', 'true');
                             button.classList.add('opacity-50', 'cursor-not-allowed');
                         } else {
-                            button.removeAttribute('disabled'); // Habilita pizzas/bebidas não promocionais
+                            button.removeAttribute('disabled'); 
                             button.classList.remove('opacity-50', 'cursor-not-allowed');
                         }
                     }
@@ -1210,16 +1242,14 @@
             });
         }
 
-        // Função para desativar/ativar botões de categoria
         function toggleCategoryButtons(enableAll = true) {
             document.querySelectorAll('.category-btn').forEach(button => {
                 const category = button.dataset.category.toLowerCase();
-                if (enableAll || !isSelectingHalfPizza) { // Se reativando tudo, ou não está no modo de meia pizza
+                if (enableAll || !isSelectingHalfPizza) { 
                     button.removeAttribute('disabled');
                     button.classList.remove('opacity-50', 'cursor-not-allowed');
-                } else { // isSelectingHalfPizza é true
+                } else { 
                     if (isFirstHalfPromotional) {
-                        // Primeira metade foi promocional: só habilita o botão da categoria promocional
                         if (category === 'promocionais') {
                             button.removeAttribute('disabled');
                             button.classList.remove('opacity-50', 'cursor-not-allowed');
@@ -1227,13 +1257,12 @@
                             button.setAttribute('disabled', 'true');
                             button.classList.add('opacity-50', 'cursor-not-allowed');
                         }
-                    } else { // Primeira metade NÃO foi promocional
-                        // Desabilita o botão da categoria promocional
+                    } else { 
                         if (category === 'promocionais') {
                             button.setAttribute('disabled', 'true');
                             button.classList.add('opacity-50', 'cursor-not-allowed');
                         } else {
-                            button.removeAttribute('disabled'); // Habilita categorias não promocionais
+                            button.removeAttribute('disabled'); 
                             button.classList.remove('opacity-50', 'cursor-not-allowed');
                         }
                     }
@@ -1241,9 +1270,8 @@
             });
         }
 
-        // Função para lidar com o clique no botão "Adicionar" (para pizzas e bebidas)
         function handleAddButtonClick(e) {
-            const clickedButton = e.target; // O botão clicado
+            const clickedButton = e.target; 
             const itemId = clickedButton.dataset.itemId;
             const item = allMenuData.find(i => i.id === itemId);
 
@@ -1252,7 +1280,6 @@
                 return;
             }
 
-            // Obtém a URL da imagem do item, se for uma pizza
             const itemImageUrl = item.isPizza ? item.imageUrl : null;
 
             if (isSelectingSecondHalf) {
@@ -1261,7 +1288,6 @@
                     return;
                 }
 
-                // Lógica de restrição para a segunda metade
                 if (isFirstHalfPromotional && item.category.toLowerCase() !== 'promocionais') {
                     showMessageModal('Para pizzas promocionais, a segunda metade deve ser também de uma pizza promocional.', () => {
                         document.getElementById('promocionais-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1273,7 +1299,6 @@
                     return;
                 }
 
-                // Remove o item "pending-half-pizza" do pedido
                 const pendingHalfIndex = order.findIndex(orderItem => orderItem.id === 'pending-half-pizza');
                 if (pendingHalfIndex > -1) {
                     order.splice(pendingHalfIndex, 1);
@@ -1282,12 +1307,9 @@
                 const cleanFirstName = firstHalfPizza.name;
                 const combinedName = `Meia ${cleanFirstName} & Meia ${item.name}`;
                 
-                // Obtém o preço da primeira metade com base nas fatias selecionadas
                 const priceFirstHalfFullSize = firstHalfPizza.original_full_price; 
-                // Obtém o preço da segunda metade com base nas fatias selecionadas (mesmo tamanho da primeira metade)
                 const priceSecondHalfFullSize = item[firstHalfPizza.priceKeyForSlices]; 
 
-                // Garante que os valores são números antes da operação
                 const combinedPrice = ((priceFirstHalfFullSize || 0) / 2) + ((priceSecondHalfFullSize || 0) / 2);
                 const combinedDescription = `${firstHalfPizza.description.replace('Primeira metade: ', '')} e ${item.description}`;
 
@@ -1296,32 +1318,30 @@
                     name: combinedName,
                     price: combinedPrice,
                     description: combinedDescription,
-                    category: 'pizzas', // Categoria genérica para pizzas meio a meio
+                    category: 'pizzas', 
                     selected_slices: firstHalfPizza.selected_slices
-                }, clickedButton, itemImageUrl); // Passa o botão clicado e a URL da imagem para a animação
+                }, clickedButton, itemImageUrl); 
 
                 firstHalfPizza = null;
                 isSelectingSecondHalf = false;
-                isSelectingHalfPizza = false; // Reseta a flag principal de seleção de meia pizza
-                isFirstHalfPromotional = false; // Reseta a flag de primeira metade promocional
-                toggleAddItemButtons(true); // Reativa todos os botões "Adicionar"
-                toggleCategoryButtons(true); // Reativa todos os botões de categoria
-                showTemporaryFeedback('Pizza meio a meio adicionada ao pedido!', 'bg-green-500'); // Usar feedback temporário
+                isSelectingHalfPizza = false; 
+                isFirstHalfPromotional = false; 
+                toggleAddItemButtons(true); 
+                toggleCategoryButtons(true); 
+                showTemporaryFeedback('Pizza meio a meio adicionada ao pedido!', 'bg-green-500'); 
                 
             } else if (item.isPizza) {
-                currentPizzaData = { ...item }; // Copia o objeto item completo
+                currentPizzaData = { ...item }; 
                 modalPizzaName.textContent = item.name;
                 modalPizzaDescription.textContent = item.description;
 
                 pizzaSizeOptions.innerHTML = '';
                 
-                // Filtra os tamanhos para mostrar apenas aqueles com preço > 0
                 const availableSizes = sizes.filter(size => currentPizzaData[size.priceKey] > 0);
 
-                // Se houver apenas uma opção de tamanho, ajuste o layout do modal
                 if (availableSizes.length === 1) {
                     pizzaSizeOptions.classList.remove('sm:grid-cols-3');
-                    pizzaSizeOptions.classList.add('sm:grid-cols-1', 'max-w-xs', 'mx-auto'); // Centraliza e limita largura para uma coluna
+                    pizzaSizeOptions.classList.add('sm:grid-cols-1', 'max-w-xs', 'mx-auto'); 
                 } else {
                     pizzaSizeOptions.classList.add('sm:grid-cols-3');
                     pizzaSizeOptions.classList.remove('sm:grid-cols-1', 'max-w-xs', 'mx-auto');
@@ -1353,13 +1373,13 @@
                         addToOrder({
                             type: 'full',
                             name: currentPizzaData.name,
-                            price: currentPizzaData[selectedPriceKey], // Usa o preço direto da chave
+                            price: currentPizzaData[selectedPriceKey], 
                             description: currentPizzaData.description,
                             category: currentPizzaData.category,
                             selected_slices: selectedSlices
-                        }, this, currentPizzaData.imageUrl); // Passa o botão clicado e a URL da imagem para a animação
+                        }, this, currentPizzaData.imageUrl); 
                         pizzaOptionModal.style.display = 'none';
-                        updatePromotionButtonVisibility(); // Mostra o botão de promoção ao fechar o modal
+                        updatePromotionButtonVisibility(); 
                     });
 
                     optionDiv.querySelector('.add-half-size-pizza-btn').addEventListener('click', function() {
@@ -1367,23 +1387,22 @@
                         const selectedPriceKey = this.dataset.priceKey;
                         firstHalfPizza = {
                             name: currentPizzaData.name,
-                            price: currentPizzaData[selectedPriceKey] / 2, // Preço da metade
+                            price: currentPizzaData[selectedPriceKey] / 2, 
                             description: currentPizzaData.description,
-                            original_full_price: currentPizzaData[selectedPriceKey], // Preço total da primeira metade
+                            original_full_price: currentPizzaData[selectedPriceKey], 
                             selected_slices: selectedSlices,
-                            priceKeyForSlices: selectedPriceKey, // Armazena a chave de preço para a segunda metade
-                            category: currentPizzaData.category // Armazena a categoria da primeira metade
+                            priceKeyForSlices: selectedPriceKey, 
+                            category: currentPizzaData.category 
                         };
                         isSelectingSecondHalf = true;
-                        isSelectingHalfPizza = true; // Ativa a flag principal de seleção de meia pizza
-                        isFirstHalfPromotional = (currentPizzaData.category.toLowerCase() === 'promocionais'); // Define se a primeira metade foi promocional
+                        isSelectingHalfPizza = true; 
+                        isFirstHalfPromotional = (currentPizzaData.category.toLowerCase() === 'promocionais'); 
                         pizzaOptionModal.style.display = 'none';
-                        updatePromotionButtonVisibility(); // Mostra o botão de promoção ao fechar o modal
+                        updatePromotionButtonVisibility(); 
 
-                        toggleAddItemButtons(false); // Desativa/ativa botões "Adicionar" com base nas novas flags
-                        toggleCategoryButtons(false); // Desativa/ativa botões de categoria com base nas novas flags
+                        toggleAddItemButtons(false); 
+                        toggleCategoryButtons(false); 
                         
-                        // Adiciona a meia pizza pendente ao pedido IMEDIATAMENTE
                         addToOrderOnly(
                             {
                                 type: 'half_pending',
@@ -1393,9 +1412,8 @@
                                 id: 'pending-half-pizza',
                                 category: currentPizzaData.category,
                                 selected_slices: selectedSlices
-                            }, this, currentPizzaData.imageUrl // Passa o botão clicado e a URL da imagem para a animação
+                            }, this, currentPizzaData.imageUrl 
                         );
-                        // Pequeno atraso antes de mostrar o modal para garantir que a sidebar atualize
                         setTimeout(() => {
                             showMessageModal('Agora, escolha a segunda metade da sua pizza.'); 
                         }, 100);
@@ -1403,50 +1421,39 @@
                 });
 
                 pizzaOptionModal.style.display = 'flex';
-                promotionButton.style.display = 'none'; // Esconde o botão de promoção ao abrir o modal
-            } else { // Para itens não-pizza (bebidas)
+                promotionButton.style.display = 'none'; 
+            } else { 
                 addToOrder({
                     type: 'full',
                     name: item.name,
-                    price: item.basePrice, // Para bebidas, basePrice é o preço único
+                    price: item.basePrice, 
                     description: item.description,
                     category: item.category
-                }, clickedButton, itemImageUrl); // Passa o botão clicado e a URL da imagem (será null) para a animação
+                }, clickedButton, itemImageUrl); 
             }
         }
         
-        // Adicionar item ao array de pedidos (com feedback, mas sem abertura automática da sidebar)
         function addToOrder(item, clickedButton = null, itemImageUrl = null) {
             order.push(item);
             updateOrderDisplay();
             updateCartCount();
 
-            // Abertura automática da sidebar removida conforme sua solicitação.
-            // O usuário agora precisa clicar no botão do carrinho para abrir o pedido.
-
-            // Animação de voo para o carrinho
             if (clickedButton) {
-                animateItemToCart(clickedButton, itemImageUrl); // Passa a URL da imagem para a animação
+                animateItemToCart(clickedButton, itemImageUrl); 
             }
             
-            // Feedback visual de adição
             showTemporaryFeedback('✔️ Adicionado ao pedido!', 'bg-green-500');
         }
 
-        // Adicionar item ao array de pedidos (SEM abertura da sidebar e SEM feedback)
         function addToOrderOnly(item, clickedButton = null, itemImageUrl = null) {
             order.push(item);
             updateOrderDisplay();
             updateCartCount();
-            // Animação de voo para o carrinho
             if (clickedButton) {
-                animateItemToCart(clickedButton, itemImageUrl); // Passa a URL da imagem para a animação
+                animateItemToCart(clickedButton, itemImageUrl); 
             }
-            // Não chama toggleOrderSidebar() aqui
-            // Não mostra showTemporaryFeedback() aqui
         }
 
-        // Nova função para animar o item até o carrinho
         function animateItemToCart(originElement, imageUrl = null) {
             const cartButtonRect = cartButton.getBoundingClientRect();
             const originRect = originElement.getBoundingClientRect();
@@ -1457,10 +1464,9 @@
             if (imageUrl) {
                 flyingEl.innerHTML = `<img src="${imageUrl}" alt="item" class="w-full h-full object-cover rounded-full">`;
             } else {
-                flyingEl.innerHTML = '<i class="fas fa-plus"></i>'; // Ícone padrão se não houver imagem
+                flyingEl.innerHTML = '<i class="fas fa-plus"></i>'; 
             }
 
-            // Define as posições iniciais e finais como variáveis CSS
             flyingEl.style.setProperty('--start-x', `${originRect.left + originRect.width / 2 - 15}px`);
             flyingEl.style.setProperty('--start-y', `${originRect.top + originRect.height / 2 - 15}px`);
             flyingEl.style.setProperty('--end-x', `${cartButtonRect.left + cartButtonRect.width / 2 - 15}px`);
@@ -1473,15 +1479,14 @@
             });
         }
 
-        // Função genérica para exibir feedback temporário
         function showTemporaryFeedback(message, bgColorClass) {
             const feedback = document.createElement('div');
             feedback.textContent = message;
             feedback.className = `fixed right-4 ${bgColorClass} text-white px-4 py-2 rounded-lg shadow-lg slide-in`;
             feedback.style.zIndex = '100';
 
-            const cartButtonRect = cartButton.getBoundingClientRect(); // Usa a referência direta
-            feedback.style.bottom = `${window.innerHeight - cartButtonRect.top + 10}px`; // Posição acima do botão do carrinho
+            const cartButtonRect = cartButton.getBoundingClientRect(); 
+            feedback.style.bottom = `${window.innerHeight - cartButtonRect.top + 10}px`; 
             document.body.appendChild(feedback);
             
             setTimeout(() => {
@@ -1495,16 +1500,17 @@
             const orderItemsContainer = document.getElementById('orderItems');
             
             if (order.length === 0) {
-                console.log("DEBUG: Order empty, resetting selectedPaymentMethod to null.");
                 emptyOrderMessage.classList.remove('hidden');
                 orderItemsContainer.innerHTML = '';
                 orderItemsContainer.appendChild(emptyOrderMessage);
                 
                 document.getElementById('subtotal').textContent = 'R$ 0,00';
-                document.getElementById('total').textContent = 'R$ ' + deliveryFee.toFixed(2).replace('.', ',');
-                selectedPaymentMethod = null; // Reseta a forma de pagamento
+                dynamicDeliveryFeeEl.textContent = 'R$ 0,00'; // Reseta taxa de entrega
+                totalEl.textContent = 'R$ 0,00'; // Reseta total
+                selectedPaymentMethod = null; 
+                selectedAddress.deliveryFee = 0; // Reseta taxa de entrega no objeto de endereço
+                hideAddressSummary(); // Esconde o resumo do endereço
             } else {
-                console.log("DEBUG: Order not empty, selectedPaymentMethod is:", selectedPaymentMethod);
                 emptyOrderMessage.classList.add('hidden');
                 
                 let itemsHTML = '';
@@ -1512,21 +1518,20 @@
                 
                 order.forEach((item, index) => {
                     subtotal += item.price;
-                    let itemDescription = item.description || ''; // Garante que description não seja undefined
+                    let itemDescription = item.description || ''; 
                     let itemName = item.name;
 
                     if (item.type === 'promotion') {
-                        itemName = `<i class="fas fa-tags text-red-600 mr-2"></i> ${item.name}`; // Ícone vermelho para promoções
-                    } else if (item.type === 'half_pending') { // Explicitamente trata a meia pizza pendente
+                        itemName = `<i class="fas fa-tags text-red-600 mr-2"></i> ${item.name}`; 
+                    } else if (item.type === 'half_pending') { 
                         const sizeLabel = `${item.selected_slices} FATIAS`.toUpperCase();
-                        itemName = `<b>${sizeLabel}</b>: ${item.name} (1ª Metade)`; // Indicador claro
-                        itemDescription = `Aguardando 2ª metade`; // Descrição mais clara
+                        itemName = `<b>${sizeLabel}</b>: ${item.name} (1ª Metade)`; 
+                        itemDescription = `Aguardando 2ª metade`; 
                     } else if (item.selected_slices) {
                         const sizeLabel = `${item.selected_slices} FATIAS`.toUpperCase();
                         itemName = `<b>${sizeLabel}</b>: ${item.name}`;
                     }
                     
-                    // Aplica a borda inferior apenas se não for o último item do pedido E não for a forma de pagamento
                     const isLastItem = (index === order.length - 1);
                     const borderClass = isLastItem && !selectedPaymentMethod ? '' : 'border-b border-gray-100';
 
@@ -1546,6 +1551,14 @@
                         </div>
                     `;
                 });
+                
+                orderItemsContainer.innerHTML = itemsHTML;
+                subtotalEl.textContent = 'R$ ' + subtotal.toFixed(2).replace('.', ',');
+                
+                // Atualiza a taxa de entrega e o total com base no selectedAddress
+                dynamicDeliveryFeeEl.textContent = 'R$ ' + selectedAddress.deliveryFee.toFixed(2).replace('.', ',');
+                const total = subtotal + selectedAddress.deliveryFee;
+                totalEl.textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
 
                 // Adiciona a forma de pagamento ao resumo do pedido se selecionada
                 if (selectedPaymentMethod) {
@@ -1562,7 +1575,7 @@
                         paymentMethodText = selectedPaymentMethod;
                     }
 
-                    itemsHTML += `
+                    orderItemsContainer.insertAdjacentHTML('beforeend', `
                         <div class="flex justify-between items-start py-3">
                             <div class="flex-1">
                                 <p class="font-medium text-gray-600">Forma de Pagamento:</p>
@@ -1572,53 +1585,50 @@
                                 <span class="font-bold text-red-600">${paymentMethodText}</span>
                             </div>
                         </div>
-                    `;
+                    `);
                 }
-                
-                orderItemsContainer.innerHTML = itemsHTML;
-                
-                const total = subtotal + deliveryFee;
-                
-                subtotalEl.textContent = 'R$ ' + subtotal.toFixed(2).replace('.', ',');
-                totalEl.textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
             }
-            updateDrinkSuggestionButtons(); // Atualiza o botão no modal de sugestão de bebidas
+            updateDrinkSuggestionButtons(); 
         }
         
-        // Remover item do pedido
         function removeItem(index) {
             const removedItem = order[index];
             order.splice(index, 1);
             updateOrderDisplay();
             updateCartCount();
 
-            // Se a meia pizza pendente for removida, reseta o estado e reativa os botões
             if (removedItem && removedItem.id === 'pending-half-pizza') {
                 firstHalfPizza = null;
                 isSelectingSecondHalf = false;
-                isSelectingHalfPizza = false; // Reseta a flag principal
-                isFirstHalfPromotional = false; // Reseta a flag promocional
-                toggleAddItemButtons(true); // Reativa todos os botões "Adicionar"
-                toggleCategoryButtons(true); // Reativa todos os botões de categoria
-                showTemporaryFeedback('Seleção de meia pizza cancelada.', 'bg-red-600'); // Mensagem e cor alteradas
+                isSelectingHalfPizza = false; 
+                isFirstHalfPromotional = false; 
+                toggleAddItemButtons(true); 
+                toggleCategoryButtons(true); 
+                showTemporaryFeedback('Seleção de meia pizza cancelada.', 'bg-red-600'); 
             }
         }
         
-        // Limpar todo o pedido
         function clearOrder() {
             order = [];
             updateOrderDisplay();
             updateCartCount();
-            // Reseta o estado da meia pizza ao limpar o pedido
             firstHalfPizza = null;
             isSelectingSecondHalf = false;
-            isSelectingHalfPizza = false; // Garante que a flag principal seja resetada
-            isFirstHalfPromotional = false; // Garante que a flag promocional seja resetada
-            toggleAddItemButtons(true); // Reativa todos os botões "Adicionar"
-            toggleCategoryButtons(true); // Reativa todos os botões de categoria
+            isSelectingHalfPizza = false; 
+            isFirstHalfPromotional = false; 
+            toggleAddItemButtons(true); 
+            toggleCategoryButtons(true);
+            selectedAddress = { // Reseta o endereço também
+                neighborhood: null,
+                street: '',
+                number: '',
+                reference: '',
+                deliveryFee: 0
+            };
+            hideAddressSummary(); // Esconde o resumo do endereço
+            updateCheckoutButtonText(); // Atualiza o texto do botão de checkout
         }
         
-        // Atualizar contagem do carrinho
         function updateCartCount() {
             if (order.length > 0) {
                 cartCount.textContent = order.length;
@@ -1628,7 +1638,6 @@
             }
         }
         
-        // Função de finalização do pedido para o WhatsApp
         function proceedToWhatsappCheckout() {
             const phoneNumber = whatsappNumber; 
             let message = 'Olá! Gostaria de fazer o seguinte pedido:\n\n';
@@ -1637,7 +1646,7 @@
             order.forEach(item => {
                 let itemName = item.name;
                 if (item.type === 'promotion') {
-                    itemName = item.name.replace('<i class="fas fa-tags text-red-600 mr-2"></i> ', ''); // Remove o ícone para o WhatsApp
+                    itemName = item.name.replace('<i class="fas fa-tags text-red-600 mr-2"></i> ', ''); 
                 } else if (item.selected_slices) {
                     itemName = `${item.selected_slices} FATIAS: ${item.name}`;
                 }
@@ -1645,13 +1654,20 @@
                 subtotal += item.price;
             });
 
-            const total = subtotal + deliveryFee;
+            const total = subtotal + selectedAddress.deliveryFee; // Usa a taxa de entrega do endereço
 
             message += `\nSubtotal: R$ ${subtotal.toFixed(2).replace('.', ',')}`;
-            message += `\nTaxa de entrega: R$ ${deliveryFee.toFixed(2).replace('.', ',')}`;
+            message += `\nTaxa de entrega (${selectedAddress.neighborhood}): R$ ${selectedAddress.deliveryFee.toFixed(2).replace('.', ',')}`;
             message += `\nTotal: R$ ${total.toFixed(2).replace('.', ',')}`;
             
-            // Adiciona a forma de pagamento à mensagem do WhatsApp
+            // Adiciona o endereço completo
+            message += `\n\nEndereço de Entrega:\n`;
+            message += `Rua: ${selectedAddress.street}, Nº ${selectedAddress.number}\n`;
+            message += `Bairro: ${selectedAddress.neighborhood}\n`;
+            if (selectedAddress.reference) {
+                message += `Ponto de Referência: ${selectedAddress.reference}\n`;
+            }
+
             if (selectedPaymentMethod) {
                 if (typeof selectedPaymentMethod === 'object' && selectedPaymentMethod.method === 'Dinheiro') {
                     message += `\nForma de Pagamento: ${selectedPaymentMethod.method}`;
@@ -1667,67 +1683,147 @@
             const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
             window.open(whatsappUrl, '_blank');
             
-            order = [];
-            updateOrderDisplay();
-            updateCartCount();
-            closeOrderSidebar();
-            // Garante que as flags de seleção de meia pizza sejam resetadas após o checkout
-            firstHalfPizza = null;
-            isSelectingSecondHalf = false;
-            isSelectingHalfPizza = false;
-            isFirstHalfPromotional = false;
-            toggleAddItemButtons(true); // Reativa todos os botões "Adicionar"
-            toggleCategoryButtons(true); // Reativa todos os botões de categoria
-            selectedPaymentMethod = null; // Reseta a forma de pagamento após o checkout
+            clearOrder(); // Limpa o pedido após finalizar
         }
 
-        // Função de finalização do pedido (chamada pelo botão "Finalizar Pedido")
-        function checkout() {
-            console.log("DEBUG: checkout() called. selectedPaymentMethod:", selectedPaymentMethod);
+        // NOVO: Função para gerenciar o fluxo de checkout
+        function handleCheckoutFlow() {
             if (order.length === 0) {
-                console.log("DEBUG: Order is empty. Showing message modal.");
                 showMessageModal('O seu pedido está vazio. Adicione itens antes de finalizar.');
                 return;
             }
             
-            // Verifica se há uma pizza meio a meio pendente
-            if (isSelectingHalfPizza) { // Usa a flag principal
+            if (isSelectingHalfPizza) { 
                 showMessageModal('Por favor, escolha a segunda metade da sua pizza antes de finalizar o pedido.');
                 return;
             }
 
-            // Verifica se há alguma bebida no pedido
-            const hasDrinks = order.some(item => item.category === 'bebidas');
-            if (!hasDrinks) {
-                displayDrinkSuggestionModal(); // Chama o novo modal de sugestão de bebidas
-                return; // Interrompe o checkout para que o usuário possa escolher uma bebida
+            // Se o endereço não foi informado, mostra a seção de input
+            if (!selectedAddress.neighborhood || !selectedAddress.street || !selectedAddress.number) {
+                showAddressInputSection();
+                return; // Interrompe o fluxo para que o usuário preencha o endereço
             }
 
-            // Se tudo estiver OK e bebidas verificadas, verifica a forma de pagamento
+            // Se chegou aqui, o endereço já foi preenchido
+            const hasDrinks = order.some(item => item.category === 'bebidas');
+            if (!hasDrinks) {
+                displayDrinkSuggestionModal(); 
+                return; 
+            }
+
             if (!selectedPaymentMethod) {
-                isCheckoutInitiated = true; // Define a flag para indicar que o modal foi aberto pelo checkout
-                openPaymentMethodModal(true); // Abre o modal de pagamento
+                isCheckoutInitiated = true; 
+                openPaymentMethodModal(true); 
             } else {
-                // Se já houver um método de pagamento selecionado, prossegue para o WhatsApp
                 proceedToWhatsappCheckout();
             }
         }
 
-        // Função para voltar ao menu (agora apenas para o botão "Adicionar mais")
+        // NOVO: Funções para mostrar/esconder a seção de input de endereço
+        function showAddressInputSection() {
+            addressInputSection.classList.remove('hidden');
+            addressSummarySection.classList.add('hidden'); // Esconde o resumo do endereço
+            isAddressInputVisible = true;
+            updateCheckoutButtonText(); // Atualiza o texto do botão
+            orderSidebar.scrollTop = orderSidebar.scrollHeight; // Rola para o final para mostrar o formulário
+        }
+
+        function hideAddressInputSection() {
+            addressInputSection.classList.add('hidden');
+            addressSummarySection.classList.remove('hidden'); // Mostra o resumo do endereço
+            isAddressInputVisible = false;
+            updateCheckoutButtonText(); // Atualiza o texto do botão
+        }
+
+        function hideAddressSummary() {
+            addressSummarySection.classList.add('hidden');
+        }
+
+        // NOVO: Função para atualizar o texto do botão de checkout
+        function updateCheckoutButtonText() {
+            if (isAddressInputVisible) {
+                checkoutButton.textContent = 'Confirmar Endereço';
+                checkoutButton.onclick = confirmAddress; // Altera a função do botão
+            } else {
+                checkoutButton.textContent = 'Finalizar Pedido';
+                checkoutButton.onclick = handleCheckoutFlow; // Volta para a função principal do checkout
+            }
+        }
+
+        // NOVO: Função para confirmar o endereço
+        function confirmAddress() {
+            const neighborhood = neighborhoodSelect.value;
+            const street = streetInput.value.trim();
+            const number = numberInput.value.trim();
+            const reference = referencePointInput.value.trim();
+
+            if (!neighborhood || !street || !number) {
+                showMessageModal('Por favor, preencha o bairro, rua e número do endereço.');
+                return;
+            }
+
+            const selectedFeeData = deliveryFeesData.find(item => item.neighborhood === neighborhood);
+            const fee = selectedFeeData ? selectedFeeData.deliveryFee : 0;
+
+            selectedAddress = {
+                neighborhood: neighborhood,
+                street: street,
+                number: number,
+                reference: reference,
+                deliveryFee: fee
+            };
+            
+            // Atualiza a exibição do resumo do endereço
+            addressDisplay.textContent = `Rua: ${selectedAddress.street}, Nº ${selectedAddress.number}`;
+            neighborhoodDisplay.textContent = `Bairro: ${selectedAddress.neighborhood}`;
+            referenceDisplay.textContent = selectedAddress.reference ? `Ponto de Ref.: ${selectedAddress.reference}` : '';
+
+            updateOrderDisplay(); // Recalcula o total com a nova taxa de entrega
+            hideAddressInputSection(); // Esconde a seção de input e mostra o resumo
+            showMessageModal('Endereço confirmado!');
+            
+            // Continua o fluxo de checkout após a confirmação do endereço
+            handleCheckoutFlow();
+        }
+
+        // NOVO: Popula o dropdown de bairros
+        function populateNeighborhoodDropdown() {
+            neighborhoodSelect.innerHTML = '<option value="">Selecione um bairro</option>';
+            deliveryFeesData.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.neighborhood;
+                option.textContent = item.neighborhood;
+                neighborhoodSelect.appendChild(option);
+            });
+
+            // Se já houver um bairro selecionado, pré-seleciona
+            if (selectedAddress.neighborhood) {
+                neighborhoodSelect.value = selectedAddress.neighborhood;
+                streetInput.value = selectedAddress.street;
+                numberInput.value = selectedAddress.number;
+                referencePointInput.value = selectedAddress.reference;
+            }
+        }
+
+        // Listener para o dropdown de bairro para atualizar a taxa de entrega
+        neighborhoodSelect.addEventListener('change', () => {
+            const selectedNeighborhoodName = neighborhoodSelect.value;
+            const selectedFeeData = deliveryFeesData.find(item => item.neighborhood === selectedNeighborhoodName);
+            selectedAddress.deliveryFee = selectedFeeData ? selectedFeeData.deliveryFee : 0;
+            updateOrderDisplay(); // Atualiza o total na sidebar
+        });
+
+
         function backToMenu() {
             closeOrderSidebar();
             document.getElementById('menu').scrollIntoView({ behavior: 'smooth' });
         }
 
-        // NOVA FUNÇÃO: Para voltar à sidebar do pedido a partir do modal de sugestão de bebidas
         function backToOrderSidebarFromDrinkSuggestion() {
-            drinkSuggestionModal.style.display = 'none'; // Fecha o modal de sugestão de bebidas
-            // A sidebar do pedido já deve estar aberta, então não precisa reabri-la.
-            // Apenas garante que ela esteja visível e rola para o final.
+            drinkSuggestionModal.style.display = 'none'; 
             orderSidebar.scrollTop = orderSidebar.scrollHeight;
         }
 
-        // Funções de Promoção
         function displayPromotionsPopup() {
             promotionsListEl.innerHTML = '';
             const activePromotions = allPromotionsData.filter(promo => promo.active && promo.promoPrice !== null);
@@ -1737,7 +1833,6 @@
                     const promoDiv = document.createElement('div');
                     promoDiv.className = 'promotion-item';
                     
-                    // Tenta encontrar a imagem do item aplicável à promoção
                     const applicableItem = allMenuData.find(item => item.id === promo.itemId);
                     const promoImageUrl = applicableItem && applicableItem.isPizza ? applicableItem.imageUrl : null;
 
@@ -1755,8 +1850,7 @@
                 document.querySelectorAll('.add-promo-to-order-btn').forEach(button => {
                     button.addEventListener('click', function() {
                         const promoId = this.dataset.promoId;
-                        const promoImageUrl = this.dataset.imageUrl || null; // Obtém a URL da imagem do dataset
-                        // Passa o botão clicado e a URL da imagem para a função addPromotionToOrder
+                        const promoImageUrl = this.dataset.imageUrl || null; 
                         addPromotionToOrder(promoId, this, promoImageUrl); 
                     });
                 });
@@ -1766,7 +1860,7 @@
             }
         }
 
-        function addPromotionToOrder(promoId, clickedButton = null, itemImageUrl = null) { // Adicionado clickedButton e itemImageUrl como parâmetros
+        function addPromotionToOrder(promoId, clickedButton = null, itemImageUrl = null) { 
             const promotion = allPromotionsData.find(p => p.id === promoId);
             if (promotion) {
                 order.push({
@@ -1779,11 +1873,10 @@
                 updateOrderDisplay();
                 updateCartCount();
                 promotionPopup.style.display = 'none';
-                // Animação de voo para o carrinho
                 if (clickedButton) {
-                    animateItemToCart(clickedButton, itemImageUrl); // Passa a URL da imagem para a animação
+                    animateItemToCart(clickedButton, itemImageUrl); 
                 }
-                showTemporaryFeedback(`Promoção "${promotion.name}" adicionada ao pedido!`, 'bg-green-500'); // Usar feedback temporário
+                showTemporaryFeedback(`Promoção "${promotion.name}" adicionada ao pedido!`, 'bg-green-500'); 
             } else {
                 console.error('Promoção não encontrada:', promoId);
                 showMessageModal('Erro ao adicionar promoção. Por favor, tente novamente.');
@@ -1791,7 +1884,6 @@
         }
 
         function updatePromotionButtonVisibility() {
-            // Só mostra o botão de promoção se houver promoções ativas E a sidebar do pedido não estiver aberta
             const activePromotionsWithPrice = allPromotionsData.filter(promo => promo.active && promo.promoPrice !== null);
             if (activePromotionsWithPrice.length > 0 && !orderSidebar.classList.contains('translate-x-0')) {
                 promotionButton.style.display = 'flex';
@@ -1800,7 +1892,6 @@
             }
         }
 
-        // Listeners para fechar o modal de promoção
         closePromotionPopupBtn.addEventListener('click', function() {
             promotionPopup.style.display = 'none';
         });
@@ -1813,14 +1904,12 @@
             }
         });
 
-        // Listener para o botão flutuante de promoção
         promotionButton.addEventListener('click', function() {
             displayPromotionsPopup();
         });
 
-        // Funções do novo modal de sugestão de bebidas
         function displayDrinkSuggestionModal() {
-            suggestedDrinksList.innerHTML = ''; // Limpa a lista antes de preencher
+            suggestedDrinksList.innerHTML = ''; 
             const availableDrinks = allMenuData.filter(item => item.category === 'bebidas' && item.available);
 
             if (availableDrinks.length > 0) {
@@ -1836,7 +1925,6 @@
                     suggestedDrinksList.insertAdjacentHTML('beforeend', drinkItemHtml);
                 });
 
-                // Adiciona listeners aos botões de adicionar bebida sugerida
                 document.querySelectorAll('.add-suggested-drink-btn').forEach(button => {
                     button.addEventListener('click', function() {
                         const itemId = this.dataset.itemId;
@@ -1848,33 +1936,26 @@
                                 price: item.basePrice,
                                 description: item.description,
                                 category: item.category
-                            }, this, null); // Passa o botão clicado e null para a imagem (bebidas não têm)
-                            // Não fecha o modal de sugestão de bebidas aqui
-                            // Não abre o modal de pagamento aqui
-                            updateDrinkSuggestionButtons(); // Atualiza o botão "Finalizar com/sem Bebidas"
+                            }, this, null); 
+                            updateDrinkSuggestionButtons(); 
                         }
                     });
                 });
             } else {
-                // Se não houver bebidas para sugerir, pode exibir uma mensagem diferente ou apenas o botão de continuar
                 suggestedDrinksList.innerHTML = '<p class="text-gray-500">Nenhuma bebida disponível para sugestão no momento.</p>';
             }
-            drinkSuggestionModal.style.display = 'flex'; // Exibe o modal
-            updateDrinkSuggestionButtons(); // Garante que o botão esteja correto ao abrir o modal
+            drinkSuggestionModal.style.display = 'flex'; 
+            updateDrinkSuggestionButtons(); 
         }
 
-        // Listener para fechar o modal de sugestão de bebidas (X)
         closeDrinkSuggestionModalBtn.addEventListener('click', function() {
             drinkSuggestionModal.style.display = 'none';
-            // Apenas fecha o modal de sugestão de bebidas
         });
 
-        // Listener para o botão "Finalizar sem Bebidas" / "Finalizar com Bebidas"
         proceedWithoutDrinksBtn.addEventListener('click', function() {
             drinkSuggestionModal.style.display = 'none';
             const hasDrinks = order.some(item => item.category === 'bebidas');
 
-            // Se não tem bebidas, vai direto para a seleção de pagamento ou checkout
             if (!selectedPaymentMethod) {
                 isCheckoutInitiated = true;
                 openPaymentMethodModal(true);
@@ -1883,7 +1964,6 @@
             }
         });
 
-        // Funções para atualizar o botão "Finalizar sem Bebidas" / "Finalizar com Bebidas"
         function updateDrinkSuggestionButtons() {
             const hasDrinks = order.some(item => item.category === 'bebidas');
             if (hasDrinks) {
@@ -1892,68 +1972,60 @@
                 proceedWithoutDrinksBtn.classList.remove('btn-order');
             } else {
                 proceedWithoutDrinksBtn.textContent = 'Finalizar sem Bebidas';
-                proceedWithoutDrinksBtn.classList.add('btn-order'); // Aplica o estilo laranja/vermelho
+                proceedWithoutDrinksBtn.classList.add('btn-order'); 
                 proceedWithoutDrinksBtn.classList.remove('green-gradient');
             }
         }
 
 
-        // Listeners para o modal de confirmação de pedido sem bebida (mantidos, mas não mais acionados pelo 'Finalizar sem Bebidas')
         closeConfirmNoDrinkModalBtn.addEventListener('click', function() {
             confirmNoDrinkModal.style.display = 'none';
-            drinkSuggestionModal.style.display = 'flex'; // Volta para o modal de sugestão de bebida
+            drinkSuggestionModal.style.display = 'flex'; 
         });
 
         confirmNoDrinkYesBtn.addEventListener('click', function() {
             confirmNoDrinkModal.style.display = 'none';
-            // NOVO: Verifica se a forma de pagamento já foi selecionada
             if (selectedPaymentMethod) {
                 console.log("DEBUG: Confirmou sem bebida, pagamento já selecionado. Indo para WhatsApp.");
                 proceedToWhatsappCheckout();
             } else {
                 console.log("DEBUG: Confirmou sem bebida, pagamento NÃO selecionado. Abrindo modal de pagamento.");
-                isCheckoutInitiated = true; // Define a flag para o próximo modal
+                isCheckoutInitiated = true; 
                 openPaymentMethodModal(true); 
             }
         });
 
-        confirmNoDrinkNoBtn.addEventListener('click', function() { // Listener para o botão "Não!" corrigido
+        confirmNoDrinkNoBtn.addEventListener('click', function() { 
             confirmNoDrinkModal.style.display = 'none';
-            drinkSuggestionModal.style.display = 'flex'; // Volta para o modal de sugestão de bebida
+            drinkSuggestionModal.style.display = 'flex'; 
         });
 
         window.addEventListener('click', function(event) {
             if (event.target == confirmNoDrinkModal) {
                 confirmNoDrinkModal.style.display = 'none';
-                drinkSuggestionModal.style.display = 'flex'; // Volta para o modal de sugestão de bebida
+                drinkSuggestionModal.style.display = 'flex'; 
             }
         });
 
-        // Funções para o modal de seleção de forma de pagamento
-        function openPaymentMethodModal(fromCheckout = false) { // NOVO: Parâmetro para indicar se veio do checkout
-            isCheckoutInitiated = fromCheckout; // Define a flag global
+        function openPaymentMethodModal(fromCheckout = false) { 
+            isCheckoutInitiated = fromCheckout; 
             paymentMethodModal.style.display = 'flex';
             
-            // Atualiza o total do pedido no modal de pagamento
             const totalOrder = calculateOrderTotal();
             paymentModalTotal.textContent = `R$ ${totalOrder.toFixed(2).replace('.', ',')}`;
 
-            // Esconde o container do troco por padrão ao abrir o modal
             trocoInputContainer.classList.add('hidden');
-            trocoParaInput.value = ''; // Limpa o valor do input
-            trocoTotalDisplay.textContent = 'R$ 0,00'; // Reseta o display do troco
+            trocoParaInput.value = ''; 
+            trocoTotalDisplay.textContent = 'R$ 0,00'; 
 
-            // Se já houver um método selecionado, marca o rádio button correspondente
             if (selectedPaymentMethod) {
                 const methodValue = typeof selectedPaymentMethod === 'object' ? selectedPaymentMethod.method : selectedPaymentMethod;
                 const radio = document.querySelector(`input[name="paymentMethod"][value="${methodValue}"]`);
                 if (radio) {
                     radio.checked = true;
-                    // Adiciona a classe 'selected' ao label pai
-                    document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('selected')); // Garante que apenas um esteja selecionado
+                    document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('selected')); 
                     radio.closest('.payment-option').classList.add('selected');
 
-                    // Se o método selecionado for Dinheiro, mostra o campo de troco e preenche se houver dados anteriores
                     if (methodValue === 'Dinheiro') {
                         trocoInputContainer.classList.remove('hidden');
                         if (typeof selectedPaymentMethod === 'object' && selectedPaymentMethod.trocoPara) {
@@ -1964,7 +2036,6 @@
                     }
                 }
             } else {
-                // Desmarca todos e remove a classe 'selected' se não houver método selecionado
                 document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
                     radio.checked = false;
                     radio.closest('.payment-option').classList.remove('selected');
@@ -1977,27 +2048,20 @@
             paymentMethodModal.style.display = 'none';
         }
 
-        // Listener para fechar o modal de forma de pagamento (botão X)
         closePaymentMethodModalBtn.addEventListener('click', closePaymentMethodModal);
 
-        // Listener para o clique em qualquer opção de pagamento (para adicionar a classe 'selected')
         paymentOptionsContainer.addEventListener('click', (event) => {
             const label = event.target.closest('.payment-option');
             if (label) {
-                // Remove a classe 'selected' de todas as opções
                 document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('selected'));
-                // Adiciona a classe 'selected' à opção clicada
                 label.classList.add('selected');
-                // Marca o radio button correspondente
                 const radio = label.querySelector('input[type="radio"]');
                 if (radio) {
                     radio.checked = true;
                 }
 
-                // Lógica para mostrar/esconder o campo de troco
                 if (radio && radio.value === 'Dinheiro') {
                     trocoInputContainer.classList.remove('hidden');
-                    // Recalcula o troco ao selecionar Dinheiro, caso o valor do pedido tenha mudado
                     const totalOrder = calculateOrderTotal();
                     const trocoParaValue = parseFloat(trocoParaInput.value) || 0;
                     if (trocoParaValue >= totalOrder) {
@@ -2008,13 +2072,12 @@
                     }
                 } else {
                     trocoInputContainer.classList.add('hidden');
-                    trocoParaInput.value = ''; // Limpa o valor do input
-                    trocoTotalDisplay.textContent = 'R$ 0,00'; // Reseta o display do troco
+                    trocoParaInput.value = ''; 
+                    trocoTotalDisplay.textContent = 'R$ 0,00'; 
                 }
             }
         });
 
-        // Listener para o input de troco, para calcular o troco em tempo real
         trocoParaInput.addEventListener('input', () => {
             const totalOrder = calculateOrderTotal();
             const trocoParaValue = parseFloat(trocoParaInput.value);
@@ -2022,26 +2085,23 @@
             if (!isNaN(trocoParaValue) && trocoParaValue >= totalOrder) {
                 const trocoCalculado = trocoParaValue - totalOrder;
                 trocoTotalDisplay.textContent = `R$ ${trocoCalculado.toFixed(2).replace('.', ',')}`;
-                trocoTotalDisplay.classList.remove('text-red-600'); // Remove cor de erro
-                trocoTotalDisplay.classList.add('text-green-600'); // Adiciona cor de sucesso
+                trocoTotalDisplay.classList.remove('text-red-600'); 
+                trocoTotalDisplay.classList.add('text-green-600'); 
             } else {
                 trocoTotalDisplay.textContent = `R$ 0,00`;
                 trocoTotalDisplay.classList.remove('text-green-600');
-                trocoTotalDisplay.classList.add('text-red-600'); // Mantém vermelho se valor inválido/insuficiente
+                trocoTotalDisplay.classList.add('text-red-600'); 
             }
         });
 
-        // Função auxiliar para calcular o total do pedido (subtotal + taxa de entrega)
         function calculateOrderTotal() {
             let currentSubtotal = 0;
             order.forEach(item => {
                 currentSubtotal += item.price;
             });
-            return currentSubtotal + deliveryFee;
+            return currentSubtotal + selectedAddress.deliveryFee; // Usa a taxa de entrega do endereço
         }
 
-
-        // Listener para o botão "Confirmar Pagamento"
         confirmPaymentMethodBtn.addEventListener('click', () => {
             const selectedRadio = document.querySelector('input[name="paymentMethod"]:checked');
             if (selectedRadio) {
@@ -2051,7 +2111,7 @@
 
                     if (isNaN(trocoParaValue) || trocoParaValue < totalOrder) {
                         showMessageModal(`O valor para troco (R$ ${trocoParaValue.toFixed(2).replace('.', ',')}) não pode ser menor que o total do pedido (R$ ${totalOrder.toFixed(2).replace('.', ',')}).`);
-                        return; // Impede o fechamento do modal e a continuação
+                        return; 
                     }
                     const trocoCalculado = trocoParaValue - totalOrder;
                     selectedPaymentMethod = {
@@ -2066,58 +2126,50 @@
                 console.log("DEBUG: Payment method selected:", selectedPaymentMethod);
                 closePaymentMethodModal();
                 
-                // Lógica condicional baseada em como o modal foi aberto
                 if (isCheckoutInitiated) {
                     console.log("DEBUG: Initiated from checkout, proceeding to WhatsApp.");
-                    proceedToWhatsappCheckout(); // Se veio do checkout, prossegue para o WhatsApp
+                    proceedToWhatsappCheckout(); 
                 } else {
                     console.log("DEBUG: Not initiated from checkout, returning to order sidebar.");
-                    // Se veio do botão "Escolher Forma de Pagamento", apenas volta para a sidebar do pedido
-                    // A sidebar já está aberta, então não precisa fazer nada além de fechar o modal.
                 }
-                isCheckoutInitiated = false; // Reseta a flag após a ação
-                updateOrderDisplay(); // Atualiza a sidebar para mostrar a forma de pagamento
+                isCheckoutInitiated = false; 
+                updateOrderDisplay(); 
             } else {
                 showMessageModal('Por favor, selecione uma forma de pagamento.');
             }
         });
 
-        // Sticky category bar logic (re-implemented for pizza categories)
         let isScrollingFromClick = false; 
-        let currentActiveCategoryByScroll = ''; // Inicialmente vazia, será definida no DOMContentLoaded
+        let currentActiveCategoryByScroll = ''; 
 
         function getStickyHeaderHeight() {
             const stickyHeader = document.querySelector('.category-bar-mobile-sticky');
-            // Ensure the element exists before trying to get its offsetHeight
             return stickyHeader ? stickyHeader.offsetHeight : 0;
         }
 
         function setActiveCategoryButton(category) {
             const categoryBtns = document.querySelectorAll('.category-btn');
             categoryBtns.forEach(btn => {
-                // Reset all buttons to default inactive state
                 btn.classList.remove('bg-red-600', 'text-white');
                 btn.classList.add('bg-gray-200', 'text-gray-800');
             });
 
-            // Find and activate the target button
             const targetBtn = document.querySelector(`.category-btn[data-category="${category}"]`);
             if (targetBtn) {
-                targetBtn.classList.remove('bg-gray-200', 'text-gray-800'); // Remove default gray
-                targetBtn.classList.add('bg-red-600', 'text-white'); // Add active red/white
+                targetBtn.classList.remove('bg-gray-200', 'text-gray-800'); 
+                targetBtn.classList.add('bg-red-600', 'text-white'); 
                 targetBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
             }
         }
 
-        let categoryObserver; // Declara a variável no escopo global/superior
+        let categoryObserver; 
 
         function setupCategoryObserver() {
-            // Desconecta o observer antigo se existir
             if (categoryObserver) {
                 categoryObserver.disconnect();
             }
 
-            const categorySections = document.querySelectorAll('.pizza-category-section'); // Re-seleciona as seções
+            const categorySections = document.querySelectorAll('.pizza-category-section'); 
 
             categoryObserver = new IntersectionObserver((entries) => {
                 if (isScrollingFromClick) {
@@ -2143,7 +2195,7 @@
 
                 if (!newActiveCategory && categorySections.length > 0) {
                     if (window.scrollY <= stickyHeaderHeight + 20) {
-                        newActiveCategory = categorySections[0].id.replace('-section', ''); // Pega a primeira categoria
+                        newActiveCategory = categorySections[0].id.replace('-section', ''); 
                     } else {
                         for (let i = 0; i < categorySections.length; i++) {
                             const section = categorySections[i];
@@ -2156,35 +2208,31 @@
                     }
                 }
                 
-                // Lógica de restrição de rolagem baseada nas flags de meia pizza
-                if (isSelectingHalfPizza) { // Check if any half pizza selection is in progress
-                    if (isFirstHalfPromotional) { // Case 1: First half was promotional
+                if (isSelectingHalfPizza) { 
+                    if (isFirstHalfPromotional) { 
                         if (newActiveCategory && newActiveCategory.toLowerCase() !== 'promocionais') {
-                            // If user scrolled to a non-promotional category, force them back to 'promocionais'
                             setActiveCategoryButton('promocionais');
-                            currentActiveCategoryByScroll = 'promocionais'; // Update this immediately
-                            isScrollingFromClick = true; // Flag to prevent observer re-triggering during forced scroll
+                            currentActiveCategoryByScroll = 'promocionais'; 
+                            isScrollingFromClick = true; 
                             document.getElementById('promocionais-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
-                            setTimeout(() => { isScrollingFromClick = false; }, 700); // Reset flag after scroll
+                            setTimeout(() => { isScrollingFromClick = false; }, 700); 
                             showMessageModal('Para pizzas promocionais, a segunda metade deve ser também de uma pizza promocional.');
-                            return; // Stop further category processing
+                            return; 
                         }
-                    } else { // Case 2: First half was NOT promotional
+                    } else { 
                         if (newActiveCategory && newActiveCategory.toLowerCase() === 'promocionais') {
-                            // If user scrolled to a promotional category, force them back to original category
                             const originalCategory = firstHalfPizza.category.toLowerCase();
                             setActiveCategoryButton(originalCategory);
-                            currentActiveCategoryByScroll = originalCategory; // Update this immediately
-                            isScrollingFromClick = true; // Flag to prevent observer re-triggering during forced scroll
+                            currentActiveCategoryByScroll = originalCategory; 
+                            isScrollingFromClick = true; 
                             document.getElementById(`${originalCategory}-section`).scrollIntoView({ behavior: 'smooth', block: 'start' });
-                            setTimeout(() => { isScrollingFromClick = false; }, 700); // Reset flag after scroll
+                            setTimeout(() => { isScrollingFromClick = false; }, 700); 
                             showMessageModal('Você começou a montar uma pizza meio a meio com um sabor não promocional. A segunda metade não pode ser de uma pizza promocional.');
-                            return; // Stop further category processing
+                            return; 
                         }
                     }
                 }
 
-                // Ativação normal da categoria se não estiver no modo de seleção de meia pizza ou se as regras permitirem
                 if (newActiveCategory && newActiveCategory !== currentActiveCategoryByScroll) {
                     setActiveCategoryButton(newActiveCategory);
                     currentActiveCategoryByScroll = newActiveCategory;
@@ -2201,26 +2249,22 @@
         }
 
 
-        // Initial setup and data loading
         document.addEventListener('DOMContentLoaded', async function() {
             try {
-                // Busca os dados da sua função Vercel usando a URL relativa
-                // Esta é a chamada correta para o seu site online no Vercel
                 const response = await fetch('/api/menu'); 
                 if (!response.ok) {
                     throw new Error(`Erro ao buscar dados da API: ${response.statusText}`);
                 }
                 const data = await response.json(); 
 
-                // Parseia os dados CSV recebidos
                 const cardapioCsvText = data.cardapio;
                 const promocoesCsvText = data.promocoes;
+                const deliveryFeesCsvText = data.deliveryFees; // NOVO: Pega os dados de frete
 
-                // Agora, use cardapioCsvText e promocoesCsvText para carregar seus dados
                 allMenuData = parseCsvData(cardapioCsvText, 'cardapio');
                 allPromotionsData = parseCsvData(promocoesCsvText, 'promocoes');
+                deliveryFeesData = parseCsvData(deliveryFeesCsvText, 'deliveryFees'); // NOVO: Popula dados de frete
                 
-                // Extrai categorias únicas na ordem em que aparecem na planilha
                 let orderedUniqueCategories = [];
                 const seenCategories = new Set();
                 allMenuData.forEach(item => {
@@ -2230,32 +2274,29 @@
                     }
                 });
                 
-                createCategoryButtons(orderedUniqueCategories); // Cria os botões de categoria
-                populateMenu(allMenuData, orderedUniqueCategories); // Popula o cardápio com todos os itens
-                
-                setupCategoryObserver(); // Configura o IntersectionObserver para as novas seções
+                createCategoryButtons(orderedUniqueCategories); 
+                populateMenu(allMenuData, orderedUniqueCategories); 
+                populateNeighborhoodDropdown(); // NOVO: Popula o dropdown de bairros
+                setupCategoryObserver(); 
 
-                updatePromotionButtonVisibility(); // Atualiza a visibilidade do botão de promoção
-                updateCartCount(); // Garante que a contagem do carrinho esteja correta ao carregar
-                updateOrderDisplay(); // Garante que o pedido esteja correto ao carregar
+                updatePromotionButtonVisibility(); 
+                updateCartCount(); 
+                updateOrderDisplay(); 
+                updateCheckoutButtonText(); // Garante o texto correto do botão de checkout
 
-                // Garante que todos os botões e categorias estejam ativos no carregamento inicial
                 toggleAddItemButtons(true);
                 toggleCategoryButtons(true);
 
-                // Dispara um evento de rolagem após um curto atraso para garantir que o observer seja executado
                 setTimeout(() => {
                     window.dispatchEvent(new Event('scroll'));
                 }, 100);
 
             } catch (error) {
                 console.error('Erro ao carregar o cardápio:', error);
-                // Opcional: Mostrar uma mensagem de erro para o usuário
                 showMessageModal('Não foi possível carregar o cardápio no momento. Por favor, tente novamente mais tarde.');
             }
         });
 
-        // Adicionado para registrar o Service Worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/service-worker.js')
@@ -2270,41 +2311,30 @@
 
         // --- Lógica de Instalação do PWA ---
 
-        // Verifica se o PWA já está instalado
         function isPwaInstalled() {
-            // Para Chrome/Android
             if (window.matchMedia('(display-mode: standalone)').matches) {
                 return true;
             }
-            // Para Safari/iOS (mais antigo, pode não ser totalmente preciso)
             if (navigator.standalone) {
                 return true;
             }
             return false;
         }
 
-        // Listener para o evento beforeinstallprompt
         window.addEventListener('beforeinstallprompt', (e) => {
-            // Previne que o mini-infobar padrão apareça
             e.preventDefault();
-            // Armazena o evento para que possa ser acionado mais tarde
             deferredPrompt = e;
             
-            // Se o PWA não estiver instalado, mostra o botão/modal de instalação
             if (!isPwaInstalled()) {
                 installPromptModal.style.display = 'flex';
             }
         });
 
-        // Listener para o botão de instalação no modal
         installAppButton.addEventListener('click', () => {
-            // Esconde o modal de instalação
             installPromptModal.style.display = 'none';
             
-            // Mostra o prompt de instalação do navegador
             if (deferredPrompt) {
                 deferredPrompt.prompt();
-                // Aguarda a escolha do usuário
                 deferredPrompt.userChoice.then((choiceResult) => {
                     if (choiceResult.outcome === 'accepted') {
                         console.log('Usuário aceitou a instalação do PWA');
@@ -2313,31 +2343,26 @@
                         console.log('Usuário recusou a instalação do PWA');
                         showMessageModal('Você pode instalar o Sâmia Cardápio a qualquer momento pelo menu do navegador.');
                     }
-                    deferredPrompt = null; // Limpa o evento
+                    deferredPrompt = null; 
                 });
             }
         });
 
-        // Listener para fechar o modal de instalação (botão X)
         closeInstallPromptModalBtn.addEventListener('click', () => {
             installPromptModal.style.display = 'none';
         });
 
-        // Listener para quando o aplicativo é realmente instalado
         window.addEventListener('appinstalled', () => {
-            // Esconde qualquer UI de instalação se ela estiver visível
             installPromptModal.style.display = 'none';
             console.log('PWA Sâmia Cardápio foi instalado!');
         });
 
-        // Verifica a instalação ao carregar a página (após um pequeno atraso)
-        // Isso é útil caso o beforeinstallprompt não seja disparado imediatamente
         window.addEventListener('load', () => {
             setTimeout(() => {
                 if (!isPwaInstalled() && deferredPrompt) {
                     installPromptModal.style.display = 'flex';
                 }
-            }, 3000); // Atraso de 3 segundos para não ser intrusivo
+            }, 3000); 
         });
 
     </script>
