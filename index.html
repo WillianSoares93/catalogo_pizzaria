@@ -985,7 +985,7 @@
                     case 'Ativo (SIM/NAO)': return 'active';
                     // NOVO: Headers para Taxas de Entrega
                     case 'Bairro': return 'neighborhood';
-                    case 'Valor Frete': return 'deliveryFee'; // Corrigido para 'Valor Frete'
+                    case 'Valor Frete': return 'deliveryFee'; 
                     default: return cleanedHeader.replace(/[^a-zA-Z0-9]+(.)?/g, (match, chr) => chr ? chr.toUpperCase() : '').replace(/^./, (match) => match.toLowerCase());
                 }
             });
@@ -999,7 +999,7 @@
                     for (let j = 0; j < mappedHeaders.length; j++) {
                         let headerKey = mappedHeaders[j];
                         let value = rowValues[j];
-                        if (['basePrice', 'price6Slices', 'price4Slices', 'promoPrice', 'deliveryFee'].includes(headerKey)) { // Adicionado 'deliveryFee'
+                        if (['basePrice', 'price6Slices', 'price4Slices', 'promoPrice', 'deliveryFee'].includes(headerKey)) { 
                             const parsedValue = parseFloat(String(value).replace(',', '.'));
                             item[headerKey] = isNaN(parsedValue) ? 0 : parsedValue;
                         } else if (['isPizza', 'available', 'active'].includes(headerKey)) {
@@ -1021,6 +1021,9 @@
                     // Para deliveryFees, todos os itens são adicionados se a linha for válida
                     if ((type === 'cardapio' && item.available) || (type === 'promocoes' && item.active) || type === 'deliveryFees') {
                         parsedData.push(item);
+                        if (type === 'deliveryFees') {
+                            console.log('Parsed delivery fee item:', item); 
+                        }
                     }
                 } else {
                     console.warn(`Linha ${i + 1} ignorada ou malformada (${type} - esperado ${mappedHeaders.length} colunas, encontrado ${rowValues.length}): "${line}"`);
@@ -1557,10 +1560,17 @@
                 
                 // NOVO: Logs de depuração para selectedAddress.deliveryFee
                 console.log('Inside updateOrderDisplay - selectedAddress:', selectedAddress);
-                console.log('Inside updateOrderDisplay - selectedAddress.deliveryFee (before toFixed):', selectedAddress.deliveryFee);
+                console.log('Inside updateOrderDisplay - selectedAddress.deliveryFee (raw):', selectedAddress.deliveryFee);
 
                 // Garante que selectedAddress.deliveryFee é um número antes de chamar toFixed
-                const currentDeliveryFee = parseFloat(selectedAddress.deliveryFee); // Usa parseFloat para garantir que é um número
+                let currentDeliveryFeeValue = selectedAddress.deliveryFee;
+                if (currentDeliveryFeeValue === undefined || currentDeliveryFeeValue === null) {
+                    currentDeliveryFeeValue = 0;
+                    console.warn('selectedAddress.deliveryFee era undefined/null em updateOrderDisplay, resetado para 0.');
+                }
+                const currentDeliveryFee = parseFloat(currentDeliveryFeeValue); 
+                console.log('Inside updateOrderDisplay - currentDeliveryFee (after parseFloat):', currentDeliveryFee);
+
                 dynamicDeliveryFeeEl.textContent = 'R$ ' + (isNaN(currentDeliveryFee) ? 0 : currentDeliveryFee).toFixed(2).replace('.', ',');
                 const total = subtotal + (isNaN(currentDeliveryFee) ? 0 : currentDeliveryFee);
                 totalEl.textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
@@ -1770,9 +1780,12 @@
             }
 
             const selectedFeeData = deliveryFeesData.find(item => item.neighborhood === neighborhood);
-            // Garante que a taxa de entrega é um número
-            const fee = selectedFeeData ? parseFloat(selectedFeeData.deliveryFee) : 0;
-            console.log('Selected neighborhood for fee:', neighborhood, 'Found fee data:', selectedFeeData, 'Calculated fee:', fee);
+            // Garante que a taxa de entrega é um número no momento da atribuição
+            selectedAddress.deliveryFee = selectedFeeData ? parseFloat(selectedFeeData.deliveryFee || '0') : 0; 
+            console.log('Selected neighborhood for fee:', neighborhood, 'Found selectedFeeData:', selectedFeeData, 'Calculated fee (after assignment):', selectedAddress.deliveryFee);
+
+            // Adicionado log para verificar o tipo de selectedAddress.deliveryFee
+            console.log('Type of selectedAddress.deliveryFee after assignment:', typeof selectedAddress.deliveryFee);
 
 
             selectedAddress = {
@@ -1780,7 +1793,7 @@
                 street: street,
                 number: number,
                 reference: reference,
-                deliveryFee: fee
+                deliveryFee: selectedAddress.deliveryFee // Usa o valor já tratado
             };
             
             // Atualiza a exibição do resumo do endereço
@@ -1826,9 +1839,10 @@
             // NOVO: Logs para depuração
             console.log('Found selectedFeeData:', selectedFeeData);
             // Garante que a taxa de entrega é um número
-            selectedAddress.deliveryFee = selectedFeeData ? parseFloat(selectedFeeData.deliveryFee) : 0; 
+            selectedAddress.deliveryFee = selectedFeeData ? parseFloat(selectedFeeData.deliveryFee || '0') : 0; 
             // NOVO: Log para depuração
             console.log('Setting selectedAddress.deliveryFee to:', selectedAddress.deliveryFee);
+            console.log('Type of selectedAddress.deliveryFee after change event:', typeof selectedAddress.deliveryFee);
             updateOrderDisplay(); // Atualiza o total na sidebar
         });
 
@@ -2129,7 +2143,7 @@
                     const trocoParaValue = parseFloat(trocoParaInput.value);
 
                     if (isNaN(trocoParaValue) || trocoParaValue < totalOrder) {
-                        showMessageModal(`O valor para troco (R$ ${trocoParaValue.toFixed(2).replace('.', ',')}) não pode ser menor que o total do pedido (R$ ${totalOrder.toFixed(2).replace('.', ',')}).`);
+                        showMessageModal(`O valor para troco (R$ ${totalOrder.toFixed(2).replace('.', ',')}) não pode ser menor que o total do pedido (R$ ${totalOrder.toFixed(2).replace('.', ',')}).`);
                         return; 
                     }
                     const trocoCalculado = trocoParaValue - totalOrder;
@@ -2281,13 +2295,12 @@
 
                 const cardapioCsvText = data.cardapio;
                 const promocoesCsvText = data.promocoes;
-                const deliveryFeesCsvText = data.deliveryFees; // NOVO: Pega os dados de frete
+                const deliveryFeesCsvText = data.deliveryFees; 
 
                 allMenuData = parseCsvData(cardapioCsvText, 'cardapio');
                 allPromotionsData = parseCsvData(promocoesCsvText, 'promocoes');
-                deliveryFeesData = parseCsvData(deliveryFeesCsvText, 'deliveryFees'); // NOVO: Popula dados de frete
+                deliveryFeesData = parseCsvData(deliveryFeesCsvText, 'deliveryFees'); 
                 
-                // NOVO: Log para depuração dos dados de frete carregados
                 console.log('Delivery Fees Data loaded:', deliveryFeesData);
 
                 let orderedUniqueCategories = [];
@@ -2301,13 +2314,13 @@
                 
                 createCategoryButtons(orderedUniqueCategories); 
                 populateMenu(allMenuData, orderedUniqueCategories); 
-                populateNeighborhoodDropdown(); // NOVO: Popula o dropdown de bairros
+                populateNeighborhoodDropdown(); 
                 setupCategoryObserver(); 
 
                 updatePromotionButtonVisibility(); 
                 updateCartCount(); 
                 updateOrderDisplay(); 
-                updateCheckoutButtonText(); // Garante o texto correto do botão de checkout
+                updateCheckoutButtonText(); 
 
                 toggleAddItemButtons(true);
                 toggleCategoryButtons(true);
