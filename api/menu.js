@@ -10,7 +10,7 @@ import fetch from 'node-fetch';
 // Verifique se as URLs estão corretas e se as planilhas estão configuradas como "Qualquer pessoa com o link pode ver".
 const CARDAPIO_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=664943668&single=true&output=csv'; 
 const PROMOCOES_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=600393470&single=true&output=csv'; 
-const DELIVERY_FEES_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=1843654910&single=true&output=csv'; // <<<< ATUALIZE ESTE LINK COM O NOVO APÓS REPUBLICAR >>>>
+const DELIVERY_FEES_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=1843654910&single=true&output=csv'; 
 
 export default async (req, res) => {
     res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate'); 
@@ -18,39 +18,49 @@ export default async (req, res) => {
     try {
         console.log('Vercel Function: Iniciando busca de dados...');
 
-        const [cardapioResponse, promocoesResponse, deliveryFeesResponse] = await Promise.all([
-            fetch(CARDAPIO_CSV_URL).catch(err => { 
-                console.error('Vercel Function: Erro ao buscar CARDAPIO_CSV_URL:', err.message);
-                throw new Error(`Falha na busca do cardápio: ${err.message}`);
-            }),
-            fetch(PROMOCOES_CSV_URL).catch(err => {
-                console.error('Vercel Function: Erro ao buscar PROMOCOES_CSV_URL:', err.message);
-                throw new Error(`Falha na busca das promoções: ${err.message}`);
-            }),
-            fetch(DELIVERY_FEES_CSV_URL).catch(err => {
-                console.error('Vercel Function: Erro ao buscar DELIVERY_FEES_CSV_URL:', err.message);
-                throw new Error(`Falha na busca das taxas de entrega: ${err.message}`);
-            })
-        ]);
-
+        // Busca Cardapio
+        console.log('Vercel Function: Buscando Cardápio...');
+        const cardapioResponse = await fetch(CARDAPIO_CSV_URL).catch(err => { 
+            console.error('Vercel Function: Erro de rede/conexão ao buscar CARDAPIO_CSV_URL:', err.message);
+            throw new Error(`Falha na busca do cardápio (rede): ${err.message}`);
+        });
         if (!cardapioResponse.ok) {
-            console.error(`Vercel Function: Cardápio Response NOT OK: ${cardapioResponse.status} ${cardapioResponse.statusText}`);
+            const errorText = await cardapioResponse.text(); // Tenta obter mais informações do corpo da resposta
+            console.error(`Vercel Function: Cardápio Response NOT OK. Status: ${cardapioResponse.status}, StatusText: ${cardapioResponse.statusText}, Corpo: ${errorText.substring(0, 200)}...`);
             throw new Error(`Erro ao buscar o cardápio: ${cardapioResponse.statusText}`);
         }
+        const cardapioData = await cardapioResponse.text();
+        console.log('Vercel Function: Cardápio buscado com sucesso.');
+
+        // Busca Promocoes
+        console.log('Vercel Function: Buscando Promoções...');
+        const promocoesResponse = await fetch(PROMOCOES_CSV_URL).catch(err => {
+            console.error('Vercel Function: Erro de rede/conexão ao buscar PROMOCOES_CSV_URL:', err.message);
+            throw new Error(`Falha na busca das promoções (rede): ${err.message}`);
+        });
         if (!promocoesResponse.ok) {
-            console.error(`Vercel Function: Promoções Response NOT OK: ${promocoesResponse.status} ${promocoesResponse.statusText}`);
+            const errorText = await promocoesResponse.text();
+            console.error(`Vercel Function: Promoções Response NOT OK. Status: ${promocoesResponse.status}, StatusText: ${promocoesResponse.statusText}, Corpo: ${errorText.substring(0, 200)}...`);
             throw new Error(`Erro ao buscar as promoções: ${promocoesResponse.statusText}`);
         }
+        const promocoesData = await promocoesResponse.text();
+        console.log('Vercel Function: Promoções buscadas com sucesso.');
+
+        // Busca Taxas de Entrega
+        console.log('Vercel Function: Buscando Taxas de Entrega...');
+        const deliveryFeesResponse = await fetch(DELIVERY_FEES_CSV_URL).catch(err => {
+            console.error('Vercel Function: Erro de rede/conexão ao buscar DELIVERY_FEES_CSV_URL:', err.message);
+            throw new Error(`Falha na busca das taxas de entrega (rede): ${err.message}`);
+        });
         if (!deliveryFeesResponse.ok) { 
-            console.error(`Vercel Function: Taxas de Entrega Response NOT OK: ${deliveryFeesResponse.status} ${deliveryFeesResponse.statusText}`);
+            const errorText = await deliveryFeesResponse.text();
+            console.error(`Vercel Function: Taxas de Entrega Response NOT OK. Status: ${deliveryFeesResponse.status}, StatusText: ${deliveryFeesResponse.statusText}, Corpo: ${errorText.substring(0, 200)}...`);
             throw new Error(`Erro ao buscar as taxas de entrega: ${deliveryFeesResponse.statusText}`);
         }
-
-        const cardapioData = await cardapioResponse.text();
-        const promocoesData = await promocoesResponse.text();
         const deliveryFeesData = await deliveryFeesResponse.text(); 
+        console.log('Vercel Function: Taxas de Entrega buscadas com sucesso.');
 
-        console.log('Vercel Function: Dados buscados com sucesso. Enviando resposta.');
+        console.log('Vercel Function: Todos os dados buscados com sucesso. Enviando resposta.');
 
         res.status(200).json({
             cardapio: cardapioData,
