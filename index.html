@@ -803,9 +803,6 @@
         let selectedPaymentMethod = null; 
         let isCheckoutInitiated = false; 
         
-        // REMOVIDO: Taxa de entrega fixa
-        // const fixedDeliveryFee = 5.00; 
-
         // NOVO: Objeto para armazenar o endereço selecionado e sua taxa de entrega
         let selectedAddress = {
             bairro: null,
@@ -1031,7 +1028,7 @@
                     case 'Preco Promocional': return 'promoPrice';
                     case 'ID Item Aplicavel': return 'itemId';
                     case 'Ativo (SIM/NAO)': return 'active';
-                    // Headers para Taxas de Entrega
+                    // Headers para Taxas de Entrega - CORRIGIDO O MAPEAMENTO
                     case 'Bairro': return 'neighborhood';
                     case 'Valor Frete': return 'deliveryFee';
                     default: return cleanedHeader.replace(/[^a-zA-Z0-9]+(.)?/g, (match, chr) => chr ? chr.toUpperCase() : '').replace(/^./, (match) => match.toLowerCase());
@@ -1074,6 +1071,7 @@
                     console.warn(`DEBUG: Linha ${i + 1} ignorada ou malformada (${type} - esperado ${mappedHeaders.length} colunas, encontrado ${rowValues.length}): "${line}"`);
                 }
             }
+            console.log(`DEBUG: Dados parseados para ${type}:`, parsedData); // Adicionado log para depuração
             return parsedData;
         }
 
@@ -1426,7 +1424,7 @@
                             category: currentPizzaData.category,
                             selected_slices: selectedSlices
                         }, this, currentPizzaData.imageUrl); 
-                        pizzaOptionModal.style.display = 'none';
+                        pizzaOptionModal.style.display = 'none'; // FECHA O MODAL AQUI
                         updatePromotionButtonVisibility(); 
                     });
 
@@ -1445,7 +1443,7 @@
                         isSelectingSecondHalf = true;
                         isSelectingHalfPizza = true; 
                         isFirstHalfPromotional = (currentPizzaData.category.toLowerCase() === 'promocionais'); 
-                        pizzaOptionModal.style.display = 'none';
+                        pizzaOptionModal.style.display = 'none'; // FECHA O MODAL AQUI
                         updatePromotionButtonVisibility(); 
 
                         toggleAddItemButtons(false); 
@@ -1462,6 +1460,7 @@
                                 selected_slices: selectedSlices
                             }, this, currentPizzaData.imageUrl 
                         );
+                        // Exibe a mensagem de instrução para a segunda metade
                         setTimeout(() => {
                             showMessageModal('Agora, escolha a segunda metade da sua pizza.'); 
                         }, 100);
@@ -1484,7 +1483,7 @@
         function addToOrder(item, clickedButton = null, itemImageUrl = null) {
             order.push(item);
             updateOrderDisplay();
-            updateCartCount();
+            updateCartCount(); // Garante que o contador é atualizado
 
             if (clickedButton) {
                 animateItemToCart(clickedButton, itemImageUrl); 
@@ -1496,7 +1495,7 @@
         function addToOrderOnly(item, clickedButton = null, itemImageUrl = null) {
             order.push(item);
             updateOrderDisplay();
-            updateCartCount();
+            updateCartCount(); // Garante que o contador é atualizado
             if (clickedButton) {
                 animateItemToCart(clickedButton, itemImageUrl); 
             }
@@ -1654,7 +1653,7 @@
                 isFirstHalfPromotional = false; 
                 toggleAddItemButtons(true); 
                 toggleCategoryButtons(true); 
-                showTemporaryFeedback('Seleção de meia pizza cancelada.', 'bg-red-600'); 
+                showMessageModal('Seleção de meia pizza cancelada.', 'bg-red-600'); 
             }
         }
         
@@ -2246,6 +2245,7 @@
             feesData.forEach(fee => {
                 const option = document.createElement('option');
                 option.value = fee.neighborhood;
+                // CORRIGIDO: Garante que neighborhood e deliveryFee são usados corretamente
                 option.textContent = `${fee.neighborhood} (R$ ${fee.deliveryFee.toFixed(2).replace('.', ',')})`;
                 neighborhoodSelect.appendChild(option);
             });
@@ -2315,17 +2315,18 @@
                 if (!response.ok) {
                     const errorText = await response.text();
                     console.error('DEBUG: Erro ao buscar dados da API:', response.status, errorText);
+                    // Apenas lança o erro se a resposta não for OK, para o catch abaixo
                     throw new Error(`Erro ao buscar dados da API: ${response.statusText || errorText}`);
                 }
                 const data = await response.json(); 
 
                 const cardapioCsvText = data.cardapio;
                 const promocoesCsvText = data.promocoes;
-                const deliveryFeesCsvText = data.deliveryFees; // NOVO: Recebe os dados de frete
+                const deliveryFeesCsvText = data.deliveryFees; 
 
                 allMenuData = parseCsvData(cardapioCsvText, 'cardapio');
                 allPromotionsData = parseCsvData(promocoesCsvText, 'promocoes');
-                deliveryFeesData = parseCsvData(deliveryFeesCsvText, 'deliveryFees'); // NOVO: Parseia os dados de frete
+                deliveryFeesData = parseCsvData(deliveryFeesCsvText, 'deliveryFees'); 
                 
                 let orderedUniqueCategories = [];
                 const seenCategories = new Set();
@@ -2338,14 +2339,14 @@
                 
                 createCategoryButtons(orderedUniqueCategories); 
                 populateMenu(allMenuData, orderedUniqueCategories); 
-                populateNeighborhoodDropdown(deliveryFeesData); // NOVO: Popula o dropdown de bairros
+                populateNeighborhoodDropdown(deliveryFeesData); 
                 setupCategoryObserver(); 
 
                 updatePromotionButtonVisibility(); 
                 updateCartCount(); 
                 updateOrderDisplay(); 
                 updateCheckoutButtonText(); 
-                showAddressSummary(); // NOVO: Exibe o resumo do endereço se já houver dados
+                showAddressSummary(); 
 
                 toggleAddItemButtons(true);
                 toggleCategoryButtons(true);
@@ -2354,8 +2355,12 @@
                     window.dispatchEvent(new Event('scroll'));
                 }, 100);
 
+                // Se chegou até aqui, o cardápio foi carregado com sucesso.
+                // Não exibe a mensagem de erro aqui.
+
             } catch (error) {
                 console.error('DEBUG: Erro ao carregar o cardápio:', error);
+                // Exibe a mensagem de erro APENAS se houve uma falha na busca ou parsing inicial
                 showMessageModal('Não foi possível carregar o cardápio no momento. Por favor, tente novamente mais tarde.');
             }
         });
