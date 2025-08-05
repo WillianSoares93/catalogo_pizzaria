@@ -951,15 +951,35 @@
             messageModal.style.display = 'none';
         }
 
+        // NOVO: Função para resetar o estado de seleção de meia pizza
+        function resetHalfPizzaSelection() {
+            if (isSelectingHalfPizza && firstHalfPizza) {
+                const pendingHalfIndex = order.findIndex(orderItem => orderItem.id === 'pending-half-pizza');
+                if (pendingHalfIndex > -1) {
+                    order.splice(pendingHalfIndex, 1);
+                    updateOrderDisplay(); 
+                }
+                firstHalfPizza = null;
+                isSelectingSecondHalf = false;
+                isSelectingHalfPizza = false;
+                isFirstHalfPromotional = false;
+                toggleAddItemButtons(true);
+                toggleCategoryButtons(true);
+                showMessageModal('Seleção de meia pizza cancelada.');
+            }
+        }
+
         closePizzaOptionModalBtn.addEventListener('click', function() {
             pizzaOptionModal.style.display = 'none';
             updatePromotionButtonVisibility(); 
+            resetHalfPizzaSelection(); // Chama o reset ao fechar o modal
         });
 
         window.addEventListener('click', function(event) {
             if (event.target == pizzaOptionModal) {
                 pizzaOptionModal.style.display = 'none';
                 updatePromotionButtonVisibility(); 
+                resetHalfPizzaSelection(); // Chama o reset ao clicar fora do modal
             }
         });
 
@@ -1031,7 +1051,9 @@
                     // Headers para Taxas de Entrega - CORRIGIDO O MAPEAMENTO
                     case 'Bairro': return 'neighborhood';
                     case 'Valor Frete': return 'deliveryFee';
-                    default: return cleanedHeader.replace(/[^a-zA-Z0-9]+(.)?/g, (match, chr) => chr ? chr.toUpperCase() : '').replace(/^./, (match) => match.toLowerCase());
+                    default: 
+                        console.warn(`DEBUG: Header CSV desconhecido encontrado para ${type}: "${cleanedHeader}"`); // Log para depuração
+                        return cleanedHeader.replace(/[^a-zA-Z0-9]+(.)?/g, (match, chr) => chr ? chr.toUpperCase() : '').replace(/^./, (match) => match.toLowerCase());
                 }
             });
             
@@ -1044,6 +1066,17 @@
                     for (let j = 0; j < mappedHeaders.length; j++) {
                         let headerKey = mappedHeaders[j];
                         let value = rowValues[j];
+
+                        // Tratamento específico para campos críticos para evitar 'undefined'
+                        if (headerKey === 'neighborhood' && (value === undefined || value === null || value.trim() === '')) {
+                            console.warn(`DEBUG: Bairro vazio ou indefinido na linha ${i + 1} para ${type}: "${line}"`);
+                            value = ''; // Garante que é uma string vazia, não undefined
+                        }
+                        if (headerKey === 'deliveryFee' && (value === undefined || value === null || value.trim() === '')) {
+                            console.warn(`DEBUG: Valor Frete vazio ou indefinido na linha ${i + 1} para ${type}: "${line}"`);
+                            value = '0.00'; // Default para 0 se ausente
+                        }
+
                         if (['basePrice', 'price6Slices', 'price4Slices', 'promoPrice', 'deliveryFee'].includes(headerKey)) { // Adicionado 'deliveryFee'
                             const parsedValue = parseFloat(String(value).replace(',', '.'));
                             item[headerKey] = isNaN(parsedValue) ? 0 : parsedValue;
@@ -1481,24 +1514,32 @@
         }
         
         function addToOrder(item, clickedButton = null, itemImageUrl = null) {
+            console.log('DEBUG: addToOrder: Adicionando item:', item.name);
             order.push(item);
             updateOrderDisplay();
             updateCartCount(); // Garante que o contador é atualizado
+            console.log('DEBUG: addToOrder: Ordem e contador atualizados.');
 
             if (clickedButton) {
+                console.log('DEBUG: addToOrder: Iniciando animação para o carrinho.');
                 animateItemToCart(clickedButton, itemImageUrl); 
             }
             
             showTemporaryFeedback('✔️ Adicionado ao pedido!', 'bg-green-500');
+            console.log('DEBUG: addToOrder: Feedback temporário exibido.');
         }
 
         function addToOrderOnly(item, clickedButton = null, itemImageUrl = null) {
+            console.log('DEBUG: addToOrderOnly: Adicionando item (apenas):', item.name);
             order.push(item);
             updateOrderDisplay();
             updateCartCount(); // Garante que o contador é atualizado
             if (clickedButton) {
+                console.log('DEBUG: addToOrderOnly: Iniciando animação para o carrinho.');
                 animateItemToCart(clickedButton, itemImageUrl); 
             }
+            // No temporary feedback here, as it's typically followed by another action/message
+            console.log('DEBUG: addToOrderOnly: Ordem e contador atualizados.');
         }
 
         function animateItemToCart(originElement, imageUrl = null) {
@@ -1827,6 +1868,7 @@
         function addPromotionToOrder(promoId, clickedButton = null, itemImageUrl = null) { 
             const promotion = allPromotionsData.find(p => p.id === promoId);
             if (promotion) {
+                console.log('DEBUG: addPromotionToOrder: Adicionando promoção:', promotion.name); // Log
                 order.push({
                     type: 'promotion',
                     name: promotion.name,
@@ -1841,8 +1883,9 @@
                     animateItemToCart(clickedButton, itemImageUrl); 
                 }
                 showTemporaryFeedback(`Promoção "${promotion.name}" adicionada ao pedido!`, 'bg-green-500'); 
+                console.log('DEBUG: addPromotionToOrder: Promoção adicionada e UI atualizada.'); // Log
             } else {
-                console.error('DEBUG: Promoção não encontrada:', promoId);
+                console.error('DEBUG: addPromotionToOrder: Promoção não encontrada:', promoId);
                 showMessageModal('Erro ao adicionar promoção. Por favor, tente novamente.');
             }
         }
@@ -2243,11 +2286,15 @@
         function populateNeighborhoodDropdown(feesData) {
             neighborhoodSelect.innerHTML = '<option value="">Selecione um bairro</option>';
             feesData.forEach(fee => {
-                const option = document.createElement('option');
-                option.value = fee.neighborhood;
-                // CORRIGIDO: Garante que neighborhood e deliveryFee são usados corretamente
-                option.textContent = `${fee.neighborhood} (R$ ${fee.deliveryFee.toFixed(2).replace('.', ',')})`;
-                neighborhoodSelect.appendChild(option);
+                // Garante que fee.neighborhood é uma string não vazia
+                if (typeof fee.neighborhood === 'string' && fee.neighborhood.trim() !== '') {
+                    const option = document.createElement('option');
+                    option.value = fee.neighborhood;
+                    option.textContent = `${fee.neighborhood} (R$ ${fee.deliveryFee.toFixed(2).replace('.', ',')})`;
+                    neighborhoodSelect.appendChild(option);
+                } else {
+                    console.warn("DEBUG: Bairro inválido ou vazio encontrado nos dados de entrega:", fee);
+                }
             });
         }
 
@@ -2311,14 +2358,15 @@
 
         document.addEventListener('DOMContentLoaded', async function() {
             try {
+                console.log('DEBUG: DOMContentLoaded: Iniciando busca da API...');
                 const response = await fetch('/api/menu'); 
                 if (!response.ok) {
                     const errorText = await response.text();
-                    console.error('DEBUG: Erro ao buscar dados da API:', response.status, errorText);
-                    // Apenas lança o erro se a resposta não for OK, para o catch abaixo
+                    console.error('DEBUG: DOMContentLoaded: Erro HTTP ao buscar dados da API:', response.status, errorText);
                     throw new Error(`Erro ao buscar dados da API: ${response.statusText || errorText}`);
                 }
                 const data = await response.json(); 
+                console.log('DEBUG: DOMContentLoaded: Dados da API recebidos com sucesso.');
 
                 const cardapioCsvText = data.cardapio;
                 const promocoesCsvText = data.promocoes;
@@ -2327,6 +2375,7 @@
                 allMenuData = parseCsvData(cardapioCsvText, 'cardapio');
                 allPromotionsData = parseCsvData(promocoesCsvText, 'promocoes');
                 deliveryFeesData = parseCsvData(deliveryFeesCsvText, 'deliveryFees'); 
+                console.log('DEBUG: DOMContentLoaded: Dados CSV parseados.');
                 
                 let orderedUniqueCategories = [];
                 const seenCategories = new Set();
@@ -2341,12 +2390,14 @@
                 populateMenu(allMenuData, orderedUniqueCategories); 
                 populateNeighborhoodDropdown(deliveryFeesData); 
                 setupCategoryObserver(); 
+                console.log('DEBUG: DOMContentLoaded: Cardápio e categorias populados.');
 
                 updatePromotionButtonVisibility(); 
                 updateCartCount(); 
                 updateOrderDisplay(); 
                 updateCheckoutButtonText(); 
                 showAddressSummary(); 
+                console.log('DEBUG: DOMContentLoaded: UI atualizada.');
 
                 toggleAddItemButtons(true);
                 toggleCategoryButtons(true);
@@ -2354,12 +2405,10 @@
                 setTimeout(() => {
                     window.dispatchEvent(new Event('scroll'));
                 }, 100);
-
-                // Se chegou até aqui, o cardápio foi carregado com sucesso.
-                // Não exibe a mensagem de erro aqui.
+                console.log('DEBUG: DOMContentLoaded: Carregamento completo e bem-sucedido.');
 
             } catch (error) {
-                console.error('DEBUG: Erro ao carregar o cardápio:', error);
+                console.error('DEBUG: DOMContentLoaded: Erro fatal ao carregar o cardápio:', error);
                 // Exibe a mensagem de erro APENAS se houve uma falha na busca ou parsing inicial
                 showMessageModal('Não foi possível carregar o cardápio no momento. Por favor, tente novamente mais tarde.');
             }
