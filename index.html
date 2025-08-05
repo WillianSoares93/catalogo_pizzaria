@@ -1793,9 +1793,16 @@
                                 category: item.category
                             }, this, null); // Passa o botão clicado e null para a imagem (bebidas não têm)
                             drinkSuggestionModal.style.display = 'none'; // Fecha o modal após adicionar
-                            // Após adicionar bebida, abre o modal de pagamento
-                            isCheckoutInitiated = true; // Define a flag para o próximo modal
-                            openPaymentMethodModal(true); 
+                            
+                            // NOVO: Verifica se a forma de pagamento já foi selecionada
+                            if (selectedPaymentMethod) {
+                                console.log("DEBUG: Bebida adicionada, pagamento já selecionado. Indo para WhatsApp.");
+                                proceedToWhatsappCheckout();
+                            } else {
+                                console.log("DEBUG: Bebida adicionada, pagamento NÃO selecionado. Abrindo modal de pagamento.");
+                                isCheckoutInitiated = true; // Define a flag para o próximo modal
+                                openPaymentMethodModal(true); 
+                            }
                         }
                     });
                 });
@@ -1826,9 +1833,15 @@
 
         confirmNoDrinkYesBtn.addEventListener('click', function() {
             confirmNoDrinkModal.style.display = 'none';
-            // Após confirmar que não quer bebida, abre o modal de pagamento
-            isCheckoutInitiated = true; // Define a flag para o próximo modal
-            openPaymentMethodModal(true); 
+            // NOVO: Verifica se a forma de pagamento já foi selecionada
+            if (selectedPaymentMethod) {
+                console.log("DEBUG: Confirmou sem bebida, pagamento já selecionado. Indo para WhatsApp.");
+                proceedToWhatsappCheckout();
+            } else {
+                console.log("DEBUG: Confirmou sem bebida, pagamento NÃO selecionado. Abrindo modal de pagamento.");
+                isCheckoutInitiated = true; // Define a flag para o próximo modal
+                openPaymentMethodModal(true); 
+            }
         });
 
         confirmNoDrinkNoBtn.addEventListener('click', function() { // Listener para o botão "Não!" corrigido
