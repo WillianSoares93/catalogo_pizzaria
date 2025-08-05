@@ -10,7 +10,7 @@ import fetch from 'node-fetch';
 // Verifique se as URLs estão corretas e se as planilhas estão configuradas como "Qualquer pessoa com o link pode ver".
 const CARDAPIO_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=664943668&single=true&output=csv'; 
 const PROMOCOES_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=600393470&single=true&output=csv'; 
-// A URL de DELIVERY_FEES_CSV_URL foi removida para depuração.
+// A URL de DELIVERY_FEES_CSV_URL foi removida.
 
 export default async (req, res) => {
     res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate'); 
@@ -46,16 +46,16 @@ export default async (req, res) => {
         const promocoesData = await promocoesResponse.text();
         console.log('Vercel Function: Promoções buscadas com sucesso.');
 
-        // A busca por Taxas de Entrega foi removida para depuração.
+        // A busca por Taxas de Entrega foi removida.
         // Certifique-se de que não há nenhuma outra referência a DELIVERY_FEES_CSV_URL ou a uma chamada fetch para ela aqui.
-        const deliveryFeesData = ""; // Retorna uma string vazia ou um valor padrão para evitar erros no frontend
+        // deliveryFeesData não é mais retornado.
 
         console.log('Vercel Function: Todos os dados (exceto taxas de entrega) buscados com sucesso. Enviando resposta.');
 
         res.status(200).json({
             cardapio: cardapioData,
-            promocoes: promocoesData,
-            deliveryFees: deliveryFeesData // Ainda envia a chave, mas com valor vazio/padrão
+            promocoes: promocoesData
+            // deliveryFees não é mais enviado.
         });
 
     } catch (error) {
