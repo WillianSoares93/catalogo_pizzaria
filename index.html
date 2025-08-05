@@ -767,7 +767,7 @@
             street: '',
             number: '',
             reference: '',
-            deliveryFee: 0
+            deliveryFee: 0 // Inicializa com 0 para evitar undefined
         };
         let isAddressInputVisible = false; // Controla a visibilidade da seção de input de endereço
 
@@ -985,7 +985,7 @@
                     case 'Ativo (SIM/NAO)': return 'active';
                     // NOVO: Headers para Taxas de Entrega
                     case 'Bairro': return 'neighborhood';
-                    case 'Valor_Frete': return 'deliveryFee';
+                    case 'Valor Frete': return 'deliveryFee'; // Corrigido para 'Valor Frete'
                     default: return cleanedHeader.replace(/[^a-zA-Z0-9]+(.)?/g, (match, chr) => chr ? chr.toUpperCase() : '').replace(/^./, (match) => match.toLowerCase());
                 }
             });
@@ -1557,13 +1557,12 @@
                 
                 // NOVO: Logs de depuração para selectedAddress.deliveryFee
                 console.log('Inside updateOrderDisplay - selectedAddress:', selectedAddress);
-                console.log('Inside updateOrderDisplay - selectedAddress.deliveryFee:', selectedAddress.deliveryFee);
+                console.log('Inside updateOrderDisplay - selectedAddress.deliveryFee (before toFixed):', selectedAddress.deliveryFee);
 
-                // Atualiza a taxa de entrega e o total com base no selectedAddress
                 // Garante que selectedAddress.deliveryFee é um número antes de chamar toFixed
-                const currentDeliveryFee = typeof selectedAddress.deliveryFee === 'number' ? selectedAddress.deliveryFee : 0;
-                dynamicDeliveryFeeEl.textContent = 'R$ ' + currentDeliveryFee.toFixed(2).replace('.', ',');
-                const total = subtotal + currentDeliveryFee;
+                const currentDeliveryFee = parseFloat(selectedAddress.deliveryFee); // Usa parseFloat para garantir que é um número
+                dynamicDeliveryFeeEl.textContent = 'R$ ' + (isNaN(currentDeliveryFee) ? 0 : currentDeliveryFee).toFixed(2).replace('.', ',');
+                const total = subtotal + (isNaN(currentDeliveryFee) ? 0 : currentDeliveryFee);
                 totalEl.textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
 
                 // Adiciona a forma de pagamento ao resumo do pedido se selecionada
@@ -1758,6 +1757,7 @@
 
         // NOVO: Função para confirmar o endereço
         function confirmAddress() {
+            console.log('confirmAddress() called');
             const neighborhood = neighborhoodSelect.value;
             const street = streetInput.value.trim();
             const number = numberInput.value.trim();
@@ -1765,11 +1765,15 @@
 
             if (!neighborhood || !street || !number) {
                 showMessageModal('Por favor, preencha o bairro, rua e número do endereço.');
+                console.log('Address validation failed: missing neighborhood, street, or number.');
                 return;
             }
 
             const selectedFeeData = deliveryFeesData.find(item => item.neighborhood === neighborhood);
-            const fee = selectedFeeData ? selectedFeeData.deliveryFee : 0;
+            // Garante que a taxa de entrega é um número
+            const fee = selectedFeeData ? parseFloat(selectedFeeData.deliveryFee) : 0;
+            console.log('Selected neighborhood for fee:', neighborhood, 'Found fee data:', selectedFeeData, 'Calculated fee:', fee);
+
 
             selectedAddress = {
                 neighborhood: neighborhood,
@@ -1795,6 +1799,8 @@
         // NOVO: Popula o dropdown de bairros
         function populateNeighborhoodDropdown() {
             neighborhoodSelect.innerHTML = '<option value="">Selecione um bairro</option>';
+            // NOVO: Log para depuração
+            console.log('Populating neighborhood dropdown with data:', deliveryFeesData);
             deliveryFeesData.forEach(item => {
                 const option = document.createElement('option');
                 option.value = item.neighborhood;
@@ -1819,7 +1825,8 @@
             const selectedFeeData = deliveryFeesData.find(item => item.neighborhood === selectedNeighborhoodName);
             // NOVO: Logs para depuração
             console.log('Found selectedFeeData:', selectedFeeData);
-            selectedAddress.deliveryFee = selectedFeeData ? selectedFeeData.deliveryFee : 0; 
+            // Garante que a taxa de entrega é um número
+            selectedAddress.deliveryFee = selectedFeeData ? parseFloat(selectedFeeData.deliveryFee) : 0; 
             // NOVO: Log para depuração
             console.log('Setting selectedAddress.deliveryFee to:', selectedAddress.deliveryFee);
             updateOrderDisplay(); // Atualiza o total na sidebar
@@ -1970,7 +1977,7 @@
 
             if (!selectedPaymentMethod) {
                 isCheckoutInitiated = true;
-                openPaymentMethodModal(true);
+                openPaymentMethodModal(true); 
             } else {
                 proceedToWhatsappCheckout();
             }
@@ -2209,7 +2216,7 @@
                     if (window.scrollY <= stickyHeaderHeight + 20) {
                         newActiveCategory = categorySections[0].id.replace('-section', ''); 
                     } else {
-                        for (let i = 0; i = 0; i < categorySections.length; i++) {
+                        for (let i = 0; i < categorySections.length; i++) {
                             const section = categorySections[i];
                             const rect = section.getBoundingClientRect();
                             if (rect.bottom > 0 && rect.top < window.innerHeight) {
