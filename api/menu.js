@@ -21,7 +21,7 @@ export default async (req, res) => {
 
         // Busca Cardapio
         console.log('Vercel Function: Buscando Cardápio...');
-        const cardapioResponse = await fetch(CARDAPIO_CSV_URL).catch(err => { 
+        const cardapioResponse = await fetch(CARDAPio_CSV_URL).catch(err => { 
             console.error('Vercel Function: Erro de rede/conexão ao buscar CARDAPIO_CSV_URL:', err.message);
             throw new Error(`Falha na busca do cardápio (rede): ${err.message}`);
         });
