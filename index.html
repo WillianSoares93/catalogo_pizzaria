@@ -511,6 +511,7 @@
                 <!-- Seção de taxa de entrega fixa -->
                 <div class="flex justify-between mb-2">
                     <span class="text-gray-600">Taxa de entrega:</span>
+                    <span id="fixedDeliveryFeeDisplay" class="font-bold">R$ 5,00</span>
                 </div>
                 
                 <div class="flex justify-between text-lg font-bold">
@@ -728,8 +729,10 @@
         // NOVO: Taxa de entrega fixa
         const fixedDeliveryFee = 5.00; 
 
-
-
+        // O objeto selectedAddress foi SIMPLIFICADO para conter apenas a taxa fixa.
+        let selectedAddress = {
+            deliveryFee: fixedDeliveryFee // Usa a taxa fixa
+        };
         // A variável isAddressInputVisible foi REMOVIDA.
 
         // Imagem padrão para pizzas sem link na planilha
@@ -750,6 +753,7 @@
         const promotionButton = document.getElementById('promotion-button'); 
         const cartButton = document.getElementById('cart-button'); 
         const subtotalEl = document.getElementById('subtotal');
+        const fixedDeliveryFeeDisplay = document.getElementById('fixedDeliveryFeeDisplay'); // Elemento para a taxa de entrega fixa
         const totalEl = document.getElementById('total');
         const checkoutButton = document.getElementById('checkoutButton'); // Referência ao botão Finalizar Pedido
 
@@ -1463,8 +1467,10 @@
                 orderItemsContainer.appendChild(emptyOrderMessage);
                 
                 document.getElementById('subtotal').textContent = 'R$ 0,00';
+                fixedDeliveryFeeDisplay.textContent = 'R$ ' + fixedDeliveryFee.toFixed(2).replace('.', ','); // Exibe a taxa fixa
                 totalEl.textContent = 'R$ 0,00'; // Reseta total
                 selectedPaymentMethod = null; 
+                selectedAddress.deliveryFee = fixedDeliveryFee; // Garante que o objeto de endereço tenha a taxa fixa
             } else {
                 emptyOrderMessage.classList.add('hidden');
                 
@@ -1510,8 +1516,9 @@
                 orderItemsContainer.innerHTML = itemsHTML;
                 subtotalEl.textContent = 'R$ ' + subtotal.toFixed(2).replace('.', ',');
                 
+                fixedDeliveryFeeDisplay.textContent = 'R$ ' + fixedDeliveryFee.toFixed(2).replace('.', ','); // Exibe a taxa fixa
                 
-        
+                const total = subtotal + fixedDeliveryFee; // Soma a taxa fixa
                 totalEl.textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
 
                 // Adiciona a forma de pagamento ao resumo do pedido se selecionada
@@ -1572,7 +1579,11 @@
             isFirstHalfPromotional = false; 
             toggleAddItemButtons(true); 
             toggleCategoryButtons(true);
-            
+            selectedAddress = { // Reseta o objeto de endereço com a taxa fixa
+                deliveryFee: fixedDeliveryFee
+            };
+            updateCheckoutButtonText(); // Atualiza o texto do botão de checkout
+        }
         
         function updateCartCount() {
             if (order.length > 0) {
@@ -1599,7 +1610,7 @@
                 subtotal += item.price;
             });
 
-
+            const total = subtotal + fixedDeliveryFee; // Usa a taxa fixa
 
             message += `\nSubtotal: R$ ${subtotal.toFixed(2).replace('.', ',')}`;
             message += `\nTaxa de entrega: R$ ${fixedDeliveryFee.toFixed(2).replace('.', ',')}`; // Mensagem de taxa fixa
@@ -1947,6 +1958,13 @@
             }
         });
 
+        function calculateOrderTotal() {
+            let currentSubtotal = 0;
+            order.forEach(item => {
+                currentSubtotal += item.price;
+            });
+            return currentSubtotal + fixedDeliveryFee; // Soma a taxa de entrega fixa
+        }
 
         confirmPaymentMethodBtn.addEventListener('click', () => {
             const selectedRadio = document.querySelector('input[name="paymentMethod"]:checked');
