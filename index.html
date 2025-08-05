@@ -657,6 +657,18 @@
                     </div>
                 </label>
             </div>
+
+            <!-- Novo campo para troco -->
+            <div id="troco-input-container" class="hidden mt-4 mb-6 p-4 border border-gray-300 rounded-lg bg-gray-50">
+                <label for="trocoPara" class="block text-gray-700 text-sm font-bold mb-2">
+                    Troco para (R$):
+                </label>
+                <input type="number" id="trocoPara" step="0.01" min="0" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mb-2">
+                <p class="text-gray-600 text-sm">
+                    Troco total: <span id="trocoTotalDisplay" class="font-bold text-red-600">R$ 0,00</span>
+                </p>
+            </div>
+
             <button id="confirm-payment-method-btn" class="px-6 py-3 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition w-full">
                 Confirmar Pagamento
             </button>
@@ -761,8 +773,9 @@
         const closePaymentMethodModalBtn = document.getElementById('close-payment-method-modal');
         const paymentOptionsContainer = document.getElementById('payment-options-container');
         const confirmPaymentMethodBtn = document.getElementById('confirm-payment-method-btn');
-        // const paymentMethodDisplay = document.getElementById('paymentMethodDisplay'); // Removido
-        // const selectedPaymentMethodText = document.getElementById('selectedPaymentMethodText'); // Removido
+        const trocoInputContainer = document.getElementById('troco-input-container'); // NOVO: container do input de troco
+        const trocoParaInput = document.getElementById('trocoPara'); // NOVO: input de troco
+        const trocoTotalDisplay = document.getElementById('trocoTotalDisplay'); // NOVO: display do troco total
 
         let currentPizzaData = {}; // Objeto para armazenar temporariamente os dados da pizza selecionada
         let firstHalfPizza = null; // Armazena os dados da primeira metade de uma pizza dividida
@@ -1532,13 +1545,27 @@
 
                 // Adiciona a forma de pagamento ao resumo do pedido se selecionada
                 if (selectedPaymentMethod) {
+                    let paymentMethodText = '';
+                    let trocoInfo = '';
+
+                    if (typeof selectedPaymentMethod === 'object' && selectedPaymentMethod.method === 'Dinheiro') {
+                        paymentMethodText = selectedPaymentMethod.method;
+                        trocoInfo = `
+                            <p class="text-sm text-gray-500 mt-1">Troco para: R$ ${selectedPaymentMethod.trocoPara.toFixed(2).replace('.', ',')}</p>
+                            <p class="text-sm text-gray-500">Troco: <span class="font-bold text-green-600">R$ ${selectedPaymentMethod.trocoTotal.toFixed(2).replace('.', ',')}</span></p>
+                        `;
+                    } else {
+                        paymentMethodText = selectedPaymentMethod;
+                    }
+
                     itemsHTML += `
-                        <div class="flex justify-between items-center py-3"> <!-- Removida a borda inferior aqui -->
+                        <div class="flex justify-between items-start py-3">
                             <div class="flex-1">
                                 <p class="font-medium text-gray-600">Forma de Pagamento:</p>
+                                ${trocoInfo}
                             </div>
                             <div class="flex items-center">
-                                <span class="font-bold text-red-600">${selectedPaymentMethod}</span>
+                                <span class="font-bold text-red-600">${paymentMethodText}</span>
                             </div>
                         </div>
                     `;
@@ -1622,7 +1649,13 @@
             
             // Adiciona a forma de pagamento à mensagem do WhatsApp
             if (selectedPaymentMethod) {
-                message += `\nForma de Pagamento: ${selectedPaymentMethod}`;
+                if (typeof selectedPaymentMethod === 'object' && selectedPaymentMethod.method === 'Dinheiro') {
+                    message += `\nForma de Pagamento: ${selectedPaymentMethod.method}`;
+                    message += `\nTroco para: R$ ${selectedPaymentMethod.trocoPara.toFixed(2).replace('.', ',')}`;
+                    message += `\nTroco: R$ ${selectedPaymentMethod.trocoTotal.toFixed(2).replace('.', ',')}`;
+                } else {
+                    message += `\nForma de Pagamento: ${selectedPaymentMethod}`;
+                }
             }
 
             message += '\n\nObrigado!';
@@ -1896,14 +1929,32 @@
         function openPaymentMethodModal(fromCheckout = false) { // NOVO: Parâmetro para indicar se veio do checkout
             isCheckoutInitiated = fromCheckout; // Define a flag global
             paymentMethodModal.style.display = 'flex';
+            
+            // Esconde o container do troco por padrão ao abrir o modal
+            trocoInputContainer.classList.add('hidden');
+            trocoParaInput.value = ''; // Limpa o valor do input
+            trocoTotalDisplay.textContent = 'R$ 0,00'; // Reseta o display do troco
+
             // Se já houver um método selecionado, marca o rádio button correspondente
             if (selectedPaymentMethod) {
-                const radio = document.querySelector(`input[name="paymentMethod"][value="${selectedPaymentMethod}"]`);
+                const methodValue = typeof selectedPaymentMethod === 'object' ? selectedPaymentMethod.method : selectedPaymentMethod;
+                const radio = document.querySelector(`input[name="paymentMethod"][value="${methodValue}"]`);
                 if (radio) {
                     radio.checked = true;
                     // Adiciona a classe 'selected' ao label pai
                     document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('selected')); // Garante que apenas um esteja selecionado
                     radio.closest('.payment-option').classList.add('selected');
+
+                    // Se o método selecionado for Dinheiro, mostra o campo de troco e preenche se houver dados anteriores
+                    if (methodValue === 'Dinheiro') {
+                        trocoInputContainer.classList.remove('hidden');
+                        if (typeof selectedPaymentMethod === 'object' && selectedPaymentMethod.trocoPara) {
+                            trocoParaInput.value = selectedPaymentMethod.trocoPara;
+                            const totalOrder = calculateOrderTotal(); // Recalcula o total do pedido
+                            const trocoCalculado = selectedPaymentMethod.trocoPara - totalOrder;
+                            trocoTotalDisplay.textContent = `R$ ${trocoCalculado.toFixed(2).replace('.', ',')}`;
+                        }
+                    }
                 }
             } else {
                 // Desmarca todos e remove a classe 'selected' se não houver método selecionado
@@ -1935,16 +1986,77 @@
                 if (radio) {
                     radio.checked = true;
                 }
+
+                // Lógica para mostrar/esconder o campo de troco
+                if (radio && radio.value === 'Dinheiro') {
+                    trocoInputContainer.classList.remove('hidden');
+                    // Recalcula o troco ao selecionar Dinheiro, caso o valor do pedido tenha mudado
+                    const totalOrder = calculateOrderTotal();
+                    const trocoParaValue = parseFloat(trocoParaInput.value) || 0;
+                    if (trocoParaValue >= totalOrder) {
+                        const trocoCalculado = trocoParaValue - totalOrder;
+                        trocoTotalDisplay.textContent = `R$ ${trocoCalculado.toFixed(2).replace('.', ',')}`;
+                    } else {
+                        trocoTotalDisplay.textContent = 'R$ 0,00';
+                    }
+                } else {
+                    trocoInputContainer.classList.add('hidden');
+                    trocoParaInput.value = ''; // Limpa o valor do input
+                    trocoTotalDisplay.textContent = 'R$ 0,00'; // Reseta o display do troco
+                }
             }
         });
+
+        // Listener para o input de troco, para calcular o troco em tempo real
+        trocoParaInput.addEventListener('input', () => {
+            const totalOrder = calculateOrderTotal();
+            const trocoParaValue = parseFloat(trocoParaInput.value);
+
+            if (!isNaN(trocoParaValue) && trocoParaValue >= totalOrder) {
+                const trocoCalculado = trocoParaValue - totalOrder;
+                trocoTotalDisplay.textContent = `R$ ${trocoCalculado.toFixed(2).replace('.', ',')}`;
+                trocoTotalDisplay.classList.remove('text-red-600'); // Remove cor de erro
+                trocoTotalDisplay.classList.add('text-green-600'); // Adiciona cor de sucesso
+            } else {
+                trocoTotalDisplay.textContent = `R$ 0,00`;
+                trocoTotalDisplay.classList.remove('text-green-600');
+                trocoTotalDisplay.classList.add('text-red-600'); // Mantém vermelho se valor inválido/insuficiente
+            }
+        });
+
+        // Função auxiliar para calcular o total do pedido (subtotal + taxa de entrega)
+        function calculateOrderTotal() {
+            let currentSubtotal = 0;
+            order.forEach(item => {
+                currentSubtotal += item.price;
+            });
+            return currentSubtotal + deliveryFee;
+        }
+
 
         // Listener para o botão "Confirmar Pagamento"
         confirmPaymentMethodBtn.addEventListener('click', () => {
             const selectedRadio = document.querySelector('input[name="paymentMethod"]:checked');
             if (selectedRadio) {
-                selectedPaymentMethod = selectedRadio.value;
+                if (selectedRadio.value === 'Dinheiro') {
+                    const totalOrder = calculateOrderTotal();
+                    const trocoParaValue = parseFloat(trocoParaInput.value);
+
+                    if (isNaN(trocoParaValue) || trocoParaValue < totalOrder) {
+                        showMessageModal(`O valor para troco (R$ ${trocoParaValue.toFixed(2).replace('.', ',')}) não pode ser menor que o total do pedido (R$ ${totalOrder.toFixed(2).replace('.', ',')}).`);
+                        return; // Impede o fechamento do modal e a continuação
+                    }
+                    const trocoCalculado = trocoParaValue - totalOrder;
+                    selectedPaymentMethod = {
+                        method: 'Dinheiro',
+                        trocoPara: trocoParaValue,
+                        trocoTotal: trocoCalculado
+                    };
+                } else {
+                    selectedPaymentMethod = selectedRadio.value;
+                }
+                
                 console.log("DEBUG: Payment method selected:", selectedPaymentMethod);
-                // selectedPaymentMethodText.textContent = selectedPaymentMethod; // Removido
                 closePaymentMethodModal();
                 
                 // Lógica condicional baseada em como o modal foi aberto
