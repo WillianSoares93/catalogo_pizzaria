@@ -508,16 +508,12 @@
                 </div>
             </div>
 
-            <!-- NOVO: Seção de Forma de Pagamento -->
+            <!-- NOVO: Seção de Forma de Pagamento - O botão "Escolher Forma de Pagamento" foi removido daqui -->
             <div id="paymentMethodDisplay" class="border-t border-gray-200 pt-4 mb-6 hidden">
                 <div class="flex justify-between items-center mb-2">
                     <span class="text-gray-600">Forma de Pagamento:</span>
                     <span id="selectedPaymentMethodText" class="font-bold text-red-600">Não selecionado</span>
                 </div>
-                <!-- Botão "Escolher Forma de Pagamento" com novo estilo -->
-                <button onclick="openPaymentMethodModal(false)" class="w-full py-3 bg-red-600 text-white font-bold rounded-full text-base hover:bg-red-700 transition shadow-md mt-2">
-                    Escolher Forma de Pagamento
-                </button>
             </div>
             
             <!-- Botão "Adicionar mais" -->
@@ -591,7 +587,7 @@
             <p class="text-gray-600 mb-6">Seu pedido não contém bebidas. Gostaria de adicionar alguma?</p>
             <!-- Botões "Voltar para o Cardápio" e "Continuar sem bebidas" com novo estilo -->
             <button onclick="backToMenuFromDrinkSuggestion()" class="px-4 py-2 bg-gray-500 text-white rounded-lg font-bold hover:bg-gray-600 transition w-full mb-3 whitespace-nowrap text-sm">
-                Voltar para o Cardápio
+                Voltar ao Cardápio
             </button>
             <button id="proceed-without-drinks" class="px-4 py-2 bg-gray-500 text-white rounded-lg font-bold hover:bg-gray-600 transition w-full mb-6 whitespace-nowrap text-sm">
                 Continuar sem bebidas
@@ -637,7 +633,7 @@
                     <i class="fas fa-money-bill-wave icon"></i>
                     <div class="text-content">
                         <h4>Dinheiro</h4>
-                        <p>Pagamento em espécie na entrega.</p>
+                        <p></p> <!-- Descrição removida -->
                     </div>
                 </label>
                 <label class="payment-option" data-method="Cartão de Crédito/Débito">
@@ -645,7 +641,7 @@
                     <i class="fas fa-credit-card icon"></i>
                     <div class="text-content">
                         <h4>Cartão de Crédito/Débito</h4>
-                        <p>Máquina de cartão na entrega (crédito ou débito).</p>
+                        <p></p> <!-- Descrição removida -->
                     </div>
                 </label>
                 <label class="payment-option" data-method="Pix">
@@ -653,7 +649,7 @@
                     <i class="fas fa-qrcode icon"></i>
                     <div class="text-content">
                         <h4>Pix</h4>
-                        <p>Pagamento via QR Code Pix na entrega.</p>
+                        <p></p> <!-- Descrição removida -->
                     </div>
                 </label>
             </div>
@@ -1818,6 +1814,7 @@
         closeDrinkSuggestionModalBtn.addEventListener('click', function() {
             drinkSuggestionModal.style.display = 'none';
             // REMOVIDO: confirmNoDrinkModal.style.display = 'flex'; // Não mostra o modal de confirmação
+            // Apenas fecha o modal de sugestão de bebidas
         });
 
         // Listener para o botão "Continuar sem bebidas"
