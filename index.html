@@ -810,7 +810,7 @@
         const confirmNoDrinkModal = document.getElementById('confirm-no-drink-modal');
         const closeConfirmNoDrinkModalBtn = document.getElementById('close-confirm-no-drink-modal');
         const confirmNoDrinkYesBtn = document.getElementById('confirm-no-drink-yes');
-        const confirmNoDrinkNoBtn = document.getElementById('confirm-no-drink-no-btn');
+        const confirmNoDrinkNoBtn = document.getElementById('close-confirm-no-drink-no-btn');
 
         // Referências para o modal de instalação do PWA
         const installPromptModal = document.getElementById('install-prompt-modal');
@@ -1559,17 +1559,19 @@
                 subtotalEl.textContent = 'R$ ' + subtotal.toFixed(2).replace('.', ',');
                 
                 // NOVO: Logs de depuração para selectedAddress.deliveryFee
-                console.log('Inside updateOrderDisplay - selectedAddress:', selectedAddress);
-                console.log('Inside updateOrderDisplay - selectedAddress.deliveryFee (raw):', selectedAddress.deliveryFee);
+                console.log('--- INSIDE updateOrderDisplay ---');
+                console.log('Current selectedAddress object at start of updateOrderDisplay:', selectedAddress);
+                console.log('selectedAddress.deliveryFee (raw value at start of updateOrderDisplay):', selectedAddress.deliveryFee);
 
                 // Garante que selectedAddress.deliveryFee é um número antes de chamar toFixed
                 let currentDeliveryFeeValue = selectedAddress.deliveryFee;
                 if (currentDeliveryFeeValue === undefined || currentDeliveryFeeValue === null) {
                     currentDeliveryFeeValue = 0;
-                    console.warn('selectedAddress.deliveryFee era undefined/null em updateOrderDisplay, resetado para 0.');
+                    console.warn('selectedAddress.deliveryFee was undefined/null in updateOrderDisplay, reset to 0 for calculation.');
                 }
                 const currentDeliveryFee = parseFloat(currentDeliveryFeeValue); 
-                console.log('Inside updateOrderDisplay - currentDeliveryFee (after parseFloat):', currentDeliveryFee);
+                console.log('currentDeliveryFee (after parseFloat and check):', currentDeliveryFee, 'Type:', typeof currentDeliveryFee);
+                console.trace('Call stack for toFixed error point (if it happens)'); // Add this
 
                 dynamicDeliveryFeeEl.textContent = 'R$ ' + (isNaN(currentDeliveryFee) ? 0 : currentDeliveryFee).toFixed(2).replace('.', ',');
                 const total = subtotal + (isNaN(currentDeliveryFee) ? 0 : currentDeliveryFee);
@@ -1602,6 +1604,7 @@
                         </div>
                     `);
                 }
+                console.log('--- END OF updateOrderDisplay ---');
             }
             updateDrinkSuggestionButtons(); 
         }
@@ -1767,7 +1770,7 @@
 
         // NOVO: Função para confirmar o endereço
         function confirmAddress() {
-            console.log('confirmAddress() called');
+            console.log('--- CONFIRM ADDRESS CALLED ---');
             const neighborhood = neighborhoodSelect.value;
             const street = streetInput.value.trim();
             const number = numberInput.value.trim();
@@ -1780,21 +1783,27 @@
             }
 
             const selectedFeeData = deliveryFeesData.find(item => item.neighborhood === neighborhood);
+            
             // Garante que a taxa de entrega é um número no momento da atribuição
-            selectedAddress.deliveryFee = selectedFeeData ? parseFloat(selectedFeeData.deliveryFee || '0') : 0; 
-            console.log('Selected neighborhood for fee:', neighborhood, 'Found selectedFeeData:', selectedFeeData, 'Calculated fee (after assignment):', selectedAddress.deliveryFee);
-
-            // Adicionado log para verificar o tipo de selectedAddress.deliveryFee
-            console.log('Type of selectedAddress.deliveryFee after assignment:', typeof selectedAddress.deliveryFee);
-
+            let fee = 0;
+            if (selectedFeeData && typeof selectedFeeData.deliveryFee === 'number') {
+                fee = selectedFeeData.deliveryFee;
+            } else {
+                console.warn(`Delivery fee data for '${neighborhood}' is invalid or not found in deliveryFeesData. Setting to 0.`);
+            }
 
             selectedAddress = {
                 neighborhood: neighborhood,
                 street: street,
                 number: number,
                 reference: reference,
-                deliveryFee: selectedAddress.deliveryFee // Usa o valor já tratado
+                deliveryFee: fee // Usa o valor já tratado
             };
+            console.log('Selected neighborhood for fee (in confirmAddress):', neighborhood);
+            console.log('Found selectedFeeData (in confirmAddress):', selectedFeeData);
+            console.log('Calculated fee (in confirmAddress, after assignment):', selectedAddress.deliveryFee);
+            console.log('Type of selectedAddress.deliveryFee (in confirmAddress, after assignment):', typeof selectedAddress.deliveryFee);
+            console.log('Full selectedAddress object (in confirmAddress):', selectedAddress);
             
             // Atualiza a exibição do resumo do endereço
             addressDisplay.textContent = `Rua: ${selectedAddress.street}, Nº ${selectedAddress.number}`;
@@ -1807,6 +1816,7 @@
             
             // Continua o fluxo de checkout após a confirmação do endereço
             handleCheckoutFlow();
+            console.log('--- END OF CONFIRM ADDRESS ---');
         }
 
         // NOVO: Popula o dropdown de bairros
@@ -1814,6 +1824,9 @@
             neighborhoodSelect.innerHTML = '<option value="">Selecione um bairro</option>';
             // NOVO: Log para depuração
             console.log('Populating neighborhood dropdown with data:', deliveryFeesData);
+            if (deliveryFeesData.length === 0) {
+                console.warn('deliveryFeesData está vazio ao tentar popular o dropdown de bairros.');
+            }
             deliveryFeesData.forEach(item => {
                 const option = document.createElement('option');
                 option.value = item.neighborhood;
@@ -1832,18 +1845,25 @@
 
         // Listener para o dropdown de bairro para atualizar a taxa de entrega
         neighborhoodSelect.addEventListener('change', () => {
+            console.log('--- NEIGHBORHOOD CHANGE EVENT FIRED ---');
             const selectedNeighborhoodName = neighborhoodSelect.value;
-            // NOVO: Log para depuração
-            console.log('Selected neighborhood in dropdown:', selectedNeighborhoodName);
+            console.log('Selected neighborhood in dropdown (raw value):', selectedNeighborhoodName);
             const selectedFeeData = deliveryFeesData.find(item => item.neighborhood === selectedNeighborhoodName);
-            // NOVO: Logs para depuração
-            console.log('Found selectedFeeData:', selectedFeeData);
-            // Garante que a taxa de entrega é um número
-            selectedAddress.deliveryFee = selectedFeeData ? parseFloat(selectedFeeData.deliveryFee || '0') : 0; 
-            // NOVO: Log para depuração
-            console.log('Setting selectedAddress.deliveryFee to:', selectedAddress.deliveryFee);
-            console.log('Type of selectedAddress.deliveryFee after change event:', typeof selectedAddress.deliveryFee);
-            updateOrderDisplay(); // Atualiza o total na sidebar
+            console.log('Found selectedFeeData for this neighborhood:', selectedFeeData);
+
+            // Ensure selectedAddress.deliveryFee is always a number
+            if (selectedFeeData && typeof selectedFeeData.deliveryFee === 'number') {
+                selectedAddress.deliveryFee = selectedFeeData.deliveryFee;
+            } else {
+                selectedAddress.deliveryFee = 0; // Default to 0 if data is not found or not a number
+                console.warn(`Delivery fee data for '${selectedNeighborhoodName}' is invalid or not found. Setting to 0.`);
+            }
+            
+            console.log('selectedAddress.deliveryFee after assignment in change event:', selectedAddress.deliveryFee, 'Type:', typeof selectedAddress.deliveryFee);
+            console.log('Full selectedAddress object after change event:', selectedAddress);
+
+            updateOrderDisplay(); // Update the total in the sidebar
+            console.log('--- NEIGHBORHOOD CHANGE EVENT ENDED ---');
         });
 
 
