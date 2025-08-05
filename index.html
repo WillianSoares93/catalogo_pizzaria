@@ -434,6 +434,16 @@
             color: #6b7280; /* gray-500 */
         }
 
+        /* Estilos para o botão dinâmico de checkout no modal de sugestão de bebidas */
+        .dynamic-checkout-button.green-gradient {
+            background: linear-gradient(135deg, #22c55e, #10b981); /* green-500 to green-600 */
+        }
+        .dynamic-checkout-button.green-gradient:hover {
+            background: linear-gradient(135deg, #10b981, #059669); /* darker green on hover */
+            transform: scale(1.02);
+            box-shadow: 0 5px 15px rgba(34, 197, 94, 0.4);
+        }
+
     </style>
 </head>
 <body>
@@ -508,13 +518,7 @@
                 </div>
             </div>
 
-            <!-- NOVO: Seção de Forma de Pagamento - O botão "Escolher Forma de Pagamento" foi removido daqui -->
-            <div id="paymentMethodDisplay" class="border-t border-gray-200 pt-4 mb-6 hidden">
-                <div class="flex justify-between items-center mb-2">
-                    <span class="text-gray-600">Forma de Pagamento:</span>
-                    <span id="selectedPaymentMethodText" class="font-bold text-red-600">Não selecionado</span>
-                </div>
-            </div>
+            <!-- Seção de Forma de Pagamento removida daqui -->
             
             <!-- Botão "Adicionar mais" -->
             <button onclick="backToMenu()" class="btn-add-more w-full py-3 text-white font-bold rounded-full mb-4">
@@ -585,12 +589,12 @@
             <span class="close-button" id="close-drink-suggestion-modal">&times;</span>
             <h3 class="text-xl font-bold text-gray-800 mb-4">Que tal adicionar uma bebida?</h3>
             <p class="text-gray-600 mb-6">Seu pedido não contém bebidas. Gostaria de adicionar alguma?</p>
-            <!-- Botões "Voltar para o Cardápio" e "Continuar sem bebidas" com novo estilo -->
+            <!-- Botões "Voltar para o Cardápio" e "Finalizar sem Bebidas" / "Finalizar com Bebidas" -->
             <button onclick="backToMenuFromDrinkSuggestion()" class="px-4 py-2 bg-gray-500 text-white rounded-lg font-bold hover:bg-gray-600 transition w-full mb-3 whitespace-nowrap text-sm">
                 Voltar ao Cardápio
             </button>
-            <button id="proceed-without-drinks" class="px-4 py-2 bg-gray-500 text-white rounded-lg font-bold hover:bg-gray-600 transition w-full mb-6 whitespace-nowrap text-sm">
-                Continuar sem bebidas
+            <button id="proceed-without-drinks" class="dynamic-checkout-button btn-order w-full py-3 text-white font-bold rounded-full mb-6 whitespace-nowrap text-sm">
+                Finalizar sem Bebidas
             </button>
             <div id="suggested-drinks-list" class="flex flex-col gap-3 mb-6">
                 <!-- Sugestões de bebidas serão inseridas aqui via JS -->
@@ -695,7 +699,7 @@
         // e não são mais usadas diretamente no frontend para carregamento.
         // Elas foram mantidas aqui apenas para referência.
         const CARDAPIO_CSV_URL_REF = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=664943668&single=true&output=csv';
-        const PROMOCOES_CSV_URL_REF = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=600393470&single=true&output=csv'; 
+        const PROMOCOES_CSV_URL_REF = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5V8OSL/pub?gid=600393470&single=true&output=csv'; 
 
         // Variáveis globais
         let order = [];
@@ -739,13 +743,13 @@
         const drinkSuggestionModal = document.getElementById('drink-suggestion-modal');
         const closeDrinkSuggestionModalBtn = document.getElementById('close-drink-suggestion-modal');
         const suggestedDrinksList = document.getElementById('suggested-drinks-list');
-        const proceedWithoutDrinksBtn = document.getElementById('proceed-without-drinks');
+        const proceedWithoutDrinksBtn = document.getElementById('proceed-without-drinks'); // Botão dinâmico
 
         // Referências para o modal de confirmação de pedido sem bebida
         const confirmNoDrinkModal = document.getElementById('confirm-no-drink-modal');
         const closeConfirmNoDrinkModalBtn = document.getElementById('close-confirm-no-drink-modal');
         const confirmNoDrinkYesBtn = document.getElementById('confirm-no-drink-yes');
-        const confirmNoDrinkNoBtn = document.getElementById('confirm-no-drink-no-btn'); // ID corrigido
+        const confirmNoDrinkNoBtn = document.getElementById('confirm-no-drink-no-btn');
 
         // Referências para o modal de instalação do PWA
         const installPromptModal = document.getElementById('install-prompt-modal');
@@ -757,9 +761,8 @@
         const closePaymentMethodModalBtn = document.getElementById('close-payment-method-modal');
         const paymentOptionsContainer = document.getElementById('payment-options-container');
         const confirmPaymentMethodBtn = document.getElementById('confirm-payment-method-btn');
-        const paymentMethodDisplay = document.getElementById('paymentMethodDisplay');
-        const selectedPaymentMethodText = document.getElementById('selectedPaymentMethodText');
-
+        // const paymentMethodDisplay = document.getElementById('paymentMethodDisplay'); // Removido
+        // const selectedPaymentMethodText = document.getElementById('selectedPaymentMethodText'); // Removido
 
         let currentPizzaData = {}; // Objeto para armazenar temporariamente os dados da pizza selecionada
         let firstHalfPizza = null; // Armazena os dados da primeira metade de uma pizza dividida
@@ -1480,13 +1483,13 @@
                 
                 document.getElementById('subtotal').textContent = 'R$ 0,00';
                 document.getElementById('total').textContent = 'R$ ' + deliveryFee.toFixed(2).replace('.', ',');
-                paymentMethodDisplay.classList.add('hidden'); // Esconde a forma de pagamento se o pedido estiver vazio
+                // paymentMethodDisplay.classList.add('hidden'); // Removido
                 selectedPaymentMethod = null; // Reseta a forma de pagamento
-                selectedPaymentMethodText.textContent = 'Não selecionado';
+                // selectedPaymentMethodText.textContent = 'Não selecionado'; // Removido
             } else {
                 console.log("DEBUG: Order not empty, selectedPaymentMethod is:", selectedPaymentMethod);
                 emptyOrderMessage.classList.add('hidden');
-                paymentMethodDisplay.classList.remove('hidden'); // Mostra a forma de pagamento se houver itens
+                // paymentMethodDisplay.classList.remove('hidden'); // Removido
                 
                 let itemsHTML = '';
                 let subtotal = 0;
@@ -1522,6 +1525,20 @@
                         </div>
                     `;
                 });
+
+                // Adiciona a forma de pagamento ao resumo do pedido se selecionada
+                if (selectedPaymentMethod) {
+                    itemsHTML += `
+                        <div class="flex justify-between items-center py-3 border-b border-gray-100">
+                            <div class="flex-1">
+                                <p class="font-medium text-gray-600">Forma de Pagamento:</p>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="font-bold text-red-600">${selectedPaymentMethod}</span>
+                            </div>
+                        </div>
+                    `;
+                }
                 
                 orderItemsContainer.innerHTML = itemsHTML;
                 
@@ -1530,6 +1547,7 @@
                 subtotalEl.textContent = 'R$ ' + subtotal.toFixed(2).replace('.', ',');
                 totalEl.textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
             }
+            updateDrinkSuggestionButtons(); // Atualiza o botão no modal de sugestão de bebidas
         }
         
         // Remover item do pedido
@@ -1620,7 +1638,7 @@
             toggleAddItemButtons(true); // Reativa todos os botões "Adicionar"
             toggleCategoryButtons(true); // Reativa todos os botões de categoria
             selectedPaymentMethod = null; // Reseta a forma de pagamento após o checkout
-            selectedPaymentMethodText.textContent = 'Não selecionado';
+            // selectedPaymentMethodText.textContent = 'Não selecionado'; // Removido
         }
 
         // Função de finalização do pedido (chamada pelo botão "Finalizar Pedido")
@@ -1789,17 +1807,9 @@
                                 description: item.description,
                                 category: item.category
                             }, this, null); // Passa o botão clicado e null para a imagem (bebidas não têm)
-                            drinkSuggestionModal.style.display = 'none'; // Fecha o modal após adicionar
-                            
-                            // NOVO: Verifica se a forma de pagamento já foi selecionada
-                            if (selectedPaymentMethod) {
-                                console.log("DEBUG: Bebida adicionada, pagamento já selecionado. Indo para WhatsApp.");
-                                proceedToWhatsappCheckout();
-                            } else {
-                                console.log("DEBUG: Bebida adicionada, pagamento NÃO selecionado. Abrindo modal de pagamento.");
-                                isCheckoutInitiated = true; // Define a flag para o próximo modal
-                                openPaymentMethodModal(true); 
-                            }
+                            // Não fecha o modal de sugestão de bebidas aqui
+                            // Não abre o modal de pagamento aqui
+                            updateDrinkSuggestionButtons(); // Atualiza o botão "Finalizar com/sem Bebidas"
                         }
                     });
                 });
@@ -1808,20 +1818,48 @@
                 suggestedDrinksList.innerHTML = '<p class="text-gray-500">Nenhuma bebida disponível para sugestão no momento.</p>';
             }
             drinkSuggestionModal.style.display = 'flex'; // Exibe o modal
+            updateDrinkSuggestionButtons(); // Garante que o botão esteja correto ao abrir o modal
         }
 
         // Listener para fechar o modal de sugestão de bebidas (X)
         closeDrinkSuggestionModalBtn.addEventListener('click', function() {
             drinkSuggestionModal.style.display = 'none';
-            // REMOVIDO: confirmNoDrinkModal.style.display = 'flex'; // Não mostra o modal de confirmação
             // Apenas fecha o modal de sugestão de bebidas
         });
 
-        // Listener para o botão "Continuar sem bebidas"
+        // Listener para o botão "Finalizar sem Bebidas" / "Finalizar com Bebidas"
         proceedWithoutDrinksBtn.addEventListener('click', function() {
             drinkSuggestionModal.style.display = 'none';
-            confirmNoDrinkModal.style.display = 'flex'; // Mostra o modal de confirmação
+            const hasDrinks = order.some(item => item.category === 'bebidas');
+
+            if (!hasDrinks) {
+                // Se não tem bebidas, mostra o modal de confirmação "Pedir sem uma bebida?"
+                confirmNoDrinkModal.style.display = 'flex';
+            } else {
+                // Se já tem bebidas, vai direto para a seleção de pagamento ou checkout
+                if (!selectedPaymentMethod) {
+                    isCheckoutInitiated = true;
+                    openPaymentMethodModal(true);
+                } else {
+                    proceedToWhatsappCheckout();
+                }
+            }
         });
+
+        // Funções para atualizar o botão "Finalizar sem Bebidas" / "Finalizar com Bebidas"
+        function updateDrinkSuggestionButtons() {
+            const hasDrinks = order.some(item => item.category === 'bebidas');
+            if (hasDrinks) {
+                proceedWithoutDrinksBtn.textContent = 'Finalizar com Bebidas';
+                proceedWithoutDrinksBtn.classList.add('green-gradient');
+                proceedWithoutDrinksBtn.classList.remove('btn-order');
+            } else {
+                proceedWithoutDrinksBtn.textContent = 'Finalizar sem Bebidas';
+                proceedWithoutDrinksBtn.classList.add('btn-order'); // Aplica o estilo laranja/vermelho
+                proceedWithoutDrinksBtn.classList.remove('green-gradient');
+            }
+        }
+
 
         // Listeners para o modal de confirmação de pedido sem bebida
         closeConfirmNoDrinkModalBtn.addEventListener('click', function() {
@@ -1906,7 +1944,7 @@
             if (selectedRadio) {
                 selectedPaymentMethod = selectedRadio.value;
                 console.log("DEBUG: Payment method selected:", selectedPaymentMethod);
-                selectedPaymentMethodText.textContent = selectedPaymentMethod;
+                // selectedPaymentMethodText.textContent = selectedPaymentMethod; // Removido
                 closePaymentMethodModal();
                 
                 // Lógica condicional baseada em como o modal foi aberto
@@ -1919,6 +1957,7 @@
                     // A sidebar já está aberta, então não precisa fazer nada além de fechar o modal.
                 }
                 isCheckoutInitiated = false; // Reseta a flag após a ação
+                updateOrderDisplay(); // Atualiza a sidebar para mostrar a forma de pagamento
             } else {
                 showMessageModal('Por favor, selecione uma forma de pagamento.');
             }
