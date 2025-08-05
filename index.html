@@ -589,9 +589,9 @@
             <span class="close-button" id="close-drink-suggestion-modal">&times;</span>
             <h3 class="text-xl font-bold text-gray-800 mb-4">Que tal adicionar uma bebida?</h3>
             <p class="text-gray-600 mb-6">Seu pedido não contém bebidas. Gostaria de adicionar alguma?</p>
-            <!-- Botões "Voltar para o Cardápio" e "Finalizar sem Bebidas" / "Finalizar com Bebidas" -->
-            <button onclick="backToMenuFromDrinkSuggestion()" class="px-4 py-2 bg-gray-500 text-white rounded-lg font-bold hover:bg-gray-600 transition w-full mb-3 whitespace-nowrap text-sm">
-                Voltar ao Cardápio
+            <!-- Botões "Voltar ao Pedido" e "Finalizar sem Bebidas" / "Finalizar com Bebidas" -->
+            <button onclick="backToOrderSidebarFromDrinkSuggestion()" class="px-4 py-2 bg-gray-500 text-white rounded-lg font-bold hover:bg-gray-600 transition w-full mb-3 whitespace-nowrap text-sm">
+                Voltar ao Pedido
             </button>
             <button id="proceed-without-drinks" class="dynamic-checkout-button btn-order w-full py-3 text-white font-bold rounded-full mb-6 whitespace-nowrap text-sm">
                 Finalizar sem Bebidas
@@ -602,7 +602,7 @@
         </div>
     </div>
 
-    <!-- NOVO: Modal de Confirmação para Pedido sem Bebida -->
+    <!-- NOVO: Modal de Confirmação para Pedido sem Bebida (Mantido, mas não mais usado pelo 'Finalizar sem Bebidas') -->
     <div id="confirm-no-drink-modal" class="message-modal">
         <div class="modal-content">
             <span class="close-button" id="close-confirm-no-drink-modal">&times;</span>
@@ -788,6 +788,8 @@
             if (orderSidebar.classList.contains('translate-x-0')) {
                 // Se a sidebar está abrindo, esconde o botão de promoção
                 promotionButton.style.display = 'none';
+                // Rola para o final da sidebar
+                orderSidebar.scrollTop = orderSidebar.scrollHeight;
             } else {
                 // Se a sidebar está fechando, mostra o botão de promoção (se houver promoções ativas)
                 updatePromotionButtonVisibility();
@@ -1674,16 +1676,18 @@
             }
         }
 
-        // Função para voltar ao menu
+        // Função para voltar ao menu (agora apenas para o botão "Adicionar mais")
         function backToMenu() {
             closeOrderSidebar();
             document.getElementById('menu').scrollIntoView({ behavior: 'smooth' });
         }
 
-        // Nova função para voltar ao menu a partir do modal de sugestão de bebidas
-        function backToMenuFromDrinkSuggestion() {
+        // NOVA FUNÇÃO: Para voltar à sidebar do pedido a partir do modal de sugestão de bebidas
+        function backToOrderSidebarFromDrinkSuggestion() {
             drinkSuggestionModal.style.display = 'none'; // Fecha o modal de sugestão de bebidas
-            backToMenu(); // Chama a função existente para rolar para o menu
+            // A sidebar do pedido já deve estar aberta, então não precisa reabri-la.
+            // Apenas garante que ela esteja visível e rola para o final.
+            orderSidebar.scrollTop = orderSidebar.scrollHeight;
         }
 
         // Funções de Promoção
@@ -1833,17 +1837,12 @@
             drinkSuggestionModal.style.display = 'none';
             const hasDrinks = order.some(item => item.category === 'bebidas');
 
-            if (!hasDrinks) {
-                // Se não tem bebidas, mostra o modal de confirmação "Pedir sem uma bebida?"
-                confirmNoDrinkModal.style.display = 'flex';
+            // Se não tem bebidas, vai direto para a seleção de pagamento ou checkout
+            if (!selectedPaymentMethod) {
+                isCheckoutInitiated = true;
+                openPaymentMethodModal(true);
             } else {
-                // Se já tem bebidas, vai direto para a seleção de pagamento ou checkout
-                if (!selectedPaymentMethod) {
-                    isCheckoutInitiated = true;
-                    openPaymentMethodModal(true);
-                } else {
-                    proceedToWhatsappCheckout();
-                }
+                proceedToWhatsappCheckout();
             }
         });
 
@@ -1862,7 +1861,7 @@
         }
 
 
-        // Listeners para o modal de confirmação de pedido sem bebida
+        // Listeners para o modal de confirmação de pedido sem bebida (mantidos, mas não mais acionados pelo 'Finalizar sem Bebidas')
         closeConfirmNoDrinkModalBtn.addEventListener('click', function() {
             confirmNoDrinkModal.style.display = 'none';
             drinkSuggestionModal.style.display = 'flex'; // Volta para o modal de sugestão de bebida
