@@ -1628,32 +1628,24 @@
         function updateOrderDisplay() {
             console.log('DEBUG: updateOrderDisplay: Atualizando exibição do pedido.');
             const orderItemsContainer = document.getElementById('orderItems');
-            
+            let subtotal = 0;
+
+            // Calcula o subtotal dos itens no pedido
+            order.forEach((item) => {
+                subtotal += item.price;
+            });
+
             if (order.length === 0) {
                 emptyOrderMessage.classList.remove('hidden');
                 orderItemsContainer.innerHTML = '';
                 orderItemsContainer.appendChild(emptyOrderMessage);
-                
                 document.getElementById('subtotal').textContent = 'R$ 0,00';
-                // NEW LOGIC FOR DELIVERY FEE DISPLAY - START
-                deliveryFeeDisplay.textContent = ''; // Clear text content
-                deliveryFeeDisplay.classList.add('hidden'); // Hide the span
-                informAddressBtn.classList.remove('hidden'); // Show the button
-                editDeliveryAddressBtn.classList.add('hidden'); // Hide edit button
-                // NEW LOGIC FOR DELIVERY FEE DISPLAY - END
-                totalEl.textContent = 'R$ 0,00';
-                selectedPaymentMethod = null;
-                selectedAddress.deliveryFee = 0.00;
-                hideAddressSummary();
-                console.log('DEBUG: updateOrderDisplay: Pedido vazio, UI resetada.');
+                selectedPaymentMethod = null; // Reseta o método de pagamento se o pedido estiver vazio
             } else {
                 emptyOrderMessage.classList.add('hidden');
                 
                 let itemsHTML = '';
-                let subtotal = 0;
-                
                 order.forEach((item, index) => {
-                    subtotal += item.price;
                     let itemDescription = item.description || ''; 
                     let itemName = item.name;
 
@@ -1687,56 +1679,55 @@
                         </div>
                     `;
                 });
-                
                 orderItemsContainer.innerHTML = itemsHTML;
                 subtotalEl.textContent = 'R$ ' + subtotal.toFixed(2).replace('.', ',');
-                
-                // NEW LOGIC FOR DELIVERY FEE DISPLAY - START
-                if (selectedAddress.bairro) {
-                    deliveryFeeDisplay.textContent = 'R$ ' + selectedAddress.deliveryFee.toFixed(2).replace('.', ',');
-                    deliveryFeeDisplay.classList.remove('hidden');
-                    informAddressBtn.classList.add('hidden');
-                    editDeliveryAddressBtn.classList.remove('hidden');
-                } else {
-                    deliveryFeeDisplay.textContent = ''; // Clear text content
-                    deliveryFeeDisplay.classList.add('hidden'); // Hide the span
-                    informAddressBtn.classList.remove('hidden'); // Show the button
-                    editDeliveryAddressBtn.classList.add('hidden'); // Hide edit button
-                }
-                // NEW LOGIC FOR DELIVERY FEE DISPLAY - END
-                
-                const total = subtotal + selectedAddress.deliveryFee; // Soma a taxa dinâmica
-                totalEl.textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
-
-                // Adiciona a forma de pagamento ao resumo do pedido se selecionada
-                if (selectedPaymentMethod) {
-                    let paymentMethodText = '';
-                    let trocoInfo = '';
-
-                    if (typeof selectedPaymentMethod === 'object' && selectedPaymentMethod.method === 'Dinheiro') {
-                        paymentMethodText = selectedPaymentMethod.method;
-                        trocoInfo = `
-                            <p class="text-sm text-gray-500 mt-1">Troco para: R$ ${selectedPaymentMethod.trocoPara.toFixed(2).replace('.', ',')}</p>
-                            <p class="text-sm text-gray-500">Troco: <span class="font-bold text-green-600">R$ ${selectedPaymentMethod.trocoTotal.toFixed(2).replace('.', ',')}</span></p>
-                        `;
-                    } else {
-                        paymentMethodText = selectedPaymentMethod;
-                    }
-
-                    orderItemsContainer.insertAdjacentHTML('beforeend', `
-                        <div class="flex justify-between items-start py-3">
-                            <div class="flex-1">
-                                <p class="font-medium text-gray-600">Forma de Pagamento:</p>
-                                ${trocoInfo}
-                            </div>
-                            <div class="flex items-center">
-                                <span class="font-bold text-red-600">${paymentMethodText}</span>
-                            </div>
-                        </div>
-                    `);
-                }
-                console.log('DEBUG: updateOrderDisplay: Pedido atualizado. Subtotal:', subtotal, 'Total:', total); // Log
             }
+            
+            // Lógica para exibir a taxa de entrega e o botão/ícone de edição
+            if (selectedAddress.bairro) {
+                deliveryFeeDisplay.textContent = 'R$ ' + selectedAddress.deliveryFee.toFixed(2).replace('.', ',');
+                deliveryFeeDisplay.classList.remove('hidden');
+                informAddressBtn.classList.add('hidden');
+                editDeliveryAddressBtn.classList.remove('hidden');
+            } else {
+                deliveryFeeDisplay.textContent = ''; // Limpa o texto
+                deliveryFeeDisplay.classList.add('hidden'); // Esconde o span do valor
+                informAddressBtn.classList.remove('hidden'); // Mostra o botão "Informar Endereço"
+                editDeliveryAddressBtn.classList.add('hidden'); // Esconde o ícone de edição
+            }
+            
+            const total = subtotal + selectedAddress.deliveryFee; // O total sempre inclui a taxa de entrega, mesmo que o subtotal seja 0
+            totalEl.textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
+
+            // Adiciona a forma de pagamento ao resumo do pedido se selecionada
+            if (selectedPaymentMethod) {
+                let paymentMethodText = '';
+                let trocoInfo = '';
+
+                if (typeof selectedPaymentMethod === 'object' && selectedPaymentMethod.method === 'Dinheiro') {
+                    paymentMethodText = selectedPaymentMethod.method;
+                    trocoInfo = `
+                        <p class="text-sm text-gray-500 mt-1">Troco para: R$ ${selectedPaymentMethod.trocoPara.toFixed(2).replace('.', ',')}</p>
+                        <p class="text-sm text-gray-500">Troco: <span class="font-bold text-green-600">R$ ${selectedPaymentMethod.trocoTotal.toFixed(2).replace('.', ',')}</span></p>
+                    `;
+                } else {
+                    paymentMethodText = selectedPaymentMethod;
+                }
+
+                orderItemsContainer.insertAdjacentHTML('beforeend', `
+                    <div class="flex justify-between items-start py-3">
+                        <div class="flex-1">
+                            <p class="font-medium text-gray-600">Forma de Pagamento:</p>
+                            ${trocoInfo}
+                        </div>
+                        <div class="flex items-center">
+                            <span class="font-bold text-red-600">${paymentMethodText}</span>
+                        </div>
+                    </div>
+                `);
+            }
+            console.log('DEBUG: updateOrderDisplay: Pedido atualizado. Subtotal:', subtotal, 'Total:', total); // Log
+            
             updateDrinkSuggestionButtons(); 
             updateAddressDisplay(); // Garante que o resumo do endereço esteja atualizado
         }
@@ -1762,8 +1753,8 @@
         
         function clearOrder() {
             console.log('DEBUG: clearOrder: Limpando pedido.'); // Log
-            order = [];
-            updateOrderDisplay();
+            order = []; // Apenas limpa o array de itens do pedido
+            updateOrderDisplay(); // Isso agora atualizará a UI corretamente, mantendo o endereço se já informado
             updateCartCount();
             firstHalfPizza = null;
             isSelectingSecondHalf = false;
@@ -1771,15 +1762,9 @@
             isFirstHalfPromotional = false; 
             toggleAddItemButtons(true); 
             toggleCategoryButtons(true);
-            selectedAddress = { // Reseta o objeto de endereço
-                bairro: null,
-                rua: null,
-                numero: null,
-                referencia: null,
-                deliveryFee: 0.00
-            };
+            // NÃO RESETA selectedAddress AQUI, ele deve persistir
             updateCheckoutButtonText(); // Atualiza o texto do botão de checkout
-            hideAddressSummary(); // Esconde o resumo do endereço
+            // hideAddressSummary(); // Isso é tratado por updateAddressDisplay agora
             console.log('DEBUG: Pedido limpo e estados resetados.'); // Log
         }
         
