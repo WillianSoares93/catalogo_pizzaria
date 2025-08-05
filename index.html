@@ -508,6 +508,11 @@
                     <span class="text-gray-600">Subtotal:</span>
                     <span id="subtotal" class="font-bold">R$ 0,00</span>
                 </div>
+                <!-- Seção de taxa de entrega fixa -->
+                <div class="flex justify-between mb-2">
+                    <span class="text-gray-600">Taxa de entrega:</span>
+                    <span id="fixedDeliveryFeeDisplay" class="font-bold">R$ 5,00</span>
+                </div>
                 
                 <div class="flex justify-between text-lg font-bold">
                     <span>Total:</span>
@@ -720,14 +725,18 @@
         let deferredPrompt; 
         let selectedPaymentMethod = null; 
         let isCheckoutInitiated = false; 
+        
+        // NOVO: Taxa de entrega fixa
+        const fixedDeliveryFee = 5.00; 
 
         // As variáveis para o endereço foram removidas.
+        // selectedAddress não é mais necessário para frete dinâmico, mas mantido com valor padrão.
         let selectedAddress = {
-            neighborhood: null,
+            neighborhood: 'Entrega Fixa', // Valor padrão
             street: '',
             number: '',
             reference: '',
-            deliveryFee: 0 // Mantido para compatibilidade, mas não será usado.
+            deliveryFee: fixedDeliveryFee // Usa a taxa fixa
         };
         // A variável isAddressInputVisible foi removida.
 
@@ -749,7 +758,7 @@
         const promotionButton = document.getElementById('promotion-button'); 
         const cartButton = document.getElementById('cart-button'); 
         const subtotalEl = document.getElementById('subtotal');
-        // dynamicDeliveryFeeEl foi removido.
+        const fixedDeliveryFeeDisplay = document.getElementById('fixedDeliveryFeeDisplay'); // NOVO: Elemento para a taxa de entrega fixa
         const totalEl = document.getElementById('total');
         const checkoutButton = document.getElementById('checkoutButton'); // Referência ao botão Finalizar Pedido
 
@@ -1461,11 +1470,10 @@
                 orderItemsContainer.appendChild(emptyOrderMessage);
                 
                 document.getElementById('subtotal').textContent = 'R$ 0,00';
-                // dynamicDeliveryFeeEl.textContent = 'R$ 0,00'; // Reseta taxa de entrega
+                fixedDeliveryFeeDisplay.textContent = 'R$ ' + fixedDeliveryFee.toFixed(2).replace('.', ','); // Exibe a taxa fixa
                 totalEl.textContent = 'R$ 0,00'; // Reseta total
                 selectedPaymentMethod = null; 
-                selectedAddress.deliveryFee = 0; // Reseta taxa de entrega no objeto de endereço
-                // hideAddressSummary(); // Esconde o resumo do endereço
+                selectedAddress.deliveryFee = fixedDeliveryFee; // Garante que o objeto de endereço tenha a taxa fixa
             } else {
                 emptyOrderMessage.classList.add('hidden');
                 
@@ -1511,26 +1519,9 @@
                 orderItemsContainer.innerHTML = itemsHTML;
                 subtotalEl.textContent = 'R$ ' + subtotal.toFixed(2).replace('.', ',');
                 
-                // NOVO: Logs de depuração para selectedAddress.deliveryFee
-                console.log('--- DEBUG: INSIDE updateOrderDisplay ---');
-                console.log('DEBUG: Current selectedAddress object at start of updateOrderDisplay:', JSON.stringify(selectedAddress));
-                console.log('DEBUG: selectedAddress.deliveryFee (raw value at start of updateOrderDisplay):', selectedAddress.deliveryFee);
-
-                // Garante que selectedAddress.deliveryFee é um número antes de chamar toFixed
-                let currentDeliveryFeeValue = selectedAddress.deliveryFee;
-                if (currentDeliveryFeeValue === undefined || currentDeliveryFeeValue === null) {
-                    currentDeliveryFeeValue = 0;
-                    console.warn('DEBUG: updateOrderDisplay - selectedAddress.deliveryFee was undefined/null, reset to 0 for calculation.');
-                }
-                const currentDeliveryFee = parseFloat(currentDeliveryFeeValue); 
-                console.log('DEBUG: updateOrderDisplay - currentDeliveryFee (after parseFloat and check):', currentDeliveryFee, 'Type:', typeof currentDeliveryFee);
+                fixedDeliveryFeeDisplay.textContent = 'R$ ' + fixedDeliveryFee.toFixed(2).replace('.', ','); // Exibe a taxa fixa
                 
-                // This is the line 1559 where the error is reported
-                // Ensure the value passed to toFixed is always a number
-                // dynamicDeliveryFeeEl.textContent = 'R$ ' + feeToDisplay.toFixed(2).replace('.', ','); // Removido
-                console.trace('DEBUG: Call stack for toFixed error point (if it happens)'); // Add this
-
-                const total = subtotal; // Removido selectedAddress.deliveryFee
+                const total = subtotal + fixedDeliveryFee; // Soma a taxa fixa
                 totalEl.textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
 
                 // Adiciona a forma de pagamento ao resumo do pedido se selecionada
@@ -1560,7 +1551,6 @@
                         </div>
                     `);
                 }
-                console.log('--- DEBUG: END OF updateOrderDisplay ---');
             }
             updateDrinkSuggestionButtons(); 
         }
@@ -1593,13 +1583,12 @@
             toggleAddItemButtons(true); 
             toggleCategoryButtons(true);
             selectedAddress = { // Reseta o endereço também
-                neighborhood: null,
+                neighborhood: 'Entrega Fixa',
                 street: '',
                 number: '',
                 reference: '',
-                deliveryFee: 0
+                deliveryFee: fixedDeliveryFee
             };
-            // hideAddressSummary(); // Esconde o resumo do endereço
             updateCheckoutButtonText(); // Atualiza o texto do botão de checkout
         }
         
@@ -1628,9 +1617,10 @@
                 subtotal += item.price;
             });
 
-            const total = subtotal; // Removido selectedAddress.deliveryFee
+            const total = subtotal + fixedDeliveryFee; // Usa a taxa fixa
 
             message += `\nSubtotal: R$ ${subtotal.toFixed(2).replace('.', ',')}`;
+            message += `\nTaxa de entrega: R$ ${fixedDeliveryFee.toFixed(2).replace('.', ',')}`; // Mensagem de taxa fixa
             message += `\nTotal: R$ ${total.toFixed(2).replace('.', ',')}`;
             
             // As informações de endereço foram removidas.
@@ -1986,7 +1976,7 @@
             order.forEach(item => {
                 currentSubtotal += item.price;
             });
-            return currentSubtotal; // Removido selectedAddress.deliveryFee
+            return currentSubtotal + fixedDeliveryFee; // Soma a taxa de entrega fixa
         }
 
         confirmPaymentMethodBtn.addEventListener('click', () => {
@@ -2148,14 +2138,12 @@
 
                 const cardapioCsvText = data.cardapio;
                 const promocoesCsvText = data.promocoes;
-                // deliveryFeesCsvText foi removida.
+                // deliveryFeesCsvText não é mais esperado do backend.
 
                 allMenuData = parseCsvData(cardapioCsvText, 'cardapio');
                 allPromotionsData = parseCsvData(promocoesCsvText, 'promocoes');
-                // deliveryFeesData = parseCsvData(deliveryFeesCsvText, 'deliveryFees'); // Removido
+                // deliveryFeesData não é mais parseado.
                 
-                // console.log('DEBUG: Delivery Fees Data loaded (final state):', deliveryFeesData); // Removido
-
                 let orderedUniqueCategories = [];
                 const seenCategories = new Set();
                 allMenuData.forEach(item => {
@@ -2167,7 +2155,6 @@
                 
                 createCategoryButtons(orderedUniqueCategories); 
                 populateMenu(allMenuData, orderedUniqueCategories); 
-                // populateNeighborhoodDropdown(); // Removido
                 setupCategoryObserver(); 
 
                 updatePromotionButtonVisibility(); 
