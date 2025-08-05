@@ -549,7 +549,7 @@
                     <label for="referencePointInput" class="block text-gray-700 text-sm font-bold mb-2">Ponto de Referência (Opcional):</label>
                     <input type="text" id="referencePointInput" placeholder="Ex: Ao lado da padaria" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
                 </div>
-                <button id="confirmAddressBtn" class="btn-order w-full py-3 text-white font-bold rounded-full">
+                <button id="confirmAddressBtn" onclick="confirmAddress()" class="btn-order w-full py-3 text-white font-bold rounded-full">
                     Confirmar Endereço
                 </button>
             </div>
@@ -1555,9 +1555,15 @@
                 orderItemsContainer.innerHTML = itemsHTML;
                 subtotalEl.textContent = 'R$ ' + subtotal.toFixed(2).replace('.', ',');
                 
+                // NOVO: Logs de depuração para selectedAddress.deliveryFee
+                console.log('Inside updateOrderDisplay - selectedAddress:', selectedAddress);
+                console.log('Inside updateOrderDisplay - selectedAddress.deliveryFee:', selectedAddress.deliveryFee);
+
                 // Atualiza a taxa de entrega e o total com base no selectedAddress
-                dynamicDeliveryFeeEl.textContent = 'R$ ' + selectedAddress.deliveryFee.toFixed(2).replace('.', ',');
-                const total = subtotal + selectedAddress.deliveryFee;
+                // Garante que selectedAddress.deliveryFee é um número antes de chamar toFixed
+                const currentDeliveryFee = typeof selectedAddress.deliveryFee === 'number' ? selectedAddress.deliveryFee : 0;
+                dynamicDeliveryFeeEl.textContent = 'R$ ' + currentDeliveryFee.toFixed(2).replace('.', ',');
+                const total = subtotal + currentDeliveryFee;
                 totalEl.textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
 
                 // Adiciona a forma de pagamento ao resumo do pedido se selecionada
@@ -1808,8 +1814,14 @@
         // Listener para o dropdown de bairro para atualizar a taxa de entrega
         neighborhoodSelect.addEventListener('change', () => {
             const selectedNeighborhoodName = neighborhoodSelect.value;
+            // NOVO: Log para depuração
+            console.log('Selected neighborhood in dropdown:', selectedNeighborhoodName);
             const selectedFeeData = deliveryFeesData.find(item => item.neighborhood === selectedNeighborhoodName);
-            selectedAddress.deliveryFee = selectedFeeData ? selectedFeeData.deliveryFee : 0;
+            // NOVO: Logs para depuração
+            console.log('Found selectedFeeData:', selectedFeeData);
+            selectedAddress.deliveryFee = selectedFeeData ? selectedFeeData.deliveryFee : 0; 
+            // NOVO: Log para depuração
+            console.log('Setting selectedAddress.deliveryFee to:', selectedAddress.deliveryFee);
             updateOrderDisplay(); // Atualiza o total na sidebar
         });
 
@@ -2197,7 +2209,7 @@
                     if (window.scrollY <= stickyHeaderHeight + 20) {
                         newActiveCategory = categorySections[0].id.replace('-section', ''); 
                     } else {
-                        for (let i = 0; i < categorySections.length; i++) {
+                        for (let i = 0; i = 0; i < categorySections.length; i++) {
                             const section = categorySections[i];
                             const rect = section.getBoundingClientRect();
                             if (rect.bottom > 0 && rect.top < window.innerHeight) {
@@ -2268,6 +2280,9 @@
                 allPromotionsData = parseCsvData(promocoesCsvText, 'promocoes');
                 deliveryFeesData = parseCsvData(deliveryFeesCsvText, 'deliveryFees'); // NOVO: Popula dados de frete
                 
+                // NOVO: Log para depuração dos dados de frete carregados
+                console.log('Delivery Fees Data loaded:', deliveryFeesData);
+
                 let orderedUniqueCategories = [];
                 const seenCategories = new Set();
                 allMenuData.forEach(item => {
