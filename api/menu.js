@@ -10,7 +10,7 @@ import fetch from 'node-fetch';
 // Verifique se as URLs estão corretas e se as planilhas estão configuradas como "Qualquer pessoa com o link pode ver".
 const CARDAPIO_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=664943668&single=true&output=csv'; 
 const PROMOCOES_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=600393470&single=true&output=csv'; 
-// A URL de DELIVERY_FEES_CSV_URL foi removida.
+// A constante DELIVERY_FEES_CSV_URL FOI REMOVIDA COMPLETAMENTE.
 
 export default async (req, res) => {
     res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate'); 
@@ -25,7 +25,7 @@ export default async (req, res) => {
             throw new Error(`Falha na busca do cardápio (rede): ${err.message}`);
         });
         if (!cardapioResponse.ok) {
-            const errorText = await cardapioResponse.text(); // Tenta obter mais informações do corpo da resposta
+            const errorText = await cardapioResponse.text(); 
             console.error(`Vercel Function: Cardápio Response NOT OK. Status: ${cardapioResponse.status}, StatusText: ${cardapioResponse.statusText}, Corpo: ${errorText.substring(0, 200)}...`);
             throw new Error(`Erro ao buscar o cardápio: ${cardapioResponse.statusText}`);
         }
@@ -46,16 +46,15 @@ export default async (req, res) => {
         const promocoesData = await promocoesResponse.text();
         console.log('Vercel Function: Promoções buscadas com sucesso.');
 
-        // A busca por Taxas de Entrega foi removida.
-        // Certifique-se de que não há nenhuma outra referência a DELIVERY_FEES_CSV_URL ou a uma chamada fetch para ela aqui.
-        // deliveryFeesData não é mais retornado.
+        // A busca por Taxas de Entrega foi REMOVIDA COMPLETAMENTE deste arquivo.
+        // Não há mais nenhuma referência a DELIVERY_FEES_CSV_URL ou a uma chamada fetch para ela aqui.
 
-        console.log('Vercel Function: Todos os dados (exceto taxas de entrega) buscados com sucesso. Enviando resposta.');
+        console.log('Vercel Function: Todos os dados (cardápio e promoções) buscados com sucesso. Enviando resposta.');
 
         res.status(200).json({
             cardapio: cardapioData,
             promocoes: promocoesData
-            // deliveryFees não é mais enviado.
+            // deliveryFees NÃO é mais enviado.
         });
 
     } catch (error) {
