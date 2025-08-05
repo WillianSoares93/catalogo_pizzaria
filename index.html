@@ -2253,7 +2253,10 @@
             try {
                 const response = await fetch('/api/menu'); 
                 if (!response.ok) {
-                    throw new Error(`Erro ao buscar dados da API: ${response.statusText}`);
+                    // Log the full response status and text for debugging
+                    const errorText = await response.text();
+                    console.error('Erro ao buscar dados da API:', response.status, errorText);
+                    throw new Error(`Erro ao buscar dados da API: ${response.statusText || errorText}`);
                 }
                 const data = await response.json(); 
 
