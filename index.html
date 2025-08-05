@@ -539,7 +539,15 @@
                 <!-- Seção de taxa de entrega dinâmica -->
                 <div id="deliveryFeeSection" class="flex justify-between mb-2">
                     <span class="text-gray-600">Taxa de entrega:</span>
-                    <span id="deliveryFeeDisplay" class="font-bold">R$ 0,00</span>
+                    <div id="deliveryFeeContainer" class="flex items-center">
+                        <span id="deliveryFeeDisplay" class="font-bold"></span>
+                        <button id="informAddressBtn" class="ml-2 px-3 py-1 bg-red-600 text-white rounded-md text-sm hover:bg-red-700 transition hidden">
+                            Informar Endereço
+                        </button>
+                        <button id="editDeliveryAddressBtn" class="ml-2 text-blue-500 hover:text-blue-700 text-sm hidden">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </div>
                 </div>
                 
                 <div class="flex justify-between text-lg font-bold">
@@ -882,6 +890,9 @@
         const neighborhoodDisplay = document.getElementById('neighborhood-display');
         const referenceDisplay = document.getElementById('reference-display');
         const editAddressBtn = document.getElementById('editAddressBtn');
+        // NOVO: Referências para os novos elementos de taxa de entrega
+        const informAddressBtn = document.getElementById('informAddressBtn');
+        const editDeliveryAddressBtn = document.getElementById('editDeliveryAddressBtn');
 
 
         let currentPizzaData = {}; 
@@ -1615,7 +1626,7 @@
         
         // Atualizar exibição do pedido
         function updateOrderDisplay() {
-            console.log('DEBUG: updateOrderDisplay: Atualizando exibição do pedido.'); // Log
+            console.log('DEBUG: updateOrderDisplay: Atualizando exibição do pedido.');
             const orderItemsContainer = document.getElementById('orderItems');
             
             if (order.length === 0) {
@@ -1624,12 +1635,17 @@
                 orderItemsContainer.appendChild(emptyOrderMessage);
                 
                 document.getElementById('subtotal').textContent = 'R$ 0,00';
-                deliveryFeeDisplay.textContent = 'R$ 0,00'; // Reseta a taxa de entrega
-                totalEl.textContent = 'R$ 0,00'; // Reseta total
-                selectedPaymentMethod = null; 
-                selectedAddress.deliveryFee = 0.00; // Garante que o objeto de endereço tenha a taxa 0
-                hideAddressSummary(); // Esconde o resumo do endereço
-                console.log('DEBUG: updateOrderDisplay: Pedido vazio, UI resetada.'); // Log
+                // NEW LOGIC FOR DELIVERY FEE DISPLAY - START
+                deliveryFeeDisplay.textContent = ''; // Clear text content
+                deliveryFeeDisplay.classList.add('hidden'); // Hide the span
+                informAddressBtn.classList.remove('hidden'); // Show the button
+                editDeliveryAddressBtn.classList.add('hidden'); // Hide edit button
+                // NEW LOGIC FOR DELIVERY FEE DISPLAY - END
+                totalEl.textContent = 'R$ 0,00';
+                selectedPaymentMethod = null;
+                selectedAddress.deliveryFee = 0.00;
+                hideAddressSummary();
+                console.log('DEBUG: updateOrderDisplay: Pedido vazio, UI resetada.');
             } else {
                 emptyOrderMessage.classList.add('hidden');
                 
@@ -1675,8 +1691,19 @@
                 orderItemsContainer.innerHTML = itemsHTML;
                 subtotalEl.textContent = 'R$ ' + subtotal.toFixed(2).replace('.', ',');
                 
-                // Atualiza a exibição da taxa de entrega
-                deliveryFeeDisplay.textContent = 'R$ ' + selectedAddress.deliveryFee.toFixed(2).replace('.', ',');
+                // NEW LOGIC FOR DELIVERY FEE DISPLAY - START
+                if (selectedAddress.bairro) {
+                    deliveryFeeDisplay.textContent = 'R$ ' + selectedAddress.deliveryFee.toFixed(2).replace('.', ',');
+                    deliveryFeeDisplay.classList.remove('hidden');
+                    informAddressBtn.classList.add('hidden');
+                    editDeliveryAddressBtn.classList.remove('hidden');
+                } else {
+                    deliveryFeeDisplay.textContent = ''; // Clear text content
+                    deliveryFeeDisplay.classList.add('hidden'); // Hide the span
+                    informAddressBtn.classList.remove('hidden'); // Show the button
+                    editDeliveryAddressBtn.classList.add('hidden'); // Hide edit button
+                }
+                // NEW LOGIC FOR DELIVERY FEE DISPLAY - END
                 
                 const total = subtotal + selectedAddress.deliveryFee; // Soma a taxa dinâmica
                 totalEl.textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
@@ -2462,6 +2489,18 @@
             }
         }
 
+        // NOVO: Event listener para o botão "Informar Endereço"
+        informAddressBtn.addEventListener('click', function() {
+            console.log('DEBUG: Botão Informar Endereço clicado.');
+            showAddressInputModal();
+        });
+
+        // NOVO: Event listener para o botão "Editar Endereço" ao lado da taxa de entrega
+        editDeliveryAddressBtn.addEventListener('click', function() {
+            console.log('DEBUG: Botão Editar Endereço (taxa) clicado.');
+            showAddressInputModal();
+        });
+
 
         document.addEventListener('DOMContentLoaded', async function() {
             try {
@@ -2501,7 +2540,7 @@
 
                 updatePromotionButtonVisibility(); 
                 updateCartCount(); 
-                updateOrderDisplay(); 
+                updateOrderDisplay(); // Chamada inicial para configurar a exibição da taxa de entrega
                 updateCheckoutButtonText(); 
                 showAddressSummary(); 
                 console.log('DEBUG: DOMContentLoaded: UI atualizada.');
