@@ -514,7 +514,8 @@
                     <span class="text-gray-600">Forma de Pagamento:</span>
                     <span id="selectedPaymentMethodText" class="font-bold text-red-600">Não selecionado</span>
                 </div>
-                <button onclick="openPaymentMethodModal(false)" class="w-full py-2 bg-gray-200 text-gray-800 rounded-md text-sm hover:bg-gray-300 transition">
+                <!-- Botão "Escolher Forma de Pagamento" com novo estilo -->
+                <button onclick="openPaymentMethodModal(false)" class="w-full py-3 bg-red-600 text-white font-bold rounded-full text-base hover:bg-red-700 transition shadow-md mt-2">
                     Escolher Forma de Pagamento
                 </button>
             </div>
@@ -588,11 +589,11 @@
             <span class="close-button" id="close-drink-suggestion-modal">&times;</span>
             <h3 class="text-xl font-bold text-gray-800 mb-4">Que tal adicionar uma bebida?</h3>
             <p class="text-gray-600 mb-6">Seu pedido não contém bebidas. Gostaria de adicionar alguma?</p>
-            <!-- NOVO: Botões movidos para antes da lista de bebidas -->
-            <button onclick="backToMenuFromDrinkSuggestion()" class="px-6 py-3 bg-gray-500 text-white rounded-lg font-bold hover:bg-gray-600 transition w-full mb-3">
+            <!-- Botões "Voltar para o Cardápio" e "Continuar sem bebidas" com novo estilo -->
+            <button onclick="backToMenuFromDrinkSuggestion()" class="px-4 py-2 bg-gray-500 text-white rounded-lg font-bold hover:bg-gray-600 transition w-full mb-3 whitespace-nowrap text-sm">
                 Voltar para o Cardápio
             </button>
-            <button id="proceed-without-drinks" class="px-6 py-3 bg-gray-500 text-white rounded-lg font-bold hover:bg-gray-600 transition w-full mb-6">
+            <button id="proceed-without-drinks" class="px-4 py-2 bg-gray-500 text-white rounded-lg font-bold hover:bg-gray-600 transition w-full mb-6 whitespace-nowrap text-sm">
                 Continuar sem bebidas
             </button>
             <div id="suggested-drinks-list" class="flex flex-col gap-3 mb-6">
@@ -1690,7 +1691,7 @@
                         <span class="price">R$ ${promo.promoPrice.toFixed(2).replace('.', ',')}</span>
                         <button class="add-promo-to-order-btn px-3 py-1 bg-green-600 text-white rounded-full text-sm hover:bg-green-700 transition mt-2"
                                 data-promo-id="${promo.id}" data-image-url="${promoImageUrl || ''}">
-                            Adicionar à Sacola
+                            Adicionar ao Pedido
                         </button>
                     `;
                     promotionsListEl.appendChild(promoDiv);
@@ -1816,7 +1817,7 @@
         // Listener para fechar o modal de sugestão de bebidas (X)
         closeDrinkSuggestionModalBtn.addEventListener('click', function() {
             drinkSuggestionModal.style.display = 'none';
-            confirmNoDrinkModal.style.display = 'flex'; // Mostra o modal de confirmação
+            // REMOVIDO: confirmNoDrinkModal.style.display = 'flex'; // Não mostra o modal de confirmação
         });
 
         // Listener para o botão "Continuar sem bebidas"
