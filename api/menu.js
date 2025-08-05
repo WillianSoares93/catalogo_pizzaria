@@ -13,10 +13,12 @@
 
 import fetch from 'node-fetch';
 
-// ATENÇÃO: Substitua estas URLs pelas URLs CSV DAS SUAS PLANILHAS PUBLICADAS.
+// ATENÇÃO: Substitua esta URL pela URL CSV DA SUA PLANILHA DE CARDÁPIO PUBLICADA.
+// Exemplo: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=664943668&single=true&output=csv'
 const CARDAPIO_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=664943668&single=true&output=csv'; 
-const PROMOCOES_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=600393470&single=true&output=csv';
-const DELIVERY_FEES_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=45140418&single=true&output=csv'; // <<<< NOVO URL DA PLANILHA DE FRETES >>>>
+const PROMOCOES_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5V8OSL/pub?gid=600393470&single=true&output=csv';
+// NOVO: URL para a planilha de taxas de entrega
+const DELIVERY_FEES_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=45140418&single=true&output=csv';
 
 export default async (req, res) => {
     // Define o cabeçalho Cache-Control para 5 minutos (300 segundos)
@@ -29,30 +31,27 @@ export default async (req, res) => {
         const [cardapioResponse, promocoesResponse, deliveryFeesResponse] = await Promise.all([
             fetch(CARDAPIO_CSV_URL),
             fetch(PROMOCOES_CSV_URL),
-            fetch(DELIVERY_FEES_CSV_URL) // Novo fetch para taxas de entrega
+            fetch(DELIVERY_FEES_CSV_URL) 
         ]);
 
-        // Verifica se todas as respostas foram bem-sucedidas
         if (!cardapioResponse.ok) {
             throw new Error(`Erro ao buscar o cardápio: ${cardapioResponse.statusText}`);
         }
         if (!promocoesResponse.ok) {
             throw new Error(`Erro ao buscar as promoções: ${promocoesResponse.statusText}`);
         }
-        if (!deliveryFeesResponse.ok) { // Verifica a resposta das taxas de entrega
+        if (!deliveryFeesResponse.ok) { 
             throw new Error(`Erro ao buscar as taxas de entrega: ${deliveryFeesResponse.statusText}`);
         }
 
         const cardapioData = await cardapioResponse.text();
         const promocoesData = await promocoesResponse.text();
-        const deliveryFeesData = await deliveryFeesResponse.text(); // Lê os dados de frete
+        const deliveryFeesData = await deliveryFeesResponse.text(); 
 
-        // Retorna todos os dados como um objeto JSON.
-        // Seu frontend precisará parsear este JSON e então os CSVs internos.
         res.status(200).json({
             cardapio: cardapioData,
             promocoes: promocoesData,
-            deliveryFees: deliveryFeesData // Adiciona os dados de frete na resposta
+            deliveryFees: deliveryFeesData 
         });
 
     } catch (error) {
