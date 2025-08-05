@@ -47,6 +47,7 @@ export default async (req, res) => {
         console.log('Vercel Function: Promoções buscadas com sucesso.');
 
         // A busca por Taxas de Entrega foi removida para depuração.
+        // Certifique-se de que não há nenhuma outra referência a DELIVERY_FEES_CSV_URL ou a uma chamada fetch para ela aqui.
         const deliveryFeesData = ""; // Retorna uma string vazia ou um valor padrão para evitar erros no frontend
 
         console.log('Vercel Function: Todos os dados (exceto taxas de entrega) buscados com sucesso. Enviando resposta.');
