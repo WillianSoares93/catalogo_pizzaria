@@ -9,13 +9,11 @@ import fetch from 'node-fetch'; // Para buscar o CSV da planilha
 
 // --- Configuração do Firebase Admin SDK ---
 // As credenciais da Service Account do Firebase devem ser configuradas como variáveis de ambiente no Vercel.
-// Geralmente, você obtém um arquivo JSON de credenciais do Firebase Console (Configurações do Projeto -> Contas de Serviço).
-// Você pode copiar o conteúdo JSON para uma variável de ambiente (ex: FIREBASE_ADMIN_SDK_CONFIG)
-// ou configurar variáveis separadas como FIREBASE_ADMIN_PRIVATE_KEY, FIREBASE_ADMIN_CLIENT_EMAIL, etc.
-// Para Vercel, a forma mais segura é codificar o JSON em Base64 ou usar variáveis separadas.
-// Vamos usar variáveis separadas para clareza.
+// FIREBASE_PROJECT_ID: O ID do seu projeto Firebase.
+// FIREBASE_ADMIN_PRIVATE_KEY: A chave privada do seu arquivo JSON de Service Account (substitua \\n por \n).
+// FIREBASE_ADMIN_CLIENT_EMAIL: O e-mail da sua Service Account.
 const firebaseAdminConfig = {
-    projectId: process.env.FIREBASE_PROJECT_ID, // Reutiliza o Project ID do config do cliente
+    projectId: process.env.FIREBASE_PROJECT_ID,
     privateKey: process.env.FIREBASE_ADMIN_PRIVATE_KEY.replace(/\\n/g, '\n'), // Importante: substitui \\n por nova linha real
     clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL
 };
@@ -34,15 +32,16 @@ const db = getFirestore(adminApp);
 
 // --- Configuração do Web-Push ---
 // As chaves VAPID devem ser configuradas como variáveis de ambiente no Vercel.
-// Gere-as usando um gerador online (ex: https://web-push-codelab.glitch.me/)
-// ou via `webpush.generateVAPIDKeys()`.
+// VAPID_PUBLIC_KEY: Sua chave pública VAPID.
+// VAPID_PRIVATE_KEY: Sua chave privada VAPID.
 const vapidKeys = {
     publicKey: process.env.VAPID_PUBLIC_KEY,
     privateKey: process.env.VAPID_PRIVATE_KEY
 };
 
+// Substitua pelo seu e-mail de contato para o VAPID
 webpush.setVapidDetails(
-    'mailto:seu-email@exemplo.com', // Substitua pelo seu e-mail de contato
+    'mailto:seu-email@exemplo.com', // <-- SUBSTITUA PELO SEU E-MAIL
     vapidKeys.publicKey,
     vapidKeys.privateKey
 );
@@ -114,8 +113,10 @@ export default async function handler(request, response) {
         const notificationsCsvText = await notificationsResponse.text();
         const allNotifications = parseCsvData(notificationsCsvText);
         
-        // Filtra as notificações ativas e que ainda não foram enviadas (opcional, requer um sistema de rastreamento)
-        // Para este exemplo, vamos considerar apenas as ativas.
+        // Filtra as notificações ativas.
+        // Se você quiser enviar apenas notificações NOVAS, precisaria de um sistema
+        // para marcar notificações como "enviadas" ou filtrar por data de criação
+        // e um timestamp da última vez que a função foi executada.
         const activeNotifications = allNotifications.filter(n => n.active);
 
         if (activeNotifications.length === 0) {
