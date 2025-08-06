@@ -1062,6 +1062,7 @@
                     // Headers para Promoções
                     case 'ID Promocao': return 'id';
                     case 'Nome da Promocao': return 'name';
+                    case 'Descricao': return 'description'; // <--- Garante que 'Descricao' do CSV mapeia para 'description'
                     case 'Preco Promocional': return 'promoPrice';
                     case 'ID Item Aplicavel': return 'itemId';
                     case 'Ativo (SIM/NAO)': return 'active';
@@ -1092,6 +1093,10 @@
                         if (headerKey === 'deliveryFee' && (value === undefined || value === null || value.trim() === '')) {
                             console.warn(`DEBUG: Valor Frete vazio ou indefinido na linha ${i + 1} para ${type}: "${line}"`);
                             value = '0.00'; // Default para 0 se ausente
+                        }
+                        // Garante que a descrição das promoções seja sempre uma string
+                        if (headerKey === 'description' && type === 'promocoes' && (value === undefined || value === null)) {
+                            value = ''; 
                         }
 
                         if (['basePrice', 'price6Slices', 'price4Slices', 'promoPrice', 'deliveryFee'].includes(headerKey)) { // Adicionado 'deliveryFee'
@@ -1904,7 +1909,7 @@
 
                     promoDiv.innerHTML = `
                         <h4>${promo.name}</h4>
-                        <p>${promo.description}</p>
+                        <p>${promo.description || ''}</p> <!-- Adicionado || '' para garantir que não seja 'undefined' -->
                         <span class="price">R$ ${promo.promoPrice.toFixed(2).replace('.', ',')}</span>
                         <button class="add-promo-to-order-btn px-3 py-1 bg-green-600 text-white rounded-full text-sm hover:bg-green-700 transition mt-2"
                                 data-promo-id="${promo.id}" data-image-url="${promoImageUrl || ''}">
@@ -1936,7 +1941,7 @@
                     type: 'promotion',
                     name: promotion.name,
                     price: promotion.promoPrice,
-                    description: promotion.description,
+                    description: promotion.description || '', // Garante que a descrição seja string
                     itemId: promotion.itemId
                 });
                 updateOrderDisplay();
@@ -2502,11 +2507,17 @@
                 const promocoesCsvText = data.promocoes;
                 const deliveryFeesCsvText = data.deliveryFees; 
 
+                // Adicionado log para inspecionar o CSV de promoções antes do parsing
+                console.log('DEBUG: DOMContentLoaded: promocoesCsvText (primeiras 200 chars):', promocoesCsvText.substring(0, 200));
+
                 allMenuData = parseCsvData(cardapioCsvText, 'cardapio');
                 allPromotionsData = parseCsvData(promocoesCsvText, 'promocoes');
                 deliveryFeesData = parseCsvData(deliveryFeesCsvText, 'deliveryFees'); 
                 console.log('DEBUG: DOMContentLoaded: Dados CSV parseados. allMenuData:', allMenuData.length, 'allPromotionsData:', allPromotionsData.length, 'deliveryFeesData:', deliveryFeesData.length); // Log de contagem de itens
                 
+                // Adicionado log para inspecionar allPromotionsData após o parsing
+                console.log('DEBUG: DOMContentLoaded: allPromotionsData após parsing:', allPromotionsData);
+
                 let orderedUniqueCategories = [];
                 const seenCategories = new Set();
                 allMenuData.forEach(item => {
@@ -2614,25 +2625,6 @@
                 }
             }, 3000); 
         });
-
-        // Removidos os event listeners relacionados à visibilidade do botão de notificação
-        // closePizzaOptionModalBtn.addEventListener('click', updateNotificationButtonVisibility);
-        // closePromotionPopupBtn.addEventListener('click', updateNotificationButtonVisibility);
-        // closePromotionPopupBtnBottom.addEventListener('click', updateNotificationButtonVisibility);
-        // window.addEventListener('click', (event) => {
-        //     if (event.target == promotionPopup) updateNotificationButtonVisibility();
-        //     if (event.target == pizzaOptionModal) updateNotificationButtonVisibility();
-        //     if (event.target == addressInputModal) updateNotificationButtonVisibility();
-        //     if (event.target == drinkSuggestionModal) updateNotificationButtonVisibility();
-        //     if (event.target == confirmNoDrinkModal) updateNotificationButtonVisibility();
-        //     if (event.target == installPromptModal) updateNotificationButtonVisibility();
-        //     if (event.target == paymentMethodModal) updateNotificationButtonVisibility();
-        // });
-        // closeAddressModalBtn.addEventListener('click', updateNotificationButtonVisibility);
-        // closeDrinkSuggestionModalBtn.addEventListener('click', updateNotificationButtonVisibility);
-        // closeConfirmNoDrinkModalBtn.addEventListener('click', updateNotificationButtonVisibility);
-        // closeInstallPromptModalBtn.addEventListener('click', updateNotificationButtonVisibility);
-        // closePaymentMethodModalBtn.addEventListener('click', updateNotificationButtonVisibility);
 
     </script>
 </body>
