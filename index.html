@@ -471,32 +471,6 @@
             animation: fadeIn 0.3s ease-out;
             border: 2px solid #ef4444;
         }
-
-        /* Estilo para o botão de ativar notificações */
-        #enable-notifications-button {
-            position: fixed;
-            bottom: 90px; /* Acima do botão do carrinho */
-            right: 20px;
-            background-color: #10B981; /* Verde */
-            color: white;
-            padding: 12px 18px;
-            border-radius: 50px;
-            font-weight: bold;
-            font-size: 0.9rem;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-            cursor: pointer;
-            z-index: 45; /* Acima do conteúdo, abaixo do carrinho */
-            transition: background-color 0.3s ease, transform 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        #enable-notifications-button:hover {
-            background-color: #059669; /* Verde mais escuro no hover */
-            transform: scale(1.05);
-        }
-
     </style>
 </head>
 <body>
@@ -655,12 +629,6 @@
             <span id="cartCount" class="absolute -top-2 -right-2 bg-red-500 text-white text-sm font-bold rounded-full h-7 w-7 flex items-center justify-center hidden">0</span>
         </button>
     </div>
-
-    <!-- NOVO: Botão para Ativar Notificações -->
-    <button id="enable-notifications-button">
-        <i class="fas fa-bell"></i>
-        <span>Ativar Notificações</span>
-    </button>
 
     <!-- Modal de Sugestão de Bebidas -->
     <div id="drink-suggestion-modal" class="modal">
@@ -925,9 +893,6 @@
         const informAddressBtn = document.getElementById('informAddressBtn');
         const editDeliveryAddressBtn = document.getElementById('editDeliveryAddressBtn');
 
-        // NOVO: Referência ao botão de ativar notificações
-        const enableNotificationsButton = document.getElementById('enable-notifications-button');
-
 
         let currentPizzaData = {}; 
         let firstHalfPizza = null; 
@@ -949,11 +914,8 @@
 
             if (orderSidebar.classList.contains('translate-x-0')) {
                 promotionButton.style.display = 'none';
-                enableNotificationsButton.style.display = 'none'; // Esconde o botão de notificação
-                orderSidebar.scrollTop = orderSidebar.scrollHeight; // Rola para o final ao abrir
             } else {
                 updatePromotionButtonVisibility();
-                updateNotificationButtonVisibility(); // Reexibe o botão de notificação
             }
         }
         
@@ -961,7 +923,6 @@
             orderSidebar.classList.add('translate-x-full');
             orderSidebar.classList.remove('translate-x-0');
             updatePromotionButtonVisibility(); 
-            updateNotificationButtonVisibility(); // Reexibe o botão de notificação
         }
         
         function showMessageModal(message, onOkCallback = null) {
@@ -1026,7 +987,6 @@
             console.log('DEBUG: Fechando modal de opção de pizza via botão X.'); // Log
             pizzaOptionModal.style.display = 'none';
             updatePromotionButtonVisibility(); 
-            updateNotificationButtonVisibility(); // Reexibe o botão de notificação
             resetHalfPizzaSelection(); // Chama o reset ao fechar o modal
         });
 
@@ -1035,7 +995,6 @@
                 console.log('DEBUG: Fechando modal de opção de pizza clicando fora.'); // Log
                 pizzaOptionModal.style.display = 'none';
                 updatePromotionButtonVisibility(); 
-                updateNotificationButtonVisibility(); // Reexibe o botão de notificação
                 resetHalfPizzaSelection(); // Chama o reset ao clicar fora do modal
             }
         });
@@ -1530,7 +1489,6 @@
                         }, this, currentPizzaData.imageUrl); 
                         pizzaOptionModal.style.display = 'none'; // FECHA O MODAL AQUI
                         updatePromotionButtonVisibility(); 
-                        updateNotificationButtonVisibility(); // Reexibe o botão de notificação
                         console.log('DEBUG: Modal de opção de pizza fechado após adicionar inteira.'); // Log
                     });
 
@@ -1552,7 +1510,6 @@
                         isFirstHalfPromotional = (currentPizzaData.category.toLowerCase() === 'promocionais'); 
                         pizzaOptionModal.style.display = 'none'; // FECHA O MODAL AQUI
                         updatePromotionButtonVisibility(); 
-                        updateNotificationButtonVisibility(); // Reexibe o botão de notificação
                         console.log('DEBUG: Modal de opção de pizza fechado após adicionar primeira metade.'); // Log
 
                         toggleAddItemButtons(false); 
@@ -1579,7 +1536,6 @@
 
                 pizzaOptionModal.style.display = 'flex';
                 promotionButton.style.display = 'none'; 
-                enableNotificationsButton.style.display = 'none'; // Esconde o botão de notificação
                 console.log('DEBUG: Modal de opção de pizza exibido.'); // Log
             } else { 
                 console.log('DEBUG: Item não é pizza. Adicionando diretamente ao pedido.'); // Log
@@ -2009,18 +1965,15 @@
         closePromotionPopupBtn.addEventListener('click', function() {
             console.log('DEBUG: Fechando popup de promoção via botão X.'); // Log
             promotionPopup.style.display = 'none';
-            updateNotificationButtonVisibility(); // Reexibe o botão de notificação
         });
         closePromotionPopupBtnBottom.addEventListener('click', function() {
             console.log('DEBUG: Fechando popup de promoção via botão inferior.'); // Log
             promotionPopup.style.display = 'none';
-            updateNotificationButtonVisibility(); // Reexibe o botão de notificação
         });
         window.addEventListener('click', function(event) {
             if (event.target == promotionPopup) {
                 console.log('DEBUG: Fechando popup de promoção clicando fora.'); // Log
                 promotionPopup.style.display = 'none';
-                updateNotificationButtonVisibility(); // Reexibe o botão de notificação
             }
         });
 
@@ -2389,7 +2342,6 @@
             console.log('DEBUG: showAddressInputModal: Abrindo modal de endereço.'); // Log
             addressInputModal.style.display = 'flex';
             promotionButton.style.display = 'none'; // Esconde o botão de promoção ao abrir o modal de endereço
-            enableNotificationsButton.style.display = 'none'; // Esconde o botão de notificação
             // Preenche os campos se já houver dados no selectedAddress
             if (selectedAddress.bairro) {
                 neighborhoodSelect.value = selectedAddress.bairro;
@@ -2406,7 +2358,6 @@
             console.log('DEBUG: hideAddressInputModal: Fechando modal de endereço.'); // Log
             addressInputModal.style.display = 'none';
             updatePromotionButtonVisibility(); // Reexibe o botão de promoção se aplicável
-            updateNotificationButtonVisibility(); // Reexibe o botão de notificação
         }
 
         closeAddressModalBtn.addEventListener('click', hideAddressInputModal);
@@ -2572,7 +2523,6 @@
                 console.log('DEBUG: DOMContentLoaded: Cardápio e categorias populados.');
 
                 updatePromotionButtonVisibility(); 
-                updateNotificationButtonVisibility(); // Atualiza visibilidade do botão de notificação
                 updateCartCount(); 
                 updateOrderDisplay(); // Chamada inicial para configurar a exibição da taxa de entrega
                 updateCheckoutButtonText(); 
@@ -2594,122 +2544,6 @@
             }
         });
 
-        // --- Lógica de Notificações Push ---
-
-        // SUBSTITUA ESTA STRING PELA SUA CHAVE PÚBLICA VAPID!
-        // Você pode gerar um par de chaves (pública e privada) em: https://web-push-codelab.glitch.me/
-        const applicationServerKey = 'BNhpsKQCW7wGLbYDqHmLbn1Brlngl2YvGVsS6ygN01ZHmKCSeJzcIIwruODiOTc_tBDtF_8VCiNrI4wyIhyYF1I'; // Ex: "BNc...sua_chave_aqui...="
-
-        function urlBase64ToUint8Array(base64String) {
-            const padding = '='.repeat((4 - base64String.length % 4) % 4);
-            const base64 = (base64String + padding)
-                .replace(/\-/g, '+')
-                .replace(/_/g, '/');
-            const rawData = window.atob(base64);
-            const outputArray = new Uint8Array(rawData.length);
-            for (let i = 0; i < rawData.length; ++i) {
-                outputArray[i] = rawData.charCodeAt(i);
-            }
-            return outputArray;
-        }
-
-        async function subscribeUserToPush() {
-            // 1. Verifica se o navegador suporta Service Worker e Push API
-            if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-                showMessageModal('Seu navegador não suporta notificações push.');
-                console.warn('DEBUG: Push messaging is not supported');
-                return;
-            }
-
-            // 2. Registra o Service Worker (se já não estiver registrado)
-            const registration = await navigator.serviceWorker.ready;
-
-            // 3. Verifica se o usuário já está inscrito
-            const existingSubscription = await registration.pushManager.getSubscription();
-            if (existingSubscription) {
-                showMessageModal('Você já está inscrito para receber notificações!');
-                console.log('DEBUG: Usuário já está inscrito:', existingSubscription.endpoint);
-                // Opcional: Enviar a subscription para o backend novamente para garantir que está lá
-                // sendSubscriptionToServer(existingSubscription);
-                enableNotificationsButton.style.display = 'none'; // Esconde o botão se já inscrito
-                return;
-            }
-
-            // 4. Pede permissão ao usuário
-            const permissionResult = await Notification.requestPermission();
-
-            if (permissionResult === 'granted') {
-                console.log('DEBUG: Permissão para notificações concedida.');
-                try {
-                    // 5. Gera uma nova inscrição
-                    const newSubscription = await registration.pushManager.subscribe({
-                        userVisibleOnly: true, // Notificações visíveis para o usuário
-                        applicationServerKey: urlBase64ToUint8Array(applicationServerKey)
-                    });
-                    console.log('DEBUG: Nova inscrição gerada:', newSubscription);
-
-                    // 6. Envia a inscrição para o seu backend
-                    await sendSubscriptionToServer(newSubscription);
-                    showMessageModal('Notificações ativadas com sucesso! Você receberá nossas promoções.');
-                    enableNotificationsButton.style.display = 'none'; // Esconde o botão após sucesso
-
-                } catch (error) {
-                    console.error('DEBUG: Falha ao se inscrever para notificações:', error);
-                    showMessageModal('Erro ao ativar notificações. Por favor, tente novamente.');
-                }
-            } else {
-                console.warn('DEBUG: Permissão para notificações negada ou ignorada.');
-                showMessageModal('Permissão para notificações negada. Não poderemos enviar promoções.');
-            }
-        }
-
-        async function sendSubscriptionToServer(subscription) {
-            try {
-                // Endpoint da sua função Serverless no Vercel para receber inscrições
-                const response = await fetch('/api/subscribe', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(subscription)
-                });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('DEBUG: Erro ao enviar inscrição para o servidor:', response.status, errorText);
-                    throw new Error(`Erro no servidor ao salvar inscrição: ${response.statusText || errorText}`);
-                }
-
-                console.log('DEBUG: Inscrição enviada para o servidor com sucesso.');
-            } catch (error) {
-                console.error('DEBUG: Falha na requisição para enviar inscrição ao servidor:', error);
-                showMessageModal('Erro de comunicação com o servidor ao salvar sua inscrição.');
-            }
-        }
-
-        // Função para controlar a visibilidade do botão de notificação
-        async function updateNotificationButtonVisibility() {
-            // Esconde o botão se o navegador não suporta Service Worker ou Push API
-            if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-                enableNotificationsButton.style.display = 'none';
-                return;
-            }
-
-            // Garante que o Service Worker está pronto antes de verificar a inscrição
-            const registration = await navigator.serviceWorker.ready;
-            const subscription = await registration.pushManager.getSubscription();
-            
-            // Esconde o botão se já estiver inscrito OU se algum modal/sidebar estiver aberto
-            if (subscription || pizzaOptionModal.style.display === 'flex' || addressInputModal.style.display === 'flex' || promotionPopup.style.display === 'flex' || orderSidebar.classList.contains('translate-x-0') || drinkSuggestionModal.style.display === 'flex' || confirmNoDrinkModal.style.display === 'flex' || installPromptModal.style.display === 'flex' || paymentMethodModal.style.display === 'flex') {
-                enableNotificationsButton.style.display = 'none';
-            } else {
-                enableNotificationsButton.style.display = 'flex';
-            }
-        }
-
-        // Adiciona o event listener ao botão
-        enableNotificationsButton.addEventListener('click', subscribeUserToPush);
-
         // --- Lógica de Instalação do PWA ---
 
         if ('serviceWorker' in navigator) {
@@ -2717,8 +2551,6 @@
                 navigator.serviceWorker.register('/service-worker.js')
                     .then(registration => {
                         console.log('DEBUG: Service Worker registado com sucesso. Scope:', registration.scope);
-                        // Após o registro do SW, verifica a visibilidade do botão de notificação
-                        updateNotificationButtonVisibility(); 
                     })
                     .catch(error => {
                         console.log('DEBUG: Falha no registo do Service Worker:', error);
@@ -2773,7 +2605,6 @@
         window.addEventListener('appinstalled', () => {
             installPromptModal.style.display = 'none';
             console.log('DEBUG: PWA Sâmia Cardápio foi instalado!');
-            updateNotificationButtonVisibility(); // Atualiza visibilidade após instalação
         });
 
         window.addEventListener('load', () => {
@@ -2784,26 +2615,24 @@
             }, 3000); 
         });
 
-        // Adicionado para garantir que o botão de notificação atualize sua visibilidade
-        // sempre que um modal é aberto ou fechado.
-        closePizzaOptionModalBtn.addEventListener('click', updateNotificationButtonVisibility);
-        closePromotionPopupBtn.addEventListener('click', updateNotificationButtonVisibility);
-        closePromotionPopupBtnBottom.addEventListener('click', updateNotificationButtonVisibility);
-        window.addEventListener('click', (event) => {
-            if (event.target == promotionPopup) updateNotificationButtonVisibility();
-            if (event.target == pizzaOptionModal) updateNotificationButtonVisibility();
-            if (event.target == addressInputModal) updateNotificationButtonVisibility();
-            if (event.target == drinkSuggestionModal) updateNotificationButtonVisibility();
-            if (event.target == confirmNoDrinkModal) updateNotificationButtonVisibility();
-            if (event.target == installPromptModal) updateNotificationButtonVisibility();
-            if (event.target == paymentMethodModal) updateNotificationButtonVisibility();
-        });
-        closeAddressModalBtn.addEventListener('click', updateNotificationButtonVisibility);
-        closeDrinkSuggestionModalBtn.addEventListener('click', updateNotificationButtonVisibility);
-        closeConfirmNoDrinkModalBtn.addEventListener('click', updateNotificationButtonVisibility);
-        closeInstallPromptModalBtn.addEventListener('click', updateNotificationButtonVisibility);
-        closePaymentMethodModalBtn.addEventListener('click', updateNotificationButtonVisibility);
-
+        // Removidos os event listeners relacionados à visibilidade do botão de notificação
+        // closePizzaOptionModalBtn.addEventListener('click', updateNotificationButtonVisibility);
+        // closePromotionPopupBtn.addEventListener('click', updateNotificationButtonVisibility);
+        // closePromotionPopupBtnBottom.addEventListener('click', updateNotificationButtonVisibility);
+        // window.addEventListener('click', (event) => {
+        //     if (event.target == promotionPopup) updateNotificationButtonVisibility();
+        //     if (event.target == pizzaOptionModal) updateNotificationButtonVisibility();
+        //     if (event.target == addressInputModal) updateNotificationButtonVisibility();
+        //     if (event.target == drinkSuggestionModal) updateNotificationButtonVisibility();
+        //     if (event.target == confirmNoDrinkModal) updateNotificationButtonVisibility();
+        //     if (event.target == installPromptModal) updateNotificationButtonVisibility();
+        //     if (event.target == paymentMethodModal) updateNotificationButtonVisibility();
+        // });
+        // closeAddressModalBtn.addEventListener('click', updateNotificationButtonVisibility);
+        // closeDrinkSuggestionModalBtn.addEventListener('click', updateNotificationButtonVisibility);
+        // closeConfirmNoDrinkModalBtn.addEventListener('click', updateNotificationButtonVisibility);
+        // closeInstallPromptModalBtn.addEventListener('click', updateNotificationButtonVisibility);
+        // closePaymentMethodModalBtn.addEventListener('click', updateNotificationButtonVisibility);
 
     </script>
 </body>
