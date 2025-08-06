@@ -914,6 +914,13 @@
 
         const whatsappNumber = '5587996070638'; 
 
+        // NEW: Local Storage Keys
+        const LOCAL_STORAGE_MENU_KEY = 'samiaMenuData';
+        const LOCAL_STORAGE_PROMOTIONS_KEY = 'samiaPromotionsData';
+        const LOCAL_STORAGE_DELIVERY_FEES_KEY = 'samiaDeliveryFeesData';
+        const LOCAL_STORAGE_LAST_FETCH_TIMESTAMP_KEY = 'samiaLastFetchTimestamp';
+
+
         // Funções de controle de modais e sidebar
         function toggleOrderSidebar() {
             orderSidebar.classList.toggle('translate-x-full');
@@ -2503,9 +2510,55 @@
             loadingOverlay.classList.remove('hidden'); // Show loading overlay
 
             try {
-                // Check if data is already in memory (client-side cache)
-                if (allMenuData.length === 0 || allPromotionsData.length === 0 || deliveryFeesData.length === 0) {
-                    console.log('DEBUG: DOMContentLoaded: Dados não encontrados em cache, iniciando busca da API...');
+                // Tenta carregar dados do localStorage primeiro
+                const cachedMenuData = localStorage.getItem(LOCAL_STORAGE_MENU_KEY);
+                const cachedPromotionsData = localStorage.getItem(LOCAL_STORAGE_PROMOTIONS_KEY);
+                const cachedDeliveryFeesData = localStorage.getItem(LOCAL_STORAGE_DELIVERY_FEES_KEY);
+                const lastFetchTimestamp = localStorage.getItem(LOCAL_STORAGE_LAST_FETCH_TIMESTAMP_KEY);
+
+                const now = new Date().getTime();
+                const CACHE_EXPIRATION_TIME = 5 * 60 * 1000; // 5 minutos em milissegundos
+
+                let shouldFetchFromApi = true;
+
+                if (cachedMenuData && cachedPromotionsData && cachedDeliveryFeesData && lastFetchTimestamp) {
+                    allMenuData = JSON.parse(cachedMenuData);
+                    allPromotionsData = JSON.parse(cachedPromotionsData);
+                    deliveryFeesData = JSON.parse(cachedDeliveryFeesData);
+                    
+                    // Popula o menu imediatamente com os dados do cache
+                    let orderedUniqueCategories = [];
+                    const seenCategories = new Set();
+                    allMenuData.forEach(item => {
+                        if (!seenCategories.has(item.category)) {
+                            seenCategories.add(item.category);
+                            orderedUniqueCategories.push(item.category);
+                        }
+                    });
+                    createCategoryButtons(orderedUniqueCategories);
+                    populateMenu(allMenuData, orderedUniqueCategories);
+                    populateNeighborhoodDropdown(deliveryFeesData);
+                    setupCategoryObserver();
+                    updatePromotionButtonVisibility();
+                    updateCartCount();
+                    updateOrderDisplay();
+                    updateCheckoutButtonText();
+                    showAddressSummary();
+                    toggleAddItemButtons(true);
+                    toggleCategoryButtons(true);
+                    setTimeout(() => { window.dispatchEvent(new Event('scroll')); }, 100);
+                    loadingOverlay.classList.add('hidden'); // Esconde o loading overlay imediatamente
+                    console.log('DEBUG: Dados carregados do localStorage. Buscando atualizações em segundo plano.');
+
+                    if (now - parseInt(lastFetchTimestamp) < CACHE_EXPIRATION_TIME) {
+                        shouldFetchFromApi = false; // Não precisa buscar da API se o cache ainda for válido
+                        console.log('DEBUG: Cache local ainda é válido. Pulando fetch da API em segundo plano.');
+                    }
+                } else {
+                    console.log('DEBUG: Nenhum dado encontrado no localStorage ou cache expirado. Buscando da API.');
+                }
+
+                if (shouldFetchFromApi) {
                     const response = await fetch('/api/menu'); 
                     if (!response.ok) {
                         const errorText = await response.text();
@@ -2521,51 +2574,56 @@
 
                     console.log('DEBUG: DOMContentLoaded: promocoesCsvText (primeiras 200 chars):', promocoesCsvText.substring(0, 200));
 
-                    allMenuData = parseCsvData(cardapioCsvText, 'cardapio');
-                    allPromotionsData = parseCsvData(promocoesCsvText, 'promocoes');
-                    deliveryFeesData = parseCsvData(deliveryFeesCsvText, 'deliveryFees'); 
-                    console.log('DEBUG: DOMContentLoaded: Dados CSV parseados. allMenuData:', allMenuData.length, 'allPromotionsData:', allPromotionsData.length, 'deliveryFeesData:', deliveryFeesData.length); 
+                    const newMenuData = parseCsvData(cardapioCsvText, 'cardapio');
+                    const newPromotionsData = parseCsvData(promocoesCsvText, 'promocoes');
+                    const newDeliveryFeesData = parseCsvData(deliveryFeesCsvText, 'deliveryFees'); 
                     
-                    console.log('DEBUG: DOMContentLoaded: allPromotionsData após parsing:', allPromotionsData);
-                } else {
-                    console.log('DEBUG: DOMContentLoaded: Dados já carregados na memória, usando cache local.');
-                }
+                    // Verifica se os dados mudaram antes de atualizar e repopular
+                    if (JSON.stringify(newMenuData) !== JSON.stringify(allMenuData) ||
+                        JSON.stringify(newPromotionsData) !== JSON.stringify(allPromotionsData) ||
+                        JSON.stringify(newDeliveryFeesData) !== JSON.stringify(deliveryFeesData)) {
+                        
+                        allMenuData = newMenuData;
+                        allPromotionsData = newPromotionsData;
+                        deliveryFeesData = newDeliveryFeesData;
 
-                let orderedUniqueCategories = [];
-                const seenCategories = new Set();
-                allMenuData.forEach(item => {
-                    if (!seenCategories.has(item.category)) {
-                        seenCategories.add(item.category);
-                        orderedUniqueCategories.push(item.category);
+                        localStorage.setItem(LOCAL_STORAGE_MENU_KEY, JSON.stringify(allMenuData));
+                        localStorage.setItem(LOCAL_STORAGE_PROMOTIONS_KEY, JSON.stringify(allPromotionsData));
+                        localStorage.setItem(LOCAL_STORAGE_DELIVERY_FEES_KEY, JSON.stringify(deliveryFeesData));
+                        localStorage.setItem(LOCAL_STORAGE_LAST_FETCH_TIMESTAMP_KEY, now.toString());
+                        console.log('DEBUG: Novos dados da API salvos no localStorage e UI atualizada.');
+
+                        let orderedUniqueCategories = [];
+                        const seenCategories = new Set();
+                        allMenuData.forEach(item => {
+                            if (!seenCategories.has(item.category)) {
+                                seenCategories.add(item.category);
+                                orderedUniqueCategories.push(item.category);
+                            }
+                        });
+                        createCategoryButtons(orderedUniqueCategories);
+                        populateMenu(allMenuData, orderedUniqueCategories);
+                        populateNeighborhoodDropdown(deliveryFeesData);
+                        setupCategoryObserver();
+                        updatePromotionButtonVisibility();
+                        updateCartCount();
+                        updateOrderDisplay();
+                        updateCheckoutButtonText();
+                        showAddressSummary();
+                        toggleAddItemButtons(true);
+                        toggleCategoryButtons(true);
+                        setTimeout(() => { window.dispatchEvent(new Event('scroll')); }, 100);
+                    } else {
+                        console.log('DEBUG: Dados da API são os mesmos do cache local. Nenhuma atualização de UI necessária.');
                     }
-                });
-                
-                createCategoryButtons(orderedUniqueCategories); 
-                populateMenu(allMenuData, orderedUniqueCategories); 
-                populateNeighborhoodDropdown(deliveryFeesData); 
-                setupCategoryObserver(); 
-                console.log('DEBUG: DOMContentLoaded: Cardápio e categorias populados.');
-
-                updatePromotionButtonVisibility(); 
-                updateCartCount(); 
-                updateOrderDisplay(); 
-                updateCheckoutButtonText(); 
-                showAddressSummary(); 
-                console.log('DEBUG: DOMContentLoaded: UI atualizada.');
-
-                toggleAddItemButtons(true);
-                toggleCategoryButtons(true);
-
-                setTimeout(() => {
-                    window.dispatchEvent(new Event('scroll'));
-                }, 100);
+                }
                 console.log('DEBUG: DOMContentLoaded: Carregamento completo e bem-sucedido.');
 
             } catch (error) {
                 console.error('DEBUG: DOMContentLoaded: Erro fatal ao carregar o cardápio:', error);
                 showMessageModal('Não foi possível carregar o cardápio no momento. Por favor, tente novamente mais tarde.');
             } finally {
-                loadingOverlay.classList.add('hidden'); // Hide loading overlay
+                loadingOverlay.classList.add('hidden'); // Garante que o overlay seja escondido no final
             }
         });
 
