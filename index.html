@@ -474,6 +474,12 @@
     </style>
 </head>
 <body>
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 bg-white bg-opacity-90 flex flex-col items-center justify-center z-[9999] hidden">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-red-600 mb-4"></div>
+        <p class="text-gray-800 text-lg font-semibold">Carregando Cardápio...</p>
+    </div>
+
     <!-- Header -->
     <header class="header-bg text-white py-16 px-4 text-center">
         <div class="max-w-4xl mx-auto">
@@ -824,6 +830,7 @@
         const defaultPizzaImage = 'https://upload.wikimedia.org/wikipedia/commons/9/91/Pizza-3007395.jpg';
 
         // Referências para os elementos DOM
+        const loadingOverlay = document.getElementById('loading-overlay'); // Referência ao overlay de carregamento
         const orderSidebar = document.getElementById('orderSidebar');
         const cartCount = document.getElementById('cartCount');
         const emptyOrderMessage = document.getElementById('orderItems').querySelector('#emptyOrderMessage'); // Ajustado para pegar dentro de orderItems
@@ -1045,35 +1052,37 @@
             }
 
             const headersRaw = parseCsvLine(lines[0]);
+            console.log(`DEBUG: parseCsvData para ${type} - Headers Brutos:`, headersRaw); // NOVO LOG
+
+            const headerMap = {
+                'id item (unico)': 'id',
+                'nome do item': 'name',
+                'descricao': 'description', 
+                'preço 8 fatias': 'basePrice',
+                'preço 6 fatias': 'price6Slices',
+                'preço 4 fatias': 'price4Slices',
+                'categoria': 'category',
+                'é pizza? (sim/não)': 'isPizza',
+                'disponível (sim/não)': 'available',
+                'imagem': 'imageUrl',
+                'id promocao': 'id',
+                'nome da promocao': 'name',
+                'preco promocional': 'promoPrice',
+                'id item aplicavel': 'itemId',
+                'ativo (sim/nao)': 'active',
+                'bairros': 'neighborhood',
+                'valor frete': 'deliveryFee'
+            };
+
             const mappedHeaders = headersRaw.map(header => {
-                let cleanedHeader = header.trim();
-                switch (cleanedHeader) {
-                    // Headers para Cardápio
-                    case 'ID Item (único)': return 'id';
-                    case 'Nome do Item': return 'name';
-                    case 'Descrição': return 'description';
-                    case 'Preço 8 fatias': return 'basePrice';
-                    case 'Preço 6 fatias': return 'price6Slices';
-                    case 'Preço 4 fatias': return 'price4Slices';
-                    case 'Categoria': return 'category';
-                    case 'É Pizza? (SIM/NÃO)': return 'isPizza';
-                    case 'Disponível (SIM/NÃO)': return 'available'; 
-                    case 'Imagem': return 'imageUrl'; 
-                    // Headers para Promoções
-                    case 'ID Promocao': return 'id';
-                    case 'Nome da Promocao': return 'name';
-                    case 'Descricao': return 'description'; // <--- Garante que 'Descricao' do CSV mapeia para 'description'
-                    case 'Preco Promocional': return 'promoPrice';
-                    case 'ID Item Aplicavel': return 'itemId';
-                    case 'Ativo (SIM/NAO)': return 'active';
-                    // Headers para Taxas de Entrega - CORRIGIDO O MAPEAMENTO
-                    case 'Bairros': return 'neighborhood'; // CORREÇÃO AQUI: De 'Bairro' para 'Bairros'
-                    case 'Valor Frete': return 'deliveryFee';
-                    default: 
-                        console.warn(`DEBUG: Header CSV desconhecido encontrado para ${type}: "${cleanedHeader}"`); // Log para depuração
-                        return cleanedHeader.replace(/[^a-zA-Z0-9]+(.)?/g, (match, chr) => chr ? chr.toUpperCase() : '').replace(/^./, (match) => match.toLowerCase());
+                const cleanedHeader = header.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // Remove accents, lowercase
+                if (headerMap[cleanedHeader]) {
+                    return headerMap[cleanedHeader];
                 }
+                console.warn(`DEBUG: Header CSV desconhecido encontrado: "${header}" (limpo: "${cleanedHeader}") para tipo ${type}`);
+                return cleanedHeader.replace(/[^a-zA-Z0-9]+(.)?/g, (match, chr) => chr ? chr.toUpperCase() : '').replace(/^./, (match) => match.toLowerCase());
             });
+            console.log(`DEBUG: parseCsvData para ${type} - Headers Mapeados:`, mappedHeaders); // NOVO LOG
             
             const parsedData = [];
             for (let i = 1; i < lines.length; i++) {
@@ -1094,7 +1103,7 @@
                             console.warn(`DEBUG: Valor Frete vazio ou indefinido na linha ${i + 1} para ${type}: "${line}"`);
                             value = '0.00'; // Default para 0 se ausente
                         }
-                        // Garante que a descrição das promoções seja sempre uma string
+                        // Garante que a descrição das promoções seja sempre uma string vazia se for nula/undefined
                         if (headerKey === 'description' && type === 'promocoes' && (value === undefined || value === null)) {
                             value = ''; 
                         }
@@ -2490,33 +2499,37 @@
 
 
         document.addEventListener('DOMContentLoaded', async function() {
+            const loadingOverlay = document.getElementById('loading-overlay');
+            loadingOverlay.classList.remove('hidden'); // Show loading overlay
+
             try {
-                console.log('DEBUG: DOMContentLoaded: Iniciando busca da API...');
-                // Use o domínio atual do seu site. Se você estiver testando localmente, pode ser 'http://localhost:3000'
-                // Se estiver no Vercel, será o domínio do seu deploy (ex: https://seucardapio.vercel.app)
-                const response = await fetch('/api/menu'); 
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('DEBUG: DOMContentLoaded: Erro HTTP ao buscar dados da API:', response.status, errorText);
-                    throw new Error(`Erro ao buscar dados da API: ${response.statusText || errorText}`);
+                // Check if data is already in memory (client-side cache)
+                if (allMenuData.length === 0 || allPromotionsData.length === 0 || deliveryFeesData.length === 0) {
+                    console.log('DEBUG: DOMContentLoaded: Dados não encontrados em cache, iniciando busca da API...');
+                    const response = await fetch('/api/menu'); 
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error('DEBUG: DOMContentLoaded: Erro HTTP ao buscar dados da API:', response.status, errorText);
+                        throw new Error(`Erro ao buscar dados da API: ${response.statusText || errorText}`);
+                    }
+                    const data = await response.json(); 
+                    console.log('DEBUG: DOMContentLoaded: Dados da API recebidos com sucesso:', data); 
+
+                    const cardapioCsvText = data.cardapio;
+                    const promocoesCsvText = data.promocoes;
+                    const deliveryFeesCsvText = data.deliveryFees; 
+
+                    console.log('DEBUG: DOMContentLoaded: promocoesCsvText (primeiras 200 chars):', promocoesCsvText.substring(0, 200));
+
+                    allMenuData = parseCsvData(cardapioCsvText, 'cardapio');
+                    allPromotionsData = parseCsvData(promocoesCsvText, 'promocoes');
+                    deliveryFeesData = parseCsvData(deliveryFeesCsvText, 'deliveryFees'); 
+                    console.log('DEBUG: DOMContentLoaded: Dados CSV parseados. allMenuData:', allMenuData.length, 'allPromotionsData:', allPromotionsData.length, 'deliveryFeesData:', deliveryFeesData.length); 
+                    
+                    console.log('DEBUG: DOMContentLoaded: allPromotionsData após parsing:', allPromotionsData);
+                } else {
+                    console.log('DEBUG: DOMContentLoaded: Dados já carregados na memória, usando cache local.');
                 }
-                const data = await response.json(); 
-                console.log('DEBUG: DOMContentLoaded: Dados da API recebidos com sucesso:', data); // Log completo dos dados recebidos
-
-                const cardapioCsvText = data.cardapio;
-                const promocoesCsvText = data.promocoes;
-                const deliveryFeesCsvText = data.deliveryFees; 
-
-                // Adicionado log para inspecionar o CSV de promoções antes do parsing
-                console.log('DEBUG: DOMContentLoaded: promocoesCsvText (primeiras 200 chars):', promocoesCsvText.substring(0, 200));
-
-                allMenuData = parseCsvData(cardapioCsvText, 'cardapio');
-                allPromotionsData = parseCsvData(promocoesCsvText, 'promocoes');
-                deliveryFeesData = parseCsvData(deliveryFeesCsvText, 'deliveryFees'); 
-                console.log('DEBUG: DOMContentLoaded: Dados CSV parseados. allMenuData:', allMenuData.length, 'allPromotionsData:', allPromotionsData.length, 'deliveryFeesData:', deliveryFeesData.length); // Log de contagem de itens
-                
-                // Adicionado log para inspecionar allPromotionsData após o parsing
-                console.log('DEBUG: DOMContentLoaded: allPromotionsData após parsing:', allPromotionsData);
 
                 let orderedUniqueCategories = [];
                 const seenCategories = new Set();
@@ -2535,7 +2548,7 @@
 
                 updatePromotionButtonVisibility(); 
                 updateCartCount(); 
-                updateOrderDisplay(); // Chamada inicial para configurar a exibição da taxa de entrega
+                updateOrderDisplay(); 
                 updateCheckoutButtonText(); 
                 showAddressSummary(); 
                 console.log('DEBUG: DOMContentLoaded: UI atualizada.');
@@ -2550,8 +2563,9 @@
 
             } catch (error) {
                 console.error('DEBUG: DOMContentLoaded: Erro fatal ao carregar o cardápio:', error);
-                // Exibe a mensagem de erro APENAS se houve uma falha na busca ou parsing inicial
                 showMessageModal('Não foi possível carregar o cardápio no momento. Por favor, tente novamente mais tarde.');
+            } finally {
+                loadingOverlay.classList.add('hidden'); // Hide loading overlay
             }
         });
 
