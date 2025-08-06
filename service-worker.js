@@ -1,7 +1,7 @@
 // service-worker.js
 
 // Versão do cache para controle de atualizações
-const CACHE_VERSION = 'v1.0.1'; // Incremente esta versão a cada mudança no SW
+const CACHE_VERSION = 'v1.0.2'; // INCREMENTE ESTA VERSÃO A CADA MUDANÇA NO SW
 const CACHE_NAME = `samiacardapio-cache-${CACHE_VERSION}`;
 
 // Lista de arquivos para pré-cache (adicione todos os seus assets estáticos importantes)
