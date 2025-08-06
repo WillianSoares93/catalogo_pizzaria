@@ -851,7 +851,7 @@
 
         // Referências para o modal de seleção de pizza
         const pizzaOptionModal = document.getElementById('pizza-option-modal');
-        const closePizzaOptionModalBtn = document.getElementById('close-pizza-option-modal');
+        const closePizzaOptionModalBtn = document = document.getElementById('close-pizza-option-modal');
         const modalPizzaName = document.getElementById('modal-pizza-name');
         const modalPizzaDescription = document.getElementById('modal-pizza-description');
         const pizzaSizeOptions = document.getElementById('pizza-size-options');
@@ -2130,7 +2130,7 @@
 
             if (selectedPaymentMethod) {
                 const methodValue = typeof selectedPaymentMethod === 'object' ? selectedPaymentMethod.method : selectedPaymentMethod;
-                const radio = document.querySelector(`input[name="paymentMethod"][value="${methodValue}"]`);
+                const radio = document.querySelector(`input[name="paymentMethod"]:checked`);
                 if (radio) {
                     radio.checked = true;
                     document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('selected')); 
@@ -2522,104 +2522,60 @@
             localStorage.removeItem(LOCAL_STORAGE_LAST_FETCH_TIMESTAMP_KEY);
             console.log('DEBUG: Cache do localStorage limpo para forçar nova busca da API.');
 
+            // Define 'now' antes de qualquer uso
+            const now = new Date().getTime(); 
+
             try {
-                // Remove a lógica de cache temporariamente para forçar o fetch
-                // const cachedMenuData = localStorage.getItem(LOCAL_STORAGE_MENU_KEY);
-                // const cachedPromotionsData = localStorage.getItem(LOCAL_STORAGE_PROMOTIONS_KEY);
-                // const cachedDeliveryFeesData = localStorage.getItem(LOCAL_STORAGE_DELIVERY_FEES_KEY);
-                // const lastFetchTimestamp = localStorage.getItem(LOCAL_STORAGE_LAST_FETCH_TIMESTAMP_KEY);
-                // const now = new Date().getTime();
-                // const CACHE_EXPIRATION_TIME = 5 * 60 * 1000; // 5 minutos em milissegundos
-                // let shouldFetchFromApi = true;
+                const response = await fetch('/api/menu'); 
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('DEBUG: DOMContentLoaded: Erro HTTP ao buscar dados da API:', response.status, errorText);
+                    throw new Error(`Erro ao buscar dados da API: ${response.statusText || errorText}`);
+                }
+                const data = await response.json(); 
+                console.log('DEBUG: DOMContentLoaded: Dados da API recebidos com sucesso:', data); 
 
-                // if (cachedMenuData && cachedPromotionsData && cachedDeliveryFeesData && lastFetchTimestamp) {
-                //     allMenuData = JSON.parse(cachedMenuData);
-                //     allPromotionsData = JSON.parse(cachedPromotionsData);
-                //     deliveryFeesData = JSON.parse(cachedDeliveryFeesData);
-                    
-                //     let orderedUniqueCategories = [];
-                //     const seenCategories = new Set();
-                //     allMenuData.forEach(item => {
-                //         if (!seenCategories.has(item.category)) {
-                //             seenCategories.add(item.category);
-                //             orderedUniqueCategories.push(item.category);
-                //         }
-                //     });
-                //     createCategoryButtons(orderedUniqueCategories);
-                //     populateMenu(allMenuData, orderedUniqueCategories);
-                //     populateNeighborhoodDropdown(deliveryFeesData);
-                //     setupCategoryObserver();
-                //     updatePromotionButtonVisibility();
-                //     updateCartCount();
-                //     updateOrderDisplay();
-                //     updateCheckoutButtonText();
-                //     showAddressSummary();
-                //     toggleAddItemButtons(true);
-                //     toggleCategoryButtons(true);
-                //     setTimeout(() => { window.dispatchEvent(new Event('scroll')); }, 100);
-                //     loadingOverlay.classList.add('hidden');
-                //     console.log('DEBUG: Dados carregados do localStorage. Buscando atualizações em segundo plano.');
+                const cardapioCsvText = data.cardapio;
+                const promocoesCsvText = data.promocoes;
+                const deliveryFeesCsvText = data.deliveryFees; 
 
-                //     if (now - parseInt(lastFetchTimestamp) < CACHE_EXPIRATION_TIME) {
-                //         shouldFetchFromApi = false;
-                //         console.log('DEBUG: Cache local ainda é válido. Pulando fetch da API em segundo plano.');
-                //     }
-                // } else {
-                //     console.log('DEBUG: Nenhum dado encontrado no localStorage ou cache expirado. Buscando da API.');
-                // }
+                console.log('DEBUG: DOMContentLoaded: promocoesCsvText (primeiras 200 chars):', promocoesCsvText.substring(0, 200));
 
-                // if (shouldFetchFromApi) { // Esta condição agora será sempre verdadeira devido à remoção do cache
-                    const response = await fetch('/api/menu'); 
-                    if (!response.ok) {
-                        const errorText = await response.text();
-                        console.error('DEBUG: DOMContentLoaded: Erro HTTP ao buscar dados da API:', response.status, errorText);
-                        throw new Error(`Erro ao buscar dados da API: ${response.statusText || errorText}`);
+                const newMenuData = parseCsvData(cardapioCsvText, 'cardapio');
+                const newPromotionsData = parseCsvData(promocoesCsvText, 'promocoes');
+                const newDeliveryFeesData = parseCsvData(deliveryFeesCsvText, 'deliveryFees'); 
+                
+                // Sempre atualiza e repopula quando a busca da API é forçada
+                allMenuData = newMenuData;
+                allPromotionsData = newPromotionsData;
+                deliveryFeesData = newDeliveryFeesData;
+
+                localStorage.setItem(LOCAL_STORAGE_MENU_KEY, JSON.stringify(allMenuData));
+                localStorage.setItem(LOCAL_STORAGE_PROMOTIONS_KEY, JSON.stringify(allPromotionsData));
+                localStorage.setItem(LOCAL_STORAGE_DELIVERY_FEES_KEY, JSON.stringify(deliveryFeesData));
+                localStorage.setItem(LOCAL_STORAGE_LAST_FETCH_TIMESTAMP_KEY, now.toString()); 
+                console.log('DEBUG: Novos dados da API salvos no localStorage e UI atualizada.');
+
+                let orderedUniqueCategories = [];
+                const seenCategories = new Set();
+                allMenuData.forEach(item => {
+                    if (!seenCategories.has(item.category)) {
+                        seenCategories.add(item.category);
+                        orderedUniqueCategories.push(item.category);
                     }
-                    const data = await response.json(); 
-                    console.log('DEBUG: DOMContentLoaded: Dados da API recebidos com sucesso:', data); 
-
-                    const cardapioCsvText = data.cardapio;
-                    const promocoesCsvText = data.promocoes;
-                    const deliveryFeesCsvText = data.deliveryFees; 
-
-                    console.log('DEBUG: DOMContentLoaded: promocoesCsvText (primeiras 200 chars):', promocoesCsvText.substring(0, 200));
-
-                    const newMenuData = parseCsvData(cardapioCsvText, 'cardapio');
-                    const newPromotionsData = parseCsvData(promocoesCsvText, 'promocoes');
-                    const newDeliveryFeesData = parseCsvData(deliveryFeesCsvText, 'deliveryFees'); 
-                    
-                    // Sempre atualiza e repopula quando a busca da API é forçada
-                    allMenuData = newMenuData;
-                    allPromotionsData = newPromotionsData;
-                    deliveryFeesData = newDeliveryFeesData;
-
-                    localStorage.setItem(LOCAL_STORAGE_MENU_KEY, JSON.stringify(allMenuData));
-                    localStorage.setItem(LOCAL_STORAGE_PROMOTIONS_KEY, JSON.stringify(allPromotionsData));
-                    localStorage.setItem(LOCAL_STORAGE_DELIVERY_FEES_KEY, JSON.stringify(deliveryFeesData));
-                    localStorage.setItem(LOCAL_STORAGE_LAST_FETCH_TIMESTAMP_KEY, now.toString()); // 'now' precisa ser definida
-                    console.log('DEBUG: Novos dados da API salvos no localStorage e UI atualizada.');
-
-                    let orderedUniqueCategories = [];
-                    const seenCategories = new Set();
-                    allMenuData.forEach(item => {
-                        if (!seenCategories.has(item.category)) {
-                            seenCategories.add(item.category);
-                            orderedUniqueCategories.push(item.category);
-                        }
-                    });
-                    createCategoryButtons(orderedUniqueCategories);
-                    populateMenu(allMenuData, orderedUniqueCategories);
-                    populateNeighborhoodDropdown(deliveryFeesData);
-                    setupCategoryObserver();
-                    updatePromotionButtonVisibility();
-                    updateCartCount();
-                    updateOrderDisplay();
-                    updateCheckoutButtonText();
-                    showAddressSummary();
-                    toggleAddItemButtons(true);
-                    toggleCategoryButtons(true);
-                    setTimeout(() => { window.dispatchEvent(new Event('scroll')); }, 100);
-                // } // Fim do bloco if (shouldFetchFromApi)
+                });
+                createCategoryButtons(orderedUniqueCategories);
+                populateMenu(allMenuData, orderedUniqueCategories);
+                populateNeighborhoodDropdown(deliveryFeesData);
+                setupCategoryObserver();
+                updatePromotionButtonVisibility();
+                updateCartCount();
+                updateOrderDisplay();
+                updateCheckoutButtonText();
+                showAddressSummary();
+                toggleAddItemButtons(true);
+                toggleCategoryButtons(true);
+                setTimeout(() => { window.dispatchEvent(new Event('scroll')); }, 100);
                 console.log('DEBUG: DOMContentLoaded: Carregamento completo e bem-sucedido.');
 
             } catch (error) {
