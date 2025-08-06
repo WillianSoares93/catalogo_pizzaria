@@ -12,8 +12,8 @@
   "license": "ISC",
   "dependencies": {
     "node-fetch": "^3.3.2",
-    "firebase": "^9.x.x",         // Para o frontend e subscribe.js
-    "firebase-admin": "^11.x.x",  // Para o backend (send-notification.js)
-    "web-push": "^3.x.x"          // Para enviar notificações push
+    "firebase": "^9.x.x",         // SDK Cliente Firebase (para frontend e subscribe.js)
+    "firebase-admin": "^11.x.x",  // SDK Admin Firebase (para send-notification.js)
+    "web-push": "^3.x.x"          // Biblioteca para enviar notificações push
   }
 }
