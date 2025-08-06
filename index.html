@@ -1122,6 +1122,10 @@
                             item[headerKey] = isNaN(parsedValue) ? 0 : parsedValue;
                         } else if (['isPizza', 'available', 'active'].includes(headerKey)) {
                             item[headerKey] = value.toUpperCase() === 'SIM';
+                            // NOVO LOG PARA DEPURAR O CAMPO 'available'
+                            if (headerKey === 'available' && type === 'cardapio') {
+                                console.log(`DEBUG: Item ${item.name || 'N/A'} - available: ${item.available} (raw value: "${value}")`);
+                            }
                         } else {
                             item[headerKey] = value;
                         }
