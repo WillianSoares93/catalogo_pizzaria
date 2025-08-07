@@ -14,6 +14,7 @@ const CARDAPIO_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2
 const PROMOCOES_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=600393470&single=true&output=csv'; 
 // NOVA URL para a planilha de taxas de entrega
 const DELIVERY_FEES_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=1695668250&single=true&output=csv';
+const INGREDIENTES_HAMBURGUER_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=1816106560&single=true&output=csv";
 
 // A função principal que será exportada e executada pelo Vercel.
 // 'req' é o objeto de requisição (request) e 'res' é o objeto de resposta (response).
@@ -42,7 +43,17 @@ export default async (req, res) => {
         const cardapioData = await cardapioResponse.text();
         console.log('Vercel Function: Dados do Cardápio buscados com sucesso.');
 
-        // --- 2. Busca os dados das Promoções ---
+        // --- 2.1 Busca os ingredientes do hambúrguer montável ---
+        console.log("Vercel Function: Buscando ingredientes do hambúrguer montável...");
+        const ingredientesResponse = await fetch(INGREDIENTES_HAMBURGUER_CSV_URL);
+        if (!ingredientesResponse.ok) {
+            const errorText = await ingredientesResponse.text();
+            console.error(`Erro ao buscar ingredientes: ${errorText.substring(0, 200)}...`);
+            throw new Error("Erro ao carregar ingredientes do hambúrguer");
+        }
+        const ingredientesHamburguerData = await ingredientesResponse.text();
+
+// --- 2. Busca os dados das Promoções ---
         console.log('Vercel Function: Tentando buscar dados das Promoções da URL:', PROMOCOES_CSV_URL);
         const promocoesResponse = await fetch(PROMOCOES_CSV_URL);
 
