@@ -2619,5 +2619,79 @@
         });
 
     </script>
+
+<!-- Popup Hambúrguer Montável -->
+<div id="hamburguer-popup" class="modal">
+    <div class="modal-content">
+        <span class="close-button" onclick="document.getElementById('hamburguer-popup').style.display='none'">&times;</span>
+        <h2 class="text-xl font-bold mb-2">Monte seu Hambúrguer</h2>
+        <ul id="hamburguer-ingredientes-list" class="mb-4 space-y-2"></ul>
+        <p><strong>Total:</strong> R$ <span id="hamburguer-total">0,00</span></p>
+        <button id="add-hamburguer-btn" class="btn-order mt-4 px-4 py-2 rounded">Adicionar ao Carrinho</button>
+    </div>
+</div>
+
+<script>
+// Abre o popup de hambúrguer montável
+function openHamburguerMontavelPopup(produto) {
+    const popup = document.getElementById('hamburguer-popup');
+    const listEl = document.getElementById('hamburguer-ingredientes-list');
+    const totalEl = document.getElementById('hamburguer-total');
+
+    listEl.innerHTML = "";
+
+    let total = 0;
+    const ingredientes = produto.ingredientes || [];
+
+    ingredientes.forEach(ing => {
+        const preco = parseFloat(ing.preco) || 0;
+        const isBrioche = ing.nome.toLowerCase().includes("brioche");
+
+        if (isBrioche) total += preco;
+
+        const li = document.createElement('li');
+        li.innerHTML = \`
+            <label>
+                <input type="checkbox" value="\${preco}" \${isBrioche ? 'checked disabled' : ''}>
+                \${ing.nome} - R$ \${preco.toFixed(2).replace('.', ',')}
+            </label>
+        \`;
+        listEl.appendChild(li);
+    });
+
+    listEl.querySelectorAll('input[type="checkbox"]').forEach(chk => {
+        chk.addEventListener('change', () => {
+            let soma = 0;
+            listEl.querySelectorAll('input[type="checkbox"]:checked').forEach(c => {
+                soma += parseFloat(c.value);
+            });
+            totalEl.textContent = soma.toFixed(2).replace('.', ',');
+        });
+    });
+
+    totalEl.textContent = total.toFixed(2).replace('.', ',');
+
+    document.getElementById('add-hamburguer-btn').onclick = () => {
+        const selecionados = [];
+        listEl.querySelectorAll('input[type="checkbox"]:checked').forEach(c => {
+            const nomeIng = c.parentElement.textContent.split(' - ')[0].trim();
+            selecionados.push(nomeIng);
+        });
+
+        const precoTotal = parseFloat(totalEl.textContent.replace(',', '.'));
+
+        addToCart({
+            nome: produto.nome + " (" + selecionados.join(", ") + ")",
+            preco: precoTotal,
+            quantidade: 1
+        });
+
+        popup.style.display = 'none';
+    };
+
+    popup.style.display = 'flex';
+}
+</script>
+
 </body>
 </html>
