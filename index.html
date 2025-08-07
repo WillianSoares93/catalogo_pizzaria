@@ -492,7 +492,7 @@
     <!-- Menu Section -->
     <section id="menu" class="py-8 px-4 max-w-6xl mx-auto">
         <div class="text-center mb-8">
-            <h2 class="text-4xl font-bold text-gray-800 mb-4">Nosso Cardápio- teste</h2>
+            <h2 class="text-4xl font-bold text-gray-800 mb-4">Nosso Cardápio</h2>
             <p class="text-gray-600 text-lg mx-auto">Escolha sua pizza favorita ou uma bebida refrescante!</p>
         </div>
 
@@ -1906,7 +1906,7 @@
 
                     promoDiv.innerHTML = `
                         <h4>${promo.name}</h4>
-                        <p>${promo.description}</p>
+                        <p>${promo.descricao || ''}</p>
                         <span class="price">R$ ${promo.promoPrice.toFixed(2).replace('.', ',')}</span>
                         <button class="add-promo-to-order-btn px-3 py-1 bg-green-600 text-white rounded-full text-sm hover:bg-green-700 transition mt-2"
                                 data-promo-id="${promo.id}" data-image-url="${promoImageUrl || ''}">
