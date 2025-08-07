@@ -1906,7 +1906,7 @@
 
                     promoDiv.innerHTML = `
                         <h4>${promo.name}</h4>
-                        <p>${promo.descricao || ''}</p>
+                        <p>${promo.description}</p>
                         <span class="price">R$ ${promo.promoPrice.toFixed(2).replace('.', ',')}</span>
                         <button class="add-promo-to-order-btn px-3 py-1 bg-green-600 text-white rounded-full text-sm hover:bg-green-700 transition mt-2"
                                 data-promo-id="${promo.id}" data-image-url="${promoImageUrl || ''}">
@@ -2619,5 +2619,17 @@
         });
 
     </script>
+
+<!-- Popup Hambúrguer Montável -->
+<div id="hamburguer-popup" class="popup" style="display:none;">
+    <div class="popup-content">
+        <span class="close" onclick="closeHamburguerPopup()">&times;</span>
+        <h2>Monte seu Hambúrguer</h2>
+        <ul id="hamburguer-ingredientes-list"></ul>
+        <p><strong>Total:</strong> R$ <span id="hamburguer-total">0,00</span></p>
+        <button id="add-hamburguer-btn">Adicionar ao Carrinho</button>
+    </div>
+</div>
+
 </body>
 </html>
