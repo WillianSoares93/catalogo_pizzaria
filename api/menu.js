@@ -11,6 +11,10 @@ import fetch from 'node-fetch'; // Importa a biblioteca 'node-fetch' para fazer 
 // É CRÍTICO que estas URLs estejam corretas e que as planilhas estejam configuradas
 // para serem "Visíveis para qualquer pessoa com o link".
 const CARDAPIO_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=664943668&single=true&output=csv'; 
+const HAMBURGUER_MONTAVEL_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=1816106560&single=true&output=csv";
+
+let hamburguerIngredientes = [];
+
 const PROMOCOES_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=600393470&single=true&output=csv'; 
 // NOVA URL para a planilha de taxas de entrega
 const DELIVERY_FEES_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=1695668250&single=true&output=csv';
@@ -89,3 +93,69 @@ export default async (req, res) => {
         res.status(500).json({ error: `Erro interno no servidor ao carregar dados: ${error.message}` });
     }
 };
+
+
+function openHamburguerMontavelPopup(produto) {
+    const popup = document.getElementById('hamburguer-popup');
+    const listEl = document.getElementById('hamburguer-ingredientes-list');
+    const totalEl = document.getElementById('hamburguer-total');
+
+    listEl.innerHTML = "";
+
+    let total = 0;
+
+    hamburguerIngredientes.forEach(ing => {
+        const preco = parseFloat(ing.preco) || 0;
+        const isBrioche = ing.nome.toLowerCase().includes("brioche");
+
+        if (isBrioche) total += preco;
+
+        const li = document.createElement('li');
+        li.innerHTML = `
+            <label>
+                <input type="checkbox" value="${preco}" ${isBrioche ? 'checked disabled' : ''}>
+                ${ing.nome} - R$ ${preco.toFixed(2).replace('.', ',')}
+            </label>
+        `;
+        listEl.appendChild(li);
+    });
+
+    // Atualiza total ao marcar/desmarcar
+    listEl.querySelectorAll('input[type="checkbox"]').forEach(chk => {
+        chk.addEventListener('change', () => {
+            let soma = 0;
+            listEl.querySelectorAll('input[type="checkbox"]:checked').forEach(c => {
+                soma += parseFloat(c.value);
+            });
+            totalEl.textContent = soma.toFixed(2).replace('.', ',');
+        });
+    });
+
+    // Define total inicial
+    totalEl.textContent = total.toFixed(2).replace('.', ',');
+
+    // Botão adicionar ao carrinho
+    document.getElementById('add-hamburguer-btn').onclick = () => {
+        const selecionados = [];
+        listEl.querySelectorAll('input[type="checkbox"]:checked').forEach(c => {
+            const nomeIng = c.parentElement.textContent.split(' - ')[0].trim();
+            selecionados.push(nomeIng);
+        });
+
+        const precoTotal = parseFloat(totalEl.textContent.replace(',', '.'));
+
+        addToCart({
+            nome: produto.nome + " (" + selecionados.join(", ") + ")",
+            preco: precoTotal,
+            quantidade: 1
+        });
+
+        closeHamburguerPopup();
+    };
+
+    popup.style.display = 'block';
+}
+
+function closeHamburguerPopup() {
+    document.getElementById('hamburguer-popup').style.display = 'none';
+}
