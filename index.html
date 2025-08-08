@@ -2493,19 +2493,23 @@
             showAddressInputModal();
         });
 
+        // =======================================================================================
+        // CÓDIGO REESTRUTURADO PARA MELHORAR O FLUXO DE ATUALIZAÇÃO
+        // =======================================================================================
 
-        document.addEventListener('DOMContentLoaded', async function() {
+        // Nova função principal para buscar e renderizar todos os dados
+        async function loadMenuAndRender() {
             try {
-                console.log('DEBUG: DOMContentLoaded: Iniciando busca da API...');
+                console.log('DEBUG: loadMenuAndRender: Iniciando busca da API...');
                 const response = await fetch('/api/menu'); 
                 if (!response.ok) {
                     const errorText = await response.text();
-                    console.error('DEBUG: DOMContentLoaded: Erro HTTP ao buscar dados da API:', response.status, errorText);
+                    console.error('DEBUG: loadMenuAndRender: Erro HTTP ao buscar dados da API:', response.status, errorText);
                     throw new Error(`Erro ao buscar dados da API: ${response.statusText || errorText}`);
                 }
                 const data = await response.json(); 
-                console.log('DEBUG: DOMContentLoaded: Dados da API recebidos com sucesso:', data); // Log completo dos dados recebidos
-
+                console.log('DEBUG: loadMenuAndRender: Dados da API recebidos com sucesso.');
+                
                 const cardapioCsvText = data.cardapio;
                 const promocoesCsvText = data.promocoes;
                 const deliveryFeesCsvText = data.deliveryFees; 
@@ -2513,7 +2517,6 @@
                 allMenuData = parseCsvData(cardapioCsvText, 'cardapio');
                 allPromotionsData = parseCsvData(promocoesCsvText, 'promocoes');
                 deliveryFeesData = parseCsvData(deliveryFeesCsvText, 'deliveryFees'); 
-                console.log('DEBUG: DOMContentLoaded: Dados CSV parseados. allMenuData:', allMenuData.length, 'allPromotionsData:', allPromotionsData.length, 'deliveryFeesData:', deliveryFeesData.length); // Log de contagem de itens
                 
                 let orderedUniqueCategories = [];
                 const seenCategories = new Set();
@@ -2528,46 +2531,53 @@
                 populateMenu(allMenuData, orderedUniqueCategories); 
                 populateNeighborhoodDropdown(deliveryFeesData); 
                 setupCategoryObserver(); 
-                console.log('DEBUG: DOMContentLoaded: Cardápio e categorias populados.');
-
                 updatePromotionButtonVisibility(); 
                 updateCartCount(); 
-                updateOrderDisplay(); // Chamada inicial para configurar a exibição da taxa de entrega
+                updateOrderDisplay(); 
                 updateCheckoutButtonText(); 
                 showAddressSummary(); 
-                console.log('DEBUG: DOMContentLoaded: UI atualizada.');
-
+                
                 toggleAddItemButtons(true);
                 toggleCategoryButtons(true);
-
+                
                 setTimeout(() => {
                     window.dispatchEvent(new Event('scroll'));
                 }, 100);
-                console.log('DEBUG: DOMContentLoaded: Carregamento completo e bem-sucedido.');
+                
+                console.log('DEBUG: loadMenuAndRender: Carregamento e renderização concluídos.');
 
             } catch (error) {
-                console.error('DEBUG: DOMContentLoaded: Erro fatal ao carregar o cardápio:', error);
-                // Exibe a mensagem de erro APENAS se houve uma falha na busca ou parsing inicial
+                console.error('DEBUG: loadMenuAndRender: Erro fatal ao carregar o cardápio:', error);
                 showMessageModal('Não foi possível carregar o cardápio no momento. Por favor, tente novamente mais tarde.');
             }
-        });
+        }
 
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
+        // Evento que garante que a UI será carregada após o DOM estar pronto
+        document.addEventListener('DOMContentLoaded', function() {
+            // A chamada inicial do PWA, garantindo que o service worker seja registrado
+            if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('/service-worker.js')
                     .then(registration => {
                         console.log('DEBUG: Service Worker registado com sucesso. Scope:', registration.scope);
                     })
                     .catch(error => {
                         console.log('DEBUG: Falha no registo do Service Worker:', error);
-                        // Adicionado catch para o fetch dentro do service worker para evitar Uncaught (in promise)
-                        // Isso é uma correção para o erro de CORS reportado no service worker
                         if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
                             console.warn('DEBUG: Erro de rede/CORS no Service Worker. Isso pode ser esperado para recursos de terceiros não-cacheáveis.');
                         }
                     });
-            });
-        }
+            }
+            // Chamada inicial para carregar todos os dados assim que o DOM estiver pronto
+            loadMenuAndRender();
+        });
+        
+        // Listener para o problema do bfcache: atualiza os dados quando o usuário volta para a página
+        document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "visible") {
+                console.log("DEBUG: Página retornou ao foco. Atualizando dados do cardápio.");
+                loadMenuAndRender();
+            }
+        });
 
         // --- Lógica de Instalação do PWA ---
 
