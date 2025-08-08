@@ -492,7 +492,7 @@
     <!-- Menu Section -->
     <section id="menu" class="py-8 px-4 max-w-6xl mx-auto">
         <div class="text-center mb-8">
-            <h2 class="text-4xl font-bold text-gray-800 mb-4">Nosso Cardápio</h2>
+            <h2 class="text-4xl font-bold text-gray-800 mb-4">Nosso Cardápio- teste</h2>
             <p class="text-gray-600 text-lg mx-auto">Escolha sua pizza favorita ou uma bebida refrescante!</p>
         </div>
 
@@ -802,9 +802,9 @@
 
         // Variáveis globais
         let order = [];
-        let cardapio = []; // Armazenará todos os itens do cardápio (pizzas e bebidas)
-        let promocoes = [];
-        let deliveryFees = []; // NOVO: Armazenará os dados de taxas de entrega
+        let allMenuData = []; // Armazenará todos os itens do cardápio (pizzas e bebidas)
+        let allPromotionsData = [];
+        let deliveryFeesData = []; // NOVO: Armazenará os dados de taxas de entrega
         let isSelectingHalfPizza = false; 
         let isFirstHalfPromotional = false; 
         let deferredPrompt; 
@@ -822,7 +822,7 @@
         let isAddressInputVisible = false; // NOVO: Controla a visibilidade do modal de endereço
 
         // Imagem padrão para pizzas sem link na planilha
-        const defaultPizzaImage = 'https://upload.wikimedia.org/wikipedia/commons/9/91/Pizza-3007395.jpg';
+        const defaultImage = 'https://www.bakelitsul.com.br/Assets/img/sem-produto-detalhe.png';
 
         // Referências para os elementos DOM
         const orderSidebar = document.getElementById('orderSidebar');
@@ -1002,6 +1002,18 @@
         });
 
         function getGenericPizzaSliceImage() {
+            return ''; 
+        }
+
+        // Função para parsear dados CSV (agora mais genérica para diferentes tipos de dados)
+        function parseCsvData(csvText, type) {
+            console.log(`DEBUG: parseCsvData para ${type} - CSV Bruto (primeiras 100 chars):`, csvText.substring(0, 100)); // Log
+            const lines = csvText.split('\n').filter(line => line.trim() !== '');
+
+            if (lines.length === 0) {
+                console.warn(`DEBUG: Nenhuma linha válida encontrada no CSV de ${type}.`);
+                return [];
+            }
 
             function parseCsvLine(line) {
                 const values = [];
@@ -1052,6 +1064,7 @@
                     // Headers para Promoções
                     case 'ID Promocao': return 'id';
                     case 'Nome da Promocao': return 'name';
+                    case 'Descrição': return 'description';
                     case 'Preco Promocional': return 'promoPrice';
                     case 'ID Item Aplicavel': return 'itemId';
                     case 'Ativo (SIM/NAO)': return 'active';
@@ -1094,14 +1107,17 @@
                         }
                     }
                     // Lógica específica para imageUrl em pizzas
-                    if (type === 'cardapio' && item.isPizza) {
+                    if (type === 'cardapio') {
                         const trimmedUrl = String(item.imageUrl || '').trim();
-                        if (trimmedUrl.length > 0 && (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://'))) {
-                            item.imageUrl = trimmedUrl;
-                        } else {
-                            item.imageUrl = defaultPizzaImage;
-                        }
+                            if (trimmedUrl.length > 0 && (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://'))) {
+                                item.imageUrl = trimmedUrl;
+                            } else if (item.isPizza) {
+                                 item.imageUrl = defaultImage;
+                            } else {
+                                item.imageUrl = ''; // sem imagem padrão para bebidas/sobremesas
+                            }
                     }
+
                     // Apenas adiciona se estiver disponível (para cardápio) ou ativo (para promoções)
                     // Para deliveryFees, adiciona todos os bairros
                     if ((type === 'cardapio' && item.available) || (type === 'promocoes' && item.active) || type === 'deliveryFees') {
@@ -1182,11 +1198,11 @@
                                     `;
                                 }
                                 
-                                const imageUrl = item.imageUrl || defaultPizzaImage; 
+                                const imageUrl = item.imageUrl || defaultImage; 
 
                                 itemHtml = `
                                     <div class="flavor-card bg-white rounded-xl overflow-hidden shadow-lg transition duration-300">
-                                        <img src="${imageUrl}" alt="Pizza de ${item.name}" class="w-full h-40 object-cover" onerror="this.onerror=null;this.src='${defaultPizzaImage}';">
+                                        <img src="${imageUrl}" alt="Pizza de ${item.name}" class="w-full h-40 object-cover" onerror="this.onerror=null;this.src='${defaultImage}';">
                                         <div class="p-6">
                                             <h3 class="text-xl font-bold text-gray-800 mb-2">${item.name}</h3>
                                             <div class="flex justify-around items-start text-sm mb-4 w-full overflow-x-auto py-1">
@@ -1202,23 +1218,26 @@
                                         </div>
                                     </div>
                                 `;
-                            } else { 
-                                itemHtml = `
-                                    <div class="flavor-card bg-white rounded-xl overflow-hidden shadow-lg transition duration-300">
-                                        <div class="p-6">
-                                            <h3 class="text-xl font-bold text-gray-800 mb-2">${item.name}</h3>
-                                            <p class="text-gray-600 text-sm mb-4">${item.description}</p>
-                                            <div class="flex justify-between items-center">
-                                                <span class="font-bold text-red-600 text-lg">R$ ${item.basePrice.toFixed(2).replace('.', ',')}</span>
-                                                <button class="add-item-btn bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full text-sm font-medium transition duration-300"
-                                                        data-item-id="${item.id}">
-                                                    Adicionar
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                `;
-                            }
+							} else {
+								const imageUrl = item.imageUrl || defaultImage; // Use uma imagem genérica se preferir
+
+							itemHtml = `
+								<div class="flavor-card bg-white rounded-xl overflow-hidden shadow-lg transition duration-300">
+									<img src="${imageUrl}" alt="${item.name}" class="w-full h-40 object-cover" onerror="this.onerror=null;this.src='${defaultImage}';">
+										<div class="p-6">
+										<h3 class="text-xl font-bold text-gray-800 mb-2">${item.name}</h3>
+										<p class="text-gray-600 text-sm mb-4">${item.description}</p>
+										<div class="flex justify-between items-center">
+											<span class="font-bold text-red-600 text-lg">R$ ${item.basePrice.toFixed(2).replace('.', ',')}</span>
+											<button class="add-item-btn bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full text-sm font-medium transition duration-300"
+											data-item-id="${item.id}">
+												Adicionar
+											</button>
+										</div>
+								</div>
+						</div>										
+					`;
+				}
                             categoryItemsEl.insertAdjacentHTML('beforeend', itemHtml);
                         }
                     });
@@ -1307,7 +1326,7 @@
             console.log('DEBUG: toggleAddItemButtons: Habilitando/Desabilitando botões de adicionar item. enableAll:', enableAll); // Log
             document.querySelectorAll('.add-item-btn').forEach(button => {
                 const itemId = button.dataset.itemId;
-                const item = cardapio.find(i => i.id === itemId);
+                const item = allMenuData.find(i => i.id === itemId);
 
                 if (enableAll || !isSelectingHalfPizza) { 
                     button.removeAttribute('disabled');
@@ -1367,7 +1386,7 @@
             console.log('DEBUG: handleAddButtonClick: Botão de adicionar clicado.'); // Log
             const clickedButton = e.target; 
             const itemId = clickedButton.dataset.itemId;
-            const item = cardapio.find(i => i.id === itemId);
+            const item = allMenuData.find(i => i.id === itemId);
 
             if (!item) {
                 console.error('DEBUG: Item não encontrado:', itemId);
@@ -1882,14 +1901,14 @@
         function displayPromotionsPopup() {
             console.log('DEBUG: displayPromotionsPopup: Exibindo popup de promoções.'); // Log
             promotionsListEl.innerHTML = '';
-            const activePromotions = promocoes.filter(promo => promo.active && promo.promoPrice !== null);
+            const activePromotions = allPromotionsData.filter(promo => promo.active && promo.promoPrice !== null);
 
             if (activePromotions.length > 0) {
                 activePromotions.forEach(promo => {
                     const promoDiv = document.createElement('div');
                     promoDiv.className = 'promotion-item';
                     
-                    const applicableItem = cardapio.find(item => item.id === promo.itemId);
+                    const applicableItem = allMenuData.find(item => item.id === promo.itemId);
                     const promoImageUrl = applicableItem && applicableItem.isPizza ? applicableItem.imageUrl : null;
 
                     promoDiv.innerHTML = `
@@ -1919,7 +1938,7 @@
         }
 
         function addPromotionToOrder(promoId, clickedButton = null, itemImageUrl = null) { 
-            const promotion = promocoes.find(p => p.id === promoId);
+            const promotion = allPromotionsData.find(p => p.id === promoId);
             if (promotion) {
                 console.log('DEBUG: addPromotionToOrder: Adicionando promoção:', promotion.name); // Log
                 order.push({
@@ -1944,7 +1963,7 @@
         }
 
         function updatePromotionButtonVisibility() {
-            const activePromotionsWithPrice = promocoes.filter(promo => promo.active && promo.promoPrice !== null);
+            const activePromotionsWithPrice = allPromotionsData.filter(promo => promo.active && promo.promoPrice !== null);
             if (activePromotionsWithPrice.length > 0 && !orderSidebar.classList.contains('translate-x-0')) {
                 promotionButton.style.display = 'flex';
             } else {
@@ -1974,7 +1993,7 @@
         function displayDrinkSuggestionModal() {
             console.log('DEBUG: displayDrinkSuggestionModal: Exibindo modal de sugestão de bebidas.'); // Log
             suggestedDrinksList.innerHTML = ''; 
-            const availableDrinks = cardapio.filter(item => item.category === 'bebidas' && item.available);
+            const availableDrinks = allMenuData.filter(item => item.category === 'bebidas' && item.available);
 
             if (availableDrinks.length > 0) {
                 const drinksToSuggest = availableDrinks; 
@@ -1992,7 +2011,7 @@
                 document.querySelectorAll('.add-suggested-drink-btn').forEach(button => {
                     button.addEventListener('click', function() {
                         const itemId = this.dataset.itemId;
-                        const item = cardapio.find(i => i.id === itemId);
+                        const item = allMenuData.find(i => i.id === itemId);
                         if (item) {
                             addToOrder({
                                 type: 'full',
@@ -2394,7 +2413,7 @@
                 return;
             }
 
-            const selectedFee = deliveryFees.find(fee => fee.neighborhood === bairro);
+            const selectedFee = deliveryFeesData.find(fee => fee.neighborhood === bairro);
             if (!selectedFee) {
                 showMessageModal('Bairro selecionado inválido. Por favor, selecione um bairro da lista.');
                 console.log('DEBUG: Bairro selecionado não encontrado nos dados de taxa.'); // Log
@@ -2491,11 +2510,14 @@
                 const promocoesCsvText = data.promocoes;
                 const deliveryFeesCsvText = data.deliveryFees; 
 
-                console.log('DEBUG: DOMContentLoaded: Dados CSV parseados. cardapio:', cardapio.length, 'promocoes:', promocoes.length, 'deliveryFees:', deliveryFees.length); // Log de contagem de itens
+                allMenuData = parseCsvData(cardapioCsvText, 'cardapio');
+                allPromotionsData = parseCsvData(promocoesCsvText, 'promocoes');
+                deliveryFeesData = parseCsvData(deliveryFeesCsvText, 'deliveryFees'); 
+                console.log('DEBUG: DOMContentLoaded: Dados CSV parseados. allMenuData:', allMenuData.length, 'allPromotionsData:', allPromotionsData.length, 'deliveryFeesData:', deliveryFeesData.length); // Log de contagem de itens
                 
                 let orderedUniqueCategories = [];
                 const seenCategories = new Set();
-                cardapio.forEach(item => {
+                allMenuData.forEach(item => {
                     if (!seenCategories.has(item.category)) {
                         seenCategories.add(item.category);
                         orderedUniqueCategories.push(item.category);
@@ -2503,8 +2525,8 @@
                 });
                 
                 createCategoryButtons(orderedUniqueCategories); 
-                populateMenu(cardapio, orderedUniqueCategories); 
-                populateNeighborhoodDropdown(deliveryFees); 
+                populateMenu(allMenuData, orderedUniqueCategories); 
+                populateNeighborhoodDropdown(deliveryFeesData); 
                 setupCategoryObserver(); 
                 console.log('DEBUG: DOMContentLoaded: Cardápio e categorias populados.');
 
@@ -2526,7 +2548,7 @@
             } catch (error) {
                 console.error('DEBUG: DOMContentLoaded: Erro fatal ao carregar o cardápio:', error);
                 // Exibe a mensagem de erro APENAS se houve uma falha na busca ou parsing inicial
-                showMessageModal('Não foi possível carregar o cardápio no momento. Por favor, tente novamente mais tarde.2217');
+                showMessageModal('Não foi possível carregar o cardápio no momento. Por favor, tente novamente mais tarde.');
             }
         });
 
@@ -2604,75 +2626,5 @@
         });
 
     </script>
-
-<!-- Modal de Hambúrguer Montável -->
-<div id="hamburguer-popup" class="modal">
-    <div class="modal-content">
-        <span class="close-button" onclick="document.getElementById('hamburguer-popup').style.display='none'">&times;</span>
-        <h2>Monte seu Hambúrguer</h2>
-        <ul id="hamburguer-ingredientes-list"></ul>
-        <p><strong>Total:</strong> R$ <span id="hamburguer-total">0,00</span></p>
-        <button id="add-hamburguer-btn">Adicionar ao Carrinho</button>
-    </div>
-</div>
-
-<script>
-function openHamburguerMontavelPopup(produto) {
-    const popup = document.getElementById('hamburguer-popup');
-    const list = document.getElementById('hamburguer-ingredientes-list');
-    const totalSpan = document.getElementById('hamburguer-total');
-
-    list.innerHTML = '';
-    let total = 0;
-
-    (produto.ingredientes || []).forEach(ing => {
-        const preco = parseFloat(ing.preco) || 0;
-        const isBrioche = ing.nome.toLowerCase().includes("brioche");
-        if (isBrioche) total += preco;
-
-        const li = document.createElement('li');
-        li.innerHTML = `
-            <label>
-                <input type="checkbox" value="\${preco}" \${isBrioche ? "checked disabled" : ""}>
-                \${ing.nome} - R$ \${preco.toFixed(2).replace(".", ",")}
-            </label>
-        `;
-        list.appendChild(li);
-    });
-
-    list.querySelectorAll('input[type="checkbox"]').forEach(chk => {
-        chk.addEventListener('change', () => {
-            let soma = 0;
-            list.querySelectorAll('input[type="checkbox"]:checked').forEach(c => {
-                soma += parseFloat(c.value);
-            });
-            totalSpan.textContent = soma.toFixed(2).replace('.', ',');
-        });
-    });
-
-    totalSpan.textContent = total.toFixed(2).replace('.', ',');
-
-    document.getElementById('add-hamburguer-btn').onclick = () => {
-        const selecionados = [];
-        list.querySelectorAll('input[type="checkbox"]:checked').forEach(c => {
-            const nomeIng = c.parentElement.textContent.split(' - ')[0].trim();
-            selecionados.push(nomeIng);
-        });
-
-        const precoTotal = parseFloat(totalSpan.textContent.replace(',', '.'));
-
-        addToCart({
-            nome: produto.nome + " (" + selecionados.join(", ") + ")",
-            preco: precoTotal,
-            quantidade: 1
-        });
-
-        popup.style.display = 'none';
-    };
-
-    popup.style.display = 'flex';
-}
-</script>
-
 </body>
 </html>
