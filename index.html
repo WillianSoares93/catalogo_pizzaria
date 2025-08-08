@@ -2491,9 +2491,6 @@
                 const promocoesCsvText = data.promocoes;
                 const deliveryFeesCsvText = data.deliveryFees; 
 
-                allMenuData = parseCsvData(cardapioCsvText, 'cardapio');
-                allPromotionsData = parseCsvData(promocoesCsvText, 'promocoes');
-                deliveryFeesData = parseCsvData(deliveryFeesCsvText, 'deliveryFees'); 
                 console.log('DEBUG: DOMContentLoaded: Dados CSV parseados. allMenuData:', allMenuData.length, 'allPromotionsData:', allPromotionsData.length, 'deliveryFeesData:', deliveryFeesData.length); // Log de contagem de itens
                 
                 let orderedUniqueCategories = [];
@@ -2529,7 +2526,7 @@
             } catch (error) {
                 console.error('DEBUG: DOMContentLoaded: Erro fatal ao carregar o cardápio:', error);
                 // Exibe a mensagem de erro APENAS se houve uma falha na busca ou parsing inicial
-                showMessageModal('Não foi possível carregar o cardápio no momento. Por favor, tente novamente mais tarde.2157');
+                showMessageModal('Não foi possível carregar o cardápio no momento. Por favor, tente novamente mais tarde.2214');
             }
         });
 
