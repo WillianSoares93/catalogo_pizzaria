@@ -2646,12 +2646,12 @@ function openHamburguerMontavelPopup(produto) {
         if (isBrioche) total += preco;
 
         const li = document.createElement('li');
-        li.innerHTML = \`
+        li.innerHTML = `
             <label>
                 <input type="checkbox" value="\${preco}" \${isBrioche ? "checked disabled" : ""}>
                 \${ing.nome} - R$ \${preco.toFixed(2).replace(".", ",")}
             </label>
-        \`;
+        `;
         list.appendChild(li);
     });
 
