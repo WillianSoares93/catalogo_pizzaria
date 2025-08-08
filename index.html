@@ -1006,8 +1006,7 @@
         }
 
         // Função para parsear dados CSV (agora mais genérica para diferentes tipos de dados)
-        function parseCsvData(csvText, type) {
-            console.log(`DEBUG: parseCsvData para ${type} - CSV Bruto (primeiras 100 chars):`, csvText.substring(0, 100)); // Log
+         - CSV Bruto (primeiras 100 chars):`, csvText.substring(0, 100)); // Log
             const lines = csvText.split('\n').filter(line => line.trim() !== '');
 
             if (lines.length === 0) {
@@ -2541,7 +2540,7 @@
             } catch (error) {
                 console.error('DEBUG: DOMContentLoaded: Erro fatal ao carregar o cardápio:', error);
                 // Exibe a mensagem de erro APENAS se houve uma falha na busca ou parsing inicial
-                showMessageModal('Não foi possível carregar o cardápio no momento. Por favor, tente novamente mais tarde.2145');
+                showMessageModal('Não foi possível carregar o cardápio no momento. Por favor, tente novamente mais tarde.');
             }
         });
 
