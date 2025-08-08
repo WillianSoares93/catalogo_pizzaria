@@ -1002,16 +1002,6 @@
         });
 
         function getGenericPizzaSliceImage() {
-            return ''; 
-        }
-
-        // Função para parsear dados CSV (agora mais genérica para diferentes tipos de dados)
-            const lines = csvText.split('\n').filter(line => line.trim() !== '');
-
-            if (lines.length === 0) {
-                console.warn(`DEBUG: Nenhuma linha válida encontrada no CSV de ${type}.`);
-                return [];
-            }
 
             function parseCsvLine(line) {
                 const values = [];
@@ -2539,7 +2529,7 @@
             } catch (error) {
                 console.error('DEBUG: DOMContentLoaded: Erro fatal ao carregar o cardápio:', error);
                 // Exibe a mensagem de erro APENAS se houve uma falha na busca ou parsing inicial
-                showMessageModal('Não foi possível carregar o cardápio no momento. Por favor, tente novamente mais tarde.2154');
+                showMessageModal('Não foi possível carregar o cardápio no momento. Por favor, tente novamente mais tarde.2157');
             }
         });
 
