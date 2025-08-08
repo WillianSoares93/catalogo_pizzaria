@@ -505,7 +505,7 @@
         <div class="category-bar-mobile-sticky lg:static lg:p-0">
             <!-- Os botões de categoria serão gerados dinamicamente aqui pelo JS -->
             <div id="category-buttons-container" class="flex space-x-2 mb-6 overflow-x-auto pb-2 
-                        lg:flex-row lg:space-x-2 lg:mb-6 lg:overflow-visible lg:pb-0">
+                         lg:flex-row lg:space-x-2 lg:mb-6 lg:overflow-visible lg:pb-0">
             </div>
         </div>
         
@@ -822,7 +822,7 @@
         let isAddressInputVisible = false; // NOVO: Controla a visibilidade do modal de endereço
 
         // Imagem padrão para pizzas sem link na planilha
-        const defaultImage = 'https://www.bakelitsul.com.br/Assets/img/sem-produto-detalhe.png';
+        const defaultPizzaImage = 'https://upload.wikimedia.org/wikipedia/commons/9/91/Pizza-3007395.jpg';
 
         // Referências para os elementos DOM
         const orderSidebar = document.getElementById('orderSidebar');
@@ -1047,35 +1047,40 @@
             }
 
             const headersRaw = parseCsvLine(lines[0]);
+            console.log(`DEBUG: parseCsvData para ${type} - Headers Brutos:`, headersRaw); // NOVO LOG
+
+            const headerMap = {
+                'id item (unico)': 'id',
+                'nome do item': 'name',
+                'descricao': 'description', 
+                'preco 8 fatias': 'basePrice', // Corrigido para "preco" sem til
+                'preco 6 fatias': 'price6Slices', // Corrigido para "preco" sem til
+                'preco 4 fatias': 'price4Slices', // Corrigido para "preco" sem til
+                'categoria': 'category',
+                'e pizza? (sim/nao)': 'isPizza', // Corrigido para "e" sem til e "nao" sem til
+                'disponivel (sim/nao)': 'available', // Corrigido para "disponivel" sem til e "nao" sem til
+                'imagem': 'imageUrl',
+                'id promocao': 'id',
+                'nome da promocao': 'name',
+                'descricao': 'description', // CORREÇÃO: Adicionado o mapeamento para a descrição das promoções
+                'preco promocional': 'promoPrice', // Corrigido para "preco" sem til
+                'id item aplicavel': 'itemId',
+                'ativo (sim/nao)': 'active', // Corrigido para "nao" sem til
+                'bairros': 'neighborhood',
+                'valor frete': 'deliveryFee'
+            };
+            console.log(`DEBUG: parseCsvData para ${type} - Conteúdo do headerMap:`, headerMap); // NOVO LOG PARA DEBUG
+
             const mappedHeaders = headersRaw.map(header => {
-                let cleanedHeader = header.trim();
-                switch (cleanedHeader) {
-                    // Headers para Cardápio
-                    case 'ID Item (único)': return 'id';
-                    case 'Nome do Item': return 'name';
-                    case 'Descrição': return 'description';
-                    case 'Preço 8 fatias': return 'basePrice';
-                    case 'Preço 6 fatias': return 'price6Slices';
-                    case 'Preço 4 fatias': return 'price4Slices';
-                    case 'Categoria': return 'category';
-                    case 'É Pizza? (SIM/NÃO)': return 'isPizza';
-                    case 'Disponível (SIM/NÃO)': return 'available'; 
-                    case 'Imagem': return 'imageUrl'; 
-                    // Headers para Promoções
-                    case 'ID Promocao': return 'id';
-                    case 'Nome da Promocao': return 'name';
-                    case 'Descrição': return 'description';
-                    case 'Preco Promocional': return 'promoPrice';
-                    case 'ID Item Aplicavel': return 'itemId';
-                    case 'Ativo (SIM/NAO)': return 'active';
-                    // Headers para Taxas de Entrega - CORRIGIDO O MAPEAMENTO
-                    case 'Bairros': return 'neighborhood'; // CORREÇÃO AQUI: De 'Bairro' para 'Bairros'
-                    case 'Valor Frete': return 'deliveryFee';
-                    default: 
-                        console.warn(`DEBUG: Header CSV desconhecido encontrado para ${type}: "${cleanedHeader}"`); // Log para depuração
-                        return cleanedHeader.replace(/[^a-zA-Z0-9]+(.)?/g, (match, chr) => chr ? chr.toUpperCase() : '').replace(/^./, (match) => match.toLowerCase());
+                const cleanedHeader = header.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // Remove accents, lowercase
+                console.log(`DEBUG: Processando header "${header}" para tipo ${type}. Cleaned: "${cleanedHeader}"`); // NOVO LOG PARA DEBUG
+                if (headerMap[cleanedHeader]) {
+                    return headerMap[cleanedHeader];
                 }
+                console.warn(`DEBUG: Header CSV desconhecido encontrado: "${header}" (limpo: "${cleanedHeader}") para tipo ${type}`);
+                return cleanedHeader.replace(/[^a-zA-Z0-9]+(.)?/g, (match, chr) => chr ? chr.toUpperCase() : '').replace(/^./, (match) => match.toLowerCase());
             });
+            console.log(`DEBUG: parseCsvData para ${type} - Headers Mapeados:`, mappedHeaders);
             
             const parsedData = [];
             for (let i = 1; i < lines.length; i++) {
@@ -1096,28 +1101,33 @@
                             console.warn(`DEBUG: Valor Frete vazio ou indefinido na linha ${i + 1} para ${type}: "${line}"`);
                             value = '0.00'; // Default para 0 se ausente
                         }
+                        // Garante que a descrição das promoções seja sempre uma string vazia se for nula/undefined
+                        if (headerKey === 'description' && type === 'promocoes' && (value === undefined || value === null)) {
+                            value = ''; 
+                        }
 
                         if (['basePrice', 'price6Slices', 'price4Slices', 'promoPrice', 'deliveryFee'].includes(headerKey)) { // Adicionado 'deliveryFee'
                             const parsedValue = parseFloat(String(value).replace(',', '.'));
                             item[headerKey] = isNaN(parsedValue) ? 0 : parsedValue;
                         } else if (['isPizza', 'available', 'active'].includes(headerKey)) {
                             item[headerKey] = value.toUpperCase() === 'SIM';
+                            // NOVO LOG PARA DEPURAR O CAMPO 'available'
+                            if (headerKey === 'available' && type === 'cardapio') {
+                                console.log(`DEBUG: Item ${item.name || 'N/A'} - available: ${item.available} (raw value: "${value}")`);
+                            }
                         } else {
                             item[headerKey] = value;
                         }
                     }
                     // Lógica específica para imageUrl em pizzas
-                    if (type === 'cardapio') {
+                    if (type === 'cardapio' && item.isPizza) {
                         const trimmedUrl = String(item.imageUrl || '').trim();
-                            if (trimmedUrl.length > 0 && (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://'))) {
-                                item.imageUrl = trimmedUrl;
-                            } else if (item.isPizza) {
-                                 item.imageUrl = defaultImage;
-                            } else {
-                                item.imageUrl = ''; // sem imagem padrão para bebidas/sobremesas
-                            }
+                        if (trimmedUrl.length > 0 && (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://'))) {
+                            item.imageUrl = trimmedUrl;
+                        } else {
+                            item.imageUrl = defaultPizzaImage;
+                        }
                     }
-
                     // Apenas adiciona se estiver disponível (para cardápio) ou ativo (para promoções)
                     // Para deliveryFees, adiciona todos os bairros
                     if ((type === 'cardapio' && item.available) || (type === 'promocoes' && item.active) || type === 'deliveryFees') {
@@ -1913,7 +1923,7 @@
 
                     promoDiv.innerHTML = `
                         <h4>${promo.name}</h4>
-                        <p>${promo.description}</p>
+                        <p>${promo.description || ''}</p> <!-- Adicionado || '' para garantir que não seja 'undefined' -->
                         <span class="price">R$ ${promo.promoPrice.toFixed(2).replace('.', ',')}</span>
                         <button class="add-promo-to-order-btn px-3 py-1 bg-green-600 text-white rounded-full text-sm hover:bg-green-700 transition mt-2"
                                 data-promo-id="${promo.id}" data-image-url="${promoImageUrl || ''}">
@@ -1945,7 +1955,7 @@
                     type: 'promotion',
                     name: promotion.name,
                     price: promotion.promoPrice,
-                    description: promotion.description,
+                    description: promotion.description || '', // Garante que a descrição seja string
                     itemId: promotion.itemId
                 });
                 updateOrderDisplay();
@@ -1964,7 +1974,7 @@
 
         function updatePromotionButtonVisibility() {
             const activePromotionsWithPrice = allPromotionsData.filter(promo => promo.active && promo.promoPrice !== null);
-            if (activePromotionsWithPrice.length > 0 && !orderSidebar.classList.contains('translate-x-0')) {
+            if (activePromotionsWithPrice.length > 0 && !orderSidebar.classList.contains('translate-x-0') && pizzaOptionModal.style.display !== 'flex' && addressInputModal.style.display !== 'flex' && promotionPopup.style.display !== 'flex' && drinkSuggestionModal.style.display !== 'flex' && confirmNoDrinkModal.style.display !== 'flex' && installPromptModal.style.display !== 'flex' && paymentMethodModal.style.display !== 'flex') {
                 promotionButton.style.display = 'flex';
             } else {
                 promotionButton.style.display = 'none';
@@ -2493,94 +2503,28 @@
             showAddressInputModal();
         });
 
-        // =======================================================================================
-        // CÓDIGO REESTRUTURADO PARA MELHORAR O FLUXO DE ATUALIZAÇÃO
-        // =======================================================================================
-
-        // Nova função principal para buscar e renderizar todos os dados
-        async function loadMenuAndRender() {
+        // Evento que garante que a UI será carregada após o DOM estar pronto
+        document.addEventListener('DOMContentLoaded', async function() {
             try {
-                console.log('DEBUG: loadMenuAndRender: Iniciando busca da API...');
-                const response = await fetch('/api/menu'); 
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('DEBUG: loadMenuAndRender: Erro HTTP ao buscar dados da API:', response.status, errorText);
-                    throw new Error(`Erro ao buscar dados da API: ${response.statusText || errorText}`);
+                // A chamada inicial do PWA, garantindo que o service worker seja registrado
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.register('/service-worker.js')
+                        .then(registration => {
+                            console.log('DEBUG: Service Worker registado com sucesso. Scope:', registration.scope);
+                        })
+                        .catch(error => {
+                            console.log('DEBUG: Falha no registo do Service Worker:', error);
+                        });
                 }
-                const data = await response.json(); 
-                console.log('DEBUG: loadMenuAndRender: Dados da API recebidos com sucesso.');
-                
-                const cardapioCsvText = data.cardapio;
-                const promocoesCsvText = data.promocoes;
-                const deliveryFeesCsvText = data.deliveryFees; 
-
-                allMenuData = parseCsvData(cardapioCsvText, 'cardapio');
-                allPromotionsData = parseCsvData(promocoesCsvText, 'promocoes');
-                deliveryFeesData = parseCsvData(deliveryFeesCsvText, 'deliveryFees'); 
-                
-                let orderedUniqueCategories = [];
-                const seenCategories = new Set();
-                allMenuData.forEach(item => {
-                    if (!seenCategories.has(item.category)) {
-                        seenCategories.add(item.category);
-                        orderedUniqueCategories.push(item.category);
-                    }
-                });
-                
-                createCategoryButtons(orderedUniqueCategories); 
-                populateMenu(allMenuData, orderedUniqueCategories); 
-                populateNeighborhoodDropdown(deliveryFeesData); 
-                setupCategoryObserver(); 
-                updatePromotionButtonVisibility(); 
-                updateCartCount(); 
-                updateOrderDisplay(); 
-                updateCheckoutButtonText(); 
-                showAddressSummary(); 
-                
-                toggleAddItemButtons(true);
-                toggleCategoryButtons(true);
-                
-                setTimeout(() => {
-                    window.dispatchEvent(new Event('scroll'));
-                }, 100);
-                
-                console.log('DEBUG: loadMenuAndRender: Carregamento e renderização concluídos.');
-
+                // Chamada inicial para carregar todos os dados assim que o DOM estiver pronto
+                loadMenuAndRender();
             } catch (error) {
-                console.error('DEBUG: loadMenuAndRender: Erro fatal ao carregar o cardápio:', error);
+                console.error('DEBUG: DOMContentLoaded: Erro fatal ao carregar o cardápio:', error);
                 showMessageModal('Não foi possível carregar o cardápio no momento. Por favor, tente novamente mais tarde.');
             }
-        }
-
-        // Evento que garante que a UI será carregada após o DOM estar pronto
-        document.addEventListener('DOMContentLoaded', function() {
-            // A chamada inicial do PWA, garantindo que o service worker seja registrado
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('/service-worker.js')
-                    .then(registration => {
-                        console.log('DEBUG: Service Worker registado com sucesso. Scope:', registration.scope);
-                    })
-                    .catch(error => {
-                        console.log('DEBUG: Falha no registo do Service Worker:', error);
-                        if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-                            console.warn('DEBUG: Erro de rede/CORS no Service Worker. Isso pode ser esperado para recursos de terceiros não-cacheáveis.');
-                        }
-                    });
-            }
-            // Chamada inicial para carregar todos os dados assim que o DOM estiver pronto
-            loadMenuAndRender();
         });
         
-        // Listener para o problema do bfcache: atualiza os dados quando o usuário volta para a página
-        document.addEventListener("visibilitychange", () => {
-            if (document.visibilityState === "visible") {
-                console.log("DEBUG: Página retornou ao foco. Atualizando dados do cardápio.");
-                loadMenuAndRender();
-            }
-        });
-
-        // --- Lógica de Instalação do PWA ---
-
+        // --- Lógica do PWA para carregamento offline ---
         function isPwaInstalled() {
             if (window.matchMedia('(display-mode: standalone)').matches) {
                 return true;
