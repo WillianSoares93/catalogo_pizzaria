@@ -51,11 +51,7 @@ export default async function handler(req, res) {
             }
         });
 
-        res.status(200).json({
-            cardapio,
-            promocoes,
-            deliveryFees
-        });
+        res.status(200).json({ cardapio, promocoes, deliveryFees, ingredientesHamburguer });
 
     } catch (error) {
         console.error("Erro na API:", error);
