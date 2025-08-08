@@ -802,9 +802,9 @@
 
         // Variáveis globais
         let order = [];
-        let allMenuData = []; // Armazenará todos os itens do cardápio (pizzas e bebidas)
-        let allPromotionsData = [];
-        let deliveryFeesData = []; // NOVO: Armazenará os dados de taxas de entrega
+        let cardapio = []; // Armazenará todos os itens do cardápio (pizzas e bebidas)
+        let promocoes = [];
+        let deliveryFees = []; // NOVO: Armazenará os dados de taxas de entrega
         let isSelectingHalfPizza = false; 
         let isFirstHalfPromotional = false; 
         let deferredPrompt; 
@@ -1307,7 +1307,7 @@
             console.log('DEBUG: toggleAddItemButtons: Habilitando/Desabilitando botões de adicionar item. enableAll:', enableAll); // Log
             document.querySelectorAll('.add-item-btn').forEach(button => {
                 const itemId = button.dataset.itemId;
-                const item = allMenuData.find(i => i.id === itemId);
+                const item = cardapio.find(i => i.id === itemId);
 
                 if (enableAll || !isSelectingHalfPizza) { 
                     button.removeAttribute('disabled');
@@ -1367,7 +1367,7 @@
             console.log('DEBUG: handleAddButtonClick: Botão de adicionar clicado.'); // Log
             const clickedButton = e.target; 
             const itemId = clickedButton.dataset.itemId;
-            const item = allMenuData.find(i => i.id === itemId);
+            const item = cardapio.find(i => i.id === itemId);
 
             if (!item) {
                 console.error('DEBUG: Item não encontrado:', itemId);
@@ -1882,14 +1882,14 @@
         function displayPromotionsPopup() {
             console.log('DEBUG: displayPromotionsPopup: Exibindo popup de promoções.'); // Log
             promotionsListEl.innerHTML = '';
-            const activePromotions = allPromotionsData.filter(promo => promo.active && promo.promoPrice !== null);
+            const activePromotions = promocoes.filter(promo => promo.active && promo.promoPrice !== null);
 
             if (activePromotions.length > 0) {
                 activePromotions.forEach(promo => {
                     const promoDiv = document.createElement('div');
                     promoDiv.className = 'promotion-item';
                     
-                    const applicableItem = allMenuData.find(item => item.id === promo.itemId);
+                    const applicableItem = cardapio.find(item => item.id === promo.itemId);
                     const promoImageUrl = applicableItem && applicableItem.isPizza ? applicableItem.imageUrl : null;
 
                     promoDiv.innerHTML = `
@@ -1919,7 +1919,7 @@
         }
 
         function addPromotionToOrder(promoId, clickedButton = null, itemImageUrl = null) { 
-            const promotion = allPromotionsData.find(p => p.id === promoId);
+            const promotion = promocoes.find(p => p.id === promoId);
             if (promotion) {
                 console.log('DEBUG: addPromotionToOrder: Adicionando promoção:', promotion.name); // Log
                 order.push({
@@ -1944,7 +1944,7 @@
         }
 
         function updatePromotionButtonVisibility() {
-            const activePromotionsWithPrice = allPromotionsData.filter(promo => promo.active && promo.promoPrice !== null);
+            const activePromotionsWithPrice = promocoes.filter(promo => promo.active && promo.promoPrice !== null);
             if (activePromotionsWithPrice.length > 0 && !orderSidebar.classList.contains('translate-x-0')) {
                 promotionButton.style.display = 'flex';
             } else {
@@ -1974,7 +1974,7 @@
         function displayDrinkSuggestionModal() {
             console.log('DEBUG: displayDrinkSuggestionModal: Exibindo modal de sugestão de bebidas.'); // Log
             suggestedDrinksList.innerHTML = ''; 
-            const availableDrinks = allMenuData.filter(item => item.category === 'bebidas' && item.available);
+            const availableDrinks = cardapio.filter(item => item.category === 'bebidas' && item.available);
 
             if (availableDrinks.length > 0) {
                 const drinksToSuggest = availableDrinks; 
@@ -1992,7 +1992,7 @@
                 document.querySelectorAll('.add-suggested-drink-btn').forEach(button => {
                     button.addEventListener('click', function() {
                         const itemId = this.dataset.itemId;
-                        const item = allMenuData.find(i => i.id === itemId);
+                        const item = cardapio.find(i => i.id === itemId);
                         if (item) {
                             addToOrder({
                                 type: 'full',
@@ -2394,7 +2394,7 @@
                 return;
             }
 
-            const selectedFee = deliveryFeesData.find(fee => fee.neighborhood === bairro);
+            const selectedFee = deliveryFees.find(fee => fee.neighborhood === bairro);
             if (!selectedFee) {
                 showMessageModal('Bairro selecionado inválido. Por favor, selecione um bairro da lista.');
                 console.log('DEBUG: Bairro selecionado não encontrado nos dados de taxa.'); // Log
@@ -2491,11 +2491,11 @@
                 const promocoesCsvText = data.promocoes;
                 const deliveryFeesCsvText = data.deliveryFees; 
 
-                console.log('DEBUG: DOMContentLoaded: Dados CSV parseados. allMenuData:', allMenuData.length, 'allPromotionsData:', allPromotionsData.length, 'deliveryFeesData:', deliveryFeesData.length); // Log de contagem de itens
+                console.log('DEBUG: DOMContentLoaded: Dados CSV parseados. cardapio:', cardapio.length, 'promocoes:', promocoes.length, 'deliveryFees:', deliveryFees.length); // Log de contagem de itens
                 
                 let orderedUniqueCategories = [];
                 const seenCategories = new Set();
-                allMenuData.forEach(item => {
+                cardapio.forEach(item => {
                     if (!seenCategories.has(item.category)) {
                         seenCategories.add(item.category);
                         orderedUniqueCategories.push(item.category);
@@ -2503,8 +2503,8 @@
                 });
                 
                 createCategoryButtons(orderedUniqueCategories); 
-                populateMenu(allMenuData, orderedUniqueCategories); 
-                populateNeighborhoodDropdown(deliveryFeesData); 
+                populateMenu(cardapio, orderedUniqueCategories); 
+                populateNeighborhoodDropdown(deliveryFees); 
                 setupCategoryObserver(); 
                 console.log('DEBUG: DOMContentLoaded: Cardápio e categorias populados.');
 
@@ -2526,7 +2526,7 @@
             } catch (error) {
                 console.error('DEBUG: DOMContentLoaded: Erro fatal ao carregar o cardápio:', error);
                 // Exibe a mensagem de erro APENAS se houve uma falha na busca ou parsing inicial
-                showMessageModal('Não foi possível carregar o cardápio no momento. Por favor, tente novamente mais tarde.2214');
+                showMessageModal('Não foi possível carregar o cardápio no momento. Por favor, tente novamente mais tarde.2217');
             }
         });
 
