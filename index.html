@@ -547,7 +547,7 @@
     <!-- Menu Section -->
     <section id="menu" class="py-8 px-4 max-w-6xl mx-auto">
         <div class="text-center mb-8">
-            <h2 class="text-4xl font-bold text-gray-800 mb-4">Nosso Cardápio- teste</h2>
+            <h2 class="text-4xl font-bold text-gray-800 mb-4">Nosso Cardápio</h2>
             <p class="text-gray-600 text-lg mx-auto">Escolha sua pizza favorita ou uma bebida refrescante!</p>
         </div>
 
@@ -1048,6 +1048,13 @@
                 showMessageModal('Seleção de meia pizza cancelada.');
                 console.log('DEBUG: Estado de meia pizza resetado.');
             }
+        }
+
+        function closePizzaOptionModal() {
+            console.log('DEBUG: Fechando modal de opção de pizza via botão X.');
+            pizzaOptionModal.style.display = 'none';
+            updatePromotionButtonVisibility(); 
+            resetHalfPizzaSelection();
         }
 
         closePizzaOptionModalBtn.addEventListener('click', closePizzaOptionModal);
@@ -1643,7 +1650,7 @@
                 orderItemsContainer.innerHTML = '';
                 orderItemsContainer.appendChild(emptyOrderMessage);
                 document.getElementById('subtotal').textContent = 'R$ 0,00';
-                selectedPaymentMethod = null; // Reseta o método de pagamento se o pedido estiver vazio
+                selectedPaymentMethod = null;
             } else {
                 emptyOrderMessage.classList.add('hidden');
                 
@@ -1686,7 +1693,6 @@
                 subtotalEl.textContent = 'R$ ' + subtotal.toFixed(2).replace('.', ',');
             }
             
-            // Lógica para exibir a taxa de entrega e o botão/ícone de edição
             if (selectedAddress.bairro) {
                 deliveryFeeDisplay.textContent = 'R$ ' + selectedAddress.deliveryFee.toFixed(2).replace('.', ',');
                 deliveryFeeDisplay.classList.remove('hidden');
