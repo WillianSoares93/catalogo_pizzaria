@@ -534,7 +534,7 @@
     <!-- Menu Section -->
     <section id="menu" class="py-8 px-4 max-w-6xl mx-auto">
         <div class="text-center mb-8">
-            <h2 class="text-4xl font-bold text-gray-800 mb-4">Nosso Cardápio</h2>
+            <h2 class="text-4xl font-bold text-gray-800 mb-4">Nosso Cardápio- teste</h2>
             <p class="text-gray-600 text-lg mx-auto">Escolha sua pizza favorita ou uma bebida refrescante!</p>
         </div>
 
@@ -626,7 +626,7 @@
     <!-- Modal de Seleção de Pizza (Inteira/Meia) -->
     <div id="pizza-option-modal" class="modal">
         <div class="modal-content">
-            <span class="close-button" id="close-pizza-option-modal">&times;</span>
+            <span class="close-button" id="close-pizza-option-modal" onclick="closePizzaOptionModal()">&times;</span>
             <h3 class="text-xl font-bold text-gray-800 mb-4" id="modal-pizza-name"></h3>
             <p class="text-gray-600 mb-6" id="modal-pizza-description"></p>
             <div id="pizza-size-options" class="grid grid-cols-1 sm:grid-cols-3 gap-2 justify-items-center">
@@ -923,7 +923,7 @@
 
         // NOVO: Referências para o modal de montagem de hambúrguer
         const burgerBuildModal = document.getElementById('burger-build-modal');
-        const closeBurgerBuildModalBtn = document.getElementById('close-burger-build-modal');
+        // const closeBurgerBuildModalBtn = document.getElementById('close-burger-build-modal'); // REMOVIDO: evento agora está no onclick do botão
         const burgerIngredientsContainer = document.getElementById('burger-ingredients-container');
         const burgerTotalPriceEl = document.getElementById('burger-total-price');
         const addCustomBurgerBtn = document.getElementById('add-custom-burger-btn');
@@ -1063,26 +1063,23 @@
             }
         }
 
-        closePizzaOptionModalBtn.addEventListener('click', function() {
+        function closePizzaOptionModal() {
             console.log('DEBUG: Fechando modal de opção de pizza via botão X.'); // Log
             pizzaOptionModal.style.display = 'none';
             updatePromotionButtonVisibility(); 
-            resetHalfPizzaSelection(); // Chama o reset ao fechar o modal
-        });
-        
+            resetHalfPizzaSelection();
+        }
+
         function closeBurgerBuildModal() {
             burgerBuildModal.style.display = 'none';
             updatePromotionButtonVisibility();
         }
         
-        closeBurgerBuildModalBtn.addEventListener('click', closeBurgerBuildModal);
+        closePizzaOptionModalBtn.addEventListener('click', closePizzaOptionModal);
 
         window.addEventListener('click', function(event) {
             if (event.target == pizzaOptionModal) {
-                console.log('DEBUG: Fechando modal de opção de pizza clicando fora.'); // Log
-                pizzaOptionModal.style.display = 'none';
-                updatePromotionButtonVisibility(); 
-                resetHalfPizzaSelection(); // Chama o reset ao clicar fora do modal
+                closePizzaOptionModal();
             }
             if (event.target == burgerBuildModal) {
                 closeBurgerBuildModal();
@@ -2682,8 +2679,9 @@
 
             burgerTotalPriceEl.textContent = `R$ ${currentBurgerBuild.basePrice.toFixed(2).replace('.', ',')}`;
             burgerIngredientsContainer.innerHTML = '';
-
-            const ingredientsByCategory = allIngredientsData.reduce((acc, ingredient) => {
+            
+            // NOVO: Filtra e agrupa os ingredientes por categoria
+            const ingredientsByCategory = allIngredientsData.filter(ing => ing.available).reduce((acc, ingredient) => {
                 const category = ingredient.category || 'Outros';
                 if (!acc[category]) {
                     acc[category] = [];
@@ -2709,9 +2707,9 @@
                     const label = document.createElement('label');
                     label.className = 'burger-option';
                     
-                    const priceText = ingredient.price > 0 ? ` (+R$ ${ingredient.price.toFixed(2).replace('.', ',')})` : ' (Grátis)';
+                    const priceText = ingredient.price > 0 ? ` (+R$ ${ingredient.price.toFixed(2).replace('.', ',')})` : '';
                     label.innerHTML = `
-                        <span>${ingredient.name}</span>
+                        <span>${ingredient.name}${priceText}</span>
                         <input type="checkbox" data-name="${ingredient.name}" data-price="${ingredient.price}" data-category="${ingredient.category}" class="form-checkbox h-5 w-5 text-red-600 rounded">
                     `;
                     
