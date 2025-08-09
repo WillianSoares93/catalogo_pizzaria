@@ -30,7 +30,7 @@ export default async (req, res) => {
 
         // --- 1. Busca os dados do Cardápio ---
         console.log('Vercel Function: Tentando buscar dados do Cardápio da URL:', CARDAPIO_CSV_URL);
-        const cardapioResponse = await fetch(CARDAPIO_CSV_URL); // CORRIGIDO: Nome da variável agora está correto.
+        const cardapioResponse = await fetch(CARDAPIO_CSV_URL);
 
         // Verifica se a requisição do cardápio foi bem-sucedida (status 200 OK)
         if (!cardapioResponse.ok) {
