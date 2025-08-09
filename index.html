@@ -443,6 +443,15 @@
             transform: scale(1.02);
             box-shadow: 0 5px 15px rgba(34, 197, 94, 0.4);
         }
+         /* NOVO: Estilo para o botão vermelho de checkout */
+        .dynamic-checkout-button.red-gradient {
+            background: linear-gradient(135deg, #f59e0b, #ef4444);
+        }
+        .dynamic-checkout-button.red-gradient:hover {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            transform: scale(1.02);
+            box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
+        }
 
         /* Estilos para o modal de endereço */
         .address-modal {
@@ -512,6 +521,10 @@
         }
         .burger-option.selected span {
             color: white;
+        }
+        .burger-option:has(input:disabled) {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
 
     </style>
@@ -774,7 +787,7 @@
                     <i class="fas fa-qrcode icon"></i>
                     <div class="text-content">
                         <h4>Pix</h4>
-                        <p></p> <!-- Descrição removida -->
+                        <p id="pix-key-display" class="text-sm text-gray-600 hidden"></p>
                     </div>
                 </label>
             </div>
@@ -801,6 +814,13 @@
         <div class="address-modal-content">
             <span class="close-button" id="close-address-modal">&times;</span>
             <h3 class="text-xl font-bold text-gray-800 mb-4">Informe seu Endereço</h3>
+             <!-- NOVO: Campo de Nome do Cliente -->
+            <div class="mb-4">
+                <label for="customerNameInput" class="block text-gray-700 text-sm font-bold mb-2">
+                    Nome Completo:
+                </label>
+                <input type="text" id="customerNameInput" placeholder="Seu nome" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            </div>
             <div class="mb-4">
                 <label for="neighborhoodSelect" class="block text-gray-700 text-sm font-bold mb-2">
                     Bairro:
@@ -849,12 +869,12 @@
                 </div>
                 <div>
                     <h3 class="text-xl font-bold mb-4">Contato</h3>
-                    <p class="text-gray-400"><i class="fas fa-phone mr-2"></i> (85) 98765-4321</p>
-                    <p class="text-gray-400"><i class="fas fa-envelope mr-2"></i> contato@suapizzaria.com</p>
+                    <p id="footer-phone" class="text-gray-400"><i class="fas fa-phone mr-2"></i></p>
+                    <p id="footer-email" class="text-gray-400"><i class="fas fa-envelope mr-2"></i></p>
                     <div class="flex justify-center md:justify-start space-x-4 mt-2">
-                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-instagram text-xl"></i></a>
-                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-facebook text-xl"></i></a>
-                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-whatsapp text-xl"></i></a>
+                        <a id="footer-instagram" href="#" target="_blank" class="text-gray-400 hover:text-white"><i class="fab fa-instagram text-xl"></i></a>
+                        <a id="footer-facebook" href="#" target="_blank" class="text-gray-400 hover:text-white"><i class="fab fa-facebook text-xl"></i></a>
+                        <a id="footer-whatsapp" href="#" target="_blank" class="text-gray-400 hover:text-white"><i class="fab fa-whatsapp text-xl"></i></a>
                     </div>
                 </div>
             </div>
@@ -869,36 +889,38 @@
         const CARDAPIO_CSV_URL_REF = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=664943668&single=true&output=csv';
         const PROMOCOES_CSV_URL_REF = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=600393470&single=true&output=csv'; 
         const DELIVERY_FEES_CSV_URL_REF = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=1695668250&single=true&output=csv';
-        // NOVO: URL da planilha de ingredientes para hambúrguer
         const INGREDIENTS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=1816106560&single=true&output=csv';
+        // NOVO: URL da planilha de contatos
+        const CONTACTS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=2043568216&single=true&output=csv';
 
         // Variáveis globais
         let order = [];
-        let allMenuData = []; // Armazenará todos os itens do cardápio (pizzas e bebidas)
+        let allMenuData = [];
         let allPromotionsData = [];
-        let deliveryFeesData = []; // NOVO: Armazenará os dados de taxas de entrega
-        let allIngredientsData = []; // NOVO: Armazena os dados de ingredientes
-        let currentBurgerBuild = { item: null, ingredients: new Set(), basePrice: 0 }; // NOVO: Objeto para montar o hambúrguer
+        let deliveryFeesData = [];
+        let allIngredientsData = []; 
+        let allContactsData = {}; // NOVO: Objeto para armazenar os dados de contato
+        let currentBurgerBuild = { item: null, ingredients: new Set(), basePrice: 0 }; 
         let isSelectingHalfPizza = false; 
         let isFirstHalfPromotional = false; 
         let deferredPrompt; 
         let selectedPaymentMethod = null; 
         let isCheckoutInitiated = false; 
+        let customerName = ''; // NOVO: Variável para armazenar o nome do cliente
         
-        // NOVO: Objeto para armazenar o endereço selecionado e sua taxa de entrega
         let selectedAddress = {
             bairro: null,
             rua: null,
             numero: null,
             referencia: null,
-            deliveryFee: 0.00 // Inicializa com 0, será atualizado dinamicamente
+            deliveryFee: 0.00
         };
-        let isAddressInputVisible = false; // NOVO: Controla a visibilidade do modal de endereço
+        let isAddressInputVisible = false;
 
         // Referências para os elementos DOM
         const orderSidebar = document.getElementById('orderSidebar');
         const cartCount = document.getElementById('cartCount');
-        const emptyOrderMessage = document.getElementById('orderItems').querySelector('#emptyOrderMessage'); // Ajustado para pegar dentro de orderItems
+        const emptyOrderMessage = document.getElementById('orderItems').querySelector('#emptyOrderMessage');
         const messageModal = document.getElementById('message-modal');
         const closeMessageModalBtn = document.getElementById('close-message-modal');
         const okMessageModalBtn = document.getElementById('ok-message-modal');
@@ -910,42 +932,35 @@
         const promotionButton = document.getElementById('promotion-button'); 
         const cartButton = document.getElementById('cart-button'); 
         const subtotalEl = document.getElementById('subtotal');
-        const deliveryFeeDisplay = document.getElementById('deliveryFeeDisplay'); // NOVO: Elemento para a taxa de entrega dinâmica
+        const deliveryFeeDisplay = document.getElementById('deliveryFeeDisplay');
         const totalEl = document.getElementById('total');
-        const checkoutButton = document.getElementById('checkoutButton'); // Referência ao botão Finalizar Pedido
+        const checkoutButton = document.getElementById('checkoutButton'); 
 
-        // Referências para o modal de seleção de pizza
         const pizzaOptionModal = document.getElementById('pizza-option-modal');
         const closePizzaOptionModalBtn = document.getElementById('close-pizza-option-modal');
         const modalPizzaName = document.getElementById('modal-pizza-name');
         const modalPizzaDescription = document.getElementById('modal-pizza-description');
         const pizzaSizeOptions = document.getElementById('pizza-size-options');
 
-        // NOVO: Referências para o modal de montagem de hambúrguer
         const burgerBuildModal = document.getElementById('burger-build-modal');
-        // const closeBurgerBuildModalBtn = document.getElementById('close-burger-build-modal'); // REMOVIDO: evento agora está no onclick do botão
         const burgerIngredientsContainer = document.getElementById('burger-ingredients-container');
         const burgerTotalPriceEl = document.getElementById('burger-total-price');
         const addCustomBurgerBtn = document.getElementById('add-custom-burger-btn');
 
-        // Referências para o novo modal de sugestão de bebidas
         const drinkSuggestionModal = document.getElementById('drink-suggestion-modal');
         const closeDrinkSuggestionModalBtn = document.getElementById('close-drink-suggestion-modal');
         const suggestedDrinksList = document.getElementById('suggested-drinks-list');
         const proceedWithoutDrinksBtn = document.getElementById('proceed-without-drinks'); 
 
-        // Referências para o modal de confirmação de pedido sem bebida
         const confirmNoDrinkModal = document.getElementById('confirm-no-drink-modal');
         const closeConfirmNoDrinkModalBtn = document.getElementById('close-confirm-no-drink-modal');
         const confirmNoDrinkYesBtn = document.getElementById('confirm-no-drink-yes');
         const confirmNoDrinkNoBtn = document.getElementById('confirm-no-drink-no-btn');
 
-        // Referências para o modal de instalação do PWA
         const installPromptModal = document.getElementById('install-prompt-modal');
         const closeInstallPromptModalBtn = document.getElementById('close-install-prompt-modal');
         const installAppButton = document.getElementById('install-app-button');
 
-        // Referências para o modal de seleção de forma de pagamento
         const paymentMethodModal = document.getElementById('payment-method-modal');
         const closePaymentMethodModalBtn = document.getElementById('close-payment-method-modal');
         const paymentOptionsContainer = document.getElementById('payment-options-container');
@@ -954,10 +969,11 @@
         const trocoParaInput = document.getElementById('trocoPara'); 
         const trocoTotalDisplay = document.getElementById('trocoTotalDisplay'); 
         const paymentModalTotal = document.getElementById('payment-modal-total'); 
+        const pixKeyDisplay = document.getElementById('pix-key-display'); // NOVO: Elemento para exibir a chave Pix
 
-        // NOVO: Referências para elementos do modal de endereço
         const addressInputModal = document.getElementById('address-input-modal');
         const closeAddressModalBtn = document.getElementById('close-address-modal');
+        const customerNameInput = document.getElementById('customerNameInput'); // NOVO: Referência para o campo de nome
         const neighborhoodSelect = document.getElementById('neighborhoodSelect');
         const streetInput = document.getElementById('streetInput');
         const numberInput = document.getElementById('numberInput');
@@ -968,16 +984,18 @@
         const neighborhoodDisplay = document.getElementById('neighborhood-display');
         const referenceDisplay = document.getElementById('reference-display');
         const editAddressBtn = document.getElementById('editAddressBtn');
-        // NOVO: Referências para os novos elementos de taxa de entrega
         const informAddressBtn = document.getElementById('informAddressBtn');
         const editDeliveryAddressBtn = document.getElementById('editDeliveryAddressBtn');
-
+        const footerPhone = document.getElementById('footer-phone');
+        const footerEmail = document.getElementById('footer-email');
+        const footerInstagram = document.getElementById('footer-instagram');
+        const footerFacebook = document.getElementById('footer-facebook');
+        const footerWhatsapp = document.getElementById('footer-whatsapp');
 
         let currentPizzaData = {}; 
         let firstHalfPizza = null; 
         let isSelectingSecondHalf = false; 
 
-        // Define tamanhos e seus multiplicadores de preço em relação ao preço de 8 fatias
         const sizes = [
             { slices: 4, label: '4 Fatias', priceKey: 'price4Slices' },
             { slices: 6, label: '6 Fatias', priceKey: 'price6Slices' },
@@ -986,14 +1004,13 @@
 
         const whatsappNumber = '5587996070638'; 
 
-        // Funções de controle de modais e sidebar
         function toggleOrderSidebar() {
             orderSidebar.classList.toggle('translate-x-full');
             orderSidebar.classList.toggle('translate-x-0');
 
             if (orderSidebar.classList.contains('translate-x-0')) {
                 promotionButton.style.display = 'none';
-                orderSidebar.scrollTop = orderSidebar.scrollHeight; // Rola para o final ao abrir
+                orderSidebar.scrollTop = orderSidebar.scrollHeight;
             } else {
                 updatePromotionButtonVisibility();
             }
@@ -1006,7 +1023,7 @@
         }
         
         function showMessageModal(message, onOkCallback = null) {
-            console.log('DEBUG: showMessageModal chamado com:', message); // Log
+            console.log('DEBUG: showMessageModal chamado com:', message);
             messageModalText.textContent = message;
             messageModal.style.display = 'flex';
 
@@ -1038,19 +1055,18 @@
         }
 
         function hideMessageModal() {
-            console.log('DEBUG: hideMessageModal chamado.'); // Log
+            console.log('DEBUG: hideMessageModal chamado.');
             messageModal.style.display = 'none';
         }
 
-        // NOVO: Função para resetar o estado de seleção de meia pizza
         function resetHalfPizzaSelection() {
-            console.log('DEBUG: resetHalfPizzaSelection chamado. isSelectingHalfPizza:', isSelectingHalfPizza); // Log
+            console.log('DEBUG: resetHalfPizzaSelection chamado. isSelectingHalfPizza:', isSelectingHalfPizza);
             if (isSelectingHalfPizza && firstHalfPizza) {
                 const pendingHalfIndex = order.findIndex(orderItem => orderItem.id === 'pending-half-pizza');
                 if (pendingHalfIndex > -1) {
                     order.splice(pendingHalfIndex, 1);
                     updateOrderDisplay(); 
-                    console.log('DEBUG: Meia pizza pendente removida do pedido.'); // Log
+                    console.log('DEBUG: Meia pizza pendente removida do pedido.');
                 }
                 firstHalfPizza = null;
                 isSelectingSecondHalf = false;
@@ -1059,12 +1075,12 @@
                 toggleAddItemButtons(true);
                 toggleCategoryButtons(true);
                 showMessageModal('Seleção de meia pizza cancelada.');
-                console.log('DEBUG: Estado de meia pizza resetado.'); // Log
+                console.log('DEBUG: Estado de meia pizza resetado.');
             }
         }
 
         function closePizzaOptionModal() {
-            console.log('DEBUG: Fechando modal de opção de pizza via botão X.'); // Log
+            console.log('DEBUG: Fechando modal de opção de pizza via botão X.');
             pizzaOptionModal.style.display = 'none';
             updatePromotionButtonVisibility(); 
             resetHalfPizzaSelection();
@@ -1086,9 +1102,8 @@
             }
         });
 
-        // Função para parsear dados CSV (agora mais genérica para diferentes tipos de dados)
         function parseCsvData(csvText, type) {
-            console.log(`DEBUG: parseCsvData para ${type} - CSV Bruto (primeiras 100 chars):`, csvText.substring(0, 100)); // Log
+            console.log(`DEBUG: parseCsvData para ${type} - CSV Bruto (primeiras 100 chars):`, csvText.substring(0, 100));
             const lines = csvText.split('\n').filter(line => line.trim() !== '');
 
             if (lines.length === 0) {
@@ -1154,11 +1169,15 @@
                     case 'Bairros': return 'neighborhood';
                     case 'Valor Frete': return 'deliveryFee';
                     // Headers para Ingredientes
-                    case 'ID Intem': return 'id';
-                    case 'Ingredientes': return 'name';
-                    case 'Catelogira': return 'category';
+                    case 'ID Item': return 'id';
+                    case 'Ingrediente': return 'name';
+                    case 'Categoria': return 'category';
                     case 'Preço': return 'price';
                     case 'Disponível': return 'available';
+                    case 'Limite': return 'limit';
+                    // Headers para Contatos
+                    case 'Dados': return 'data';
+                    case 'Valor': return 'value';
                     default: 
                         console.warn(`DEBUG: Header CSV desconhecido encontrado para ${type}: "${cleanedHeader}"`);
                         return cleanedHeader.replace(/[^a-zA-Z0-9]+(.)?/g, (match, chr) => chr ? chr.toUpperCase() : '').replace(/^./, (match) => match.toLowerCase());
@@ -1179,15 +1198,13 @@
                             console.warn(`DEBUG: Bairro vazio ou indefinido na linha ${i + 1} para ${type}: "${line}"`);
                             value = '';
                         }
-                        if (headerKey === 'deliveryFee' && (value === undefined || value === null || value.trim() === '')) {
-                            console.warn(`DEBUG: Valor Frete vazio ou indefinido na linha ${i + 1} para ${type}: "${line}"`);
-                            value = '0.00';
-                        }
                         if (['price', 'basePrice', 'price6Slices', 'price4Slices', 'promoPrice', 'deliveryFee'].includes(headerKey)) {
                             const parsedValue = parseFloat(String(value).replace(',', '.'));
                             item[headerKey] = isNaN(parsedValue) ? 0 : parsedValue;
                         } else if (['isPizza', 'available', 'active', 'isCustomizable'].includes(headerKey)) {
                             item[headerKey] = value.toUpperCase() === 'SIM';
+                        } else if (headerKey === 'limit') {
+                            item[headerKey] = parseInt(value) || Infinity;
                         } else {
                             item[headerKey] = value;
                         }
@@ -1195,9 +1212,12 @@
 
                     if (type === 'cardapio') {
                         item.imageUrl = (String(item.imageUrl || '').trim());
+                    } else if (type === 'contacts') {
+                        // NOVO: Adiciona a lógica para popular o objeto allContactsData
+                        allContactsData[item.data] = item.value;
                     }
                     
-                    if ((type === 'cardapio' && item.available) || (type === 'promocoes' && item.active) || (type === 'ingredients' && item.available) || type === 'deliveryFees') {
+                    if ((type === 'cardapio' && item.available) || (type === 'promocoes' && item.active) || (type === 'ingredients' && item.available) || type === 'deliveryFees' || type === 'contacts') {
                         parsedData.push(item);
                     }
                 } else {
@@ -1495,7 +1515,8 @@
             
             // NOVO: Lógica para hambúrguer montável
             if (item.isCustomizable) {
-                // Abre o modal de montagem de hambúrguer
+                // Oculta o botão de promoções ao abrir o modal de montagem
+                promotionButton.style.display = 'none';
                 handleBurgerBuild(item);
                 return;
             }
@@ -1895,7 +1916,7 @@
         
         function proceedToWhatsappCheckout() {
             console.log('DEBUG: proceedToWhatsappCheckout: Preparando mensagem para WhatsApp.'); // Log
-            const phoneNumber = whatsappNumber; 
+            const phoneNumber = allContactsData['Whatsapp'] || whatsappNumber;
             let message = 'Olá! Gostaria de fazer o seguinte pedido:\n\n';
             let subtotal = 0;
 
@@ -1925,6 +1946,11 @@
             message += `\nTaxa de entrega (${selectedAddress.bairro || 'Não informado'}): R$ ${selectedAddress.deliveryFee.toFixed(2).replace('.', ',')}`; // Mensagem de taxa dinâmica
             message += `\nTotal: R$ ${total.toFixed(2).replace('.', ',')}`;
             
+            // NOVO: Adiciona o nome do cliente
+            if (customerName) {
+                message += `\n\nNome do Cliente: ${customerName}`;
+            }
+            
             // INFORMAÇÕES DE ENDEREÇO NA MENSAGEM DO WHATSAPP
             if (selectedAddress.bairro && selectedAddress.rua && selectedAddress.numero) {
                 message += `\n\nEndereço de Entrega:\n`;
@@ -1945,6 +1971,9 @@
                     message += `\nTroco: R$ ${selectedPaymentMethod.trocoTotal.toFixed(2).replace('.', ',')}`;
                 } else {
                     message += `\nForma de Pagamento: ${selectedPaymentMethod}`;
+                    if (selectedPaymentMethod === 'Pix') {
+                         message += ` (Chave Pix: ${allContactsData['Chave Pix'] || 'Não informada'})`;
+                    }
                 }
             }
 
@@ -1973,8 +2002,8 @@
             }
 
             // NOVO: Verifica se o endereço foi informado
-            if (!selectedAddress.bairro || !selectedAddress.rua || !selectedAddress.numero) {
-                console.log('DEBUG: Endereço não informado. Abrindo modal de endereço.'); // Log
+            if (!selectedAddress.bairro || !selectedAddress.rua || !selectedAddress.numero || !customerNameInput.value.trim()) {
+                console.log('DEBUG: Endereço ou nome não informado. Abrindo modal de endereço.'); // Log
                 showAddressInputModal();
                 return;
             }
@@ -2161,7 +2190,7 @@
             const hasDrinks = order.some(item => item.category === 'bebidas');
 
             if (!selectedPaymentMethod) {
-                isCheckoutInitiated = true;
+                isCheckoutInitiated = true; 
                 openPaymentMethodModal(true); 
             } else {
                 proceedToWhatsappCheckout();
@@ -2172,12 +2201,12 @@
             const hasDrinks = order.some(item => item.category === 'bebidas');
             if (hasDrinks) {
                 proceedWithoutDrinksBtn.textContent = 'Finalizar com Bebidas';
-                proceedWithoutDrinksBtn.classList.add('green-gradient');
+                proceedWithoutDrinksBtn.classList.add('dynamic-checkout-button', 'red-gradient');
                 proceedWithoutDrinksBtn.classList.remove('btn-order');
             } else {
                 proceedWithoutDrinksBtn.textContent = 'Finalizar sem Bebidas';
-                proceedWithoutDrinksBtn.classList.add('btn-order'); 
-                proceedWithoutDrinksBtn.classList.remove('green-gradient');
+                proceedWithoutDrinksBtn.classList.add('dynamic-checkout-button', 'btn-order'); 
+                proceedWithoutDrinksBtn.classList.remove('red-gradient');
             }
         }
 
@@ -2226,6 +2255,7 @@
             trocoInputContainer.classList.add('hidden');
             trocoParaInput.value = ''; 
             trocoTotalDisplay.textContent = 'R$ 0,00'; 
+            pixKeyDisplay.classList.add('hidden'); // Oculta a chave Pix por padrão
 
             if (selectedPaymentMethod) {
                 const methodValue = typeof selectedPaymentMethod === 'object' ? selectedPaymentMethod.method : selectedPaymentMethod;
@@ -2242,6 +2272,9 @@
                             const trocoCalculado = selectedPaymentMethod.trocoPara - totalOrder;
                             trocoTotalDisplay.textContent = `R$ ${trocoCalculado.toFixed(2).replace('.', ',')}`;
                         }
+                    } else if (methodValue === 'Pix') {
+                         pixKeyDisplay.textContent = `Chave Pix: ${allContactsData['Chave Pix'] || 'Não informada'}`;
+                         pixKeyDisplay.classList.remove('hidden');
                     }
                 }
             } else {
@@ -2272,6 +2305,7 @@
 
                 if (radio && radio.value === 'Dinheiro') {
                     trocoInputContainer.classList.remove('hidden');
+                    pixKeyDisplay.classList.add('hidden'); // Oculta a chave Pix
                     const totalOrder = calculateOrderTotal();
                     const trocoParaValue = parseFloat(trocoParaInput.value) || 0;
                     if (trocoParaValue >= totalOrder) {
@@ -2280,10 +2314,17 @@
                     } else {
                         trocoTotalDisplay.textContent = 'R$ 0,00';
                     }
-                } else {
+                } else if (radio && radio.value === 'Pix') {
                     trocoInputContainer.classList.add('hidden');
+                    pixKeyDisplay.textContent = `Chave Pix: ${allContactsData['Chave Pix'] || 'Não informada'}`;
+                    pixKeyDisplay.classList.remove('hidden');
                     trocoParaInput.value = ''; 
                     trocoTotalDisplay.textContent = 'R$ 0,00'; 
+                } else {
+                    trocoInputContainer.classList.add('hidden');
+                    pixKeyDisplay.classList.add('hidden');
+                    trocoParaInput.value = '';
+                    trocoTotalDisplay.textContent = 'R$ 0,00';
                 }
             }
         });
@@ -2470,6 +2511,9 @@
             promotionButton.style.display = 'none'; // Esconde o botão de promoção ao abrir o modal de endereço
 
             // Preenche os campos se já houver dados no selectedAddress
+            if (customerName) {
+                customerNameInput.value = customerName;
+            }
             if (selectedAddress.bairro) {
                 neighborhoodSelect.value = selectedAddress.bairro;
             } else {
@@ -2519,13 +2563,14 @@
 
         confirmAddressBtn.addEventListener('click', function() {
             console.log('DEBUG: Botão Confirmar Endereço clicado.'); // Log
+            const nome = customerNameInput.value.trim();
             const bairro = neighborhoodSelect.value;
             const rua = streetInput.value.trim();
             const numero = numberInput.value.trim();
             const referencia = referencePointInput.value.trim();
 
-            if (!bairro || !rua || !numero) {
-                showMessageModal('Por favor, preencha o bairro, a rua e o número para continuar.');
+            if (!nome || !bairro || !rua || !numero) {
+                showMessageModal('Por favor, preencha o nome, bairro, a rua e o número para continuar.');
                 console.log('DEBUG: Campos de endereço obrigatórios não preenchidos.'); // Log
                 return;
             }
@@ -2536,7 +2581,8 @@
                 console.log('DEBUG: Bairro selecionado não encontrado nos dados de taxa.'); // Log
                 return;
             }
-
+            
+            customerName = nome;
             selectedAddress = {
                 bairro: bairro,
                 rua: rua,
@@ -2609,6 +2655,21 @@
             console.log('DEBUG: Botão Editar Endereço (taxa) clicado.');
             showAddressInputModal();
         });
+        
+        // NOVO: Função para popular o rodapé com os dados de contato
+        function populateFooterContacts(contactsData) {
+            const whatsappLink = `https://wa.me/${contactsData['Whatsapp']}` || '#';
+            const facebookLink = contactsData['Facebook'] || '#';
+            const instagramLink = contactsData['Instagram'] || '#';
+            const phoneText = contactsData['Telefone'] || 'Não informado';
+            const emailText = contactsData['Email'] || 'Não informado';
+
+            footerWhatsapp.href = whatsappLink;
+            footerFacebook.href = facebookLink;
+            footerInstagram.href = instagramLink;
+            footerPhone.innerHTML = `<i class="fas fa-phone mr-2"></i> ${phoneText}`;
+            footerEmail.innerHTML = `<i class="fas fa-envelope mr-2"></i> ${emailText}`;
+        }
 
         // =======================================================================================
         // CÓDIGO REESTRUTURADO PARA MELHORAR O FLUXO DE ATUALIZAÇÃO
@@ -2630,12 +2691,15 @@
                 const cardapioCsvText = data.cardapio;
                 const promocoesCsvText = data.promocoes;
                 const deliveryFeesCsvText = data.deliveryFees;
-                const ingredientsCsvText = data.ingredients; // NOVO: Dados de ingredientes
+                const ingredientsCsvText = data.ingredients; 
+                const contactsCsvText = data.contacts; // NOVO: Dados de contatos
 
                 allMenuData = parseCsvData(cardapioCsvText, 'cardapio');
                 allPromotionsData = parseCsvData(promocoesCsvText, 'promocoes');
                 deliveryFeesData = parseCsvData(deliveryFeesCsvText, 'deliveryFees');
-                allIngredientsData = parseCsvData(ingredientsCsvText, 'ingredients'); // NOVO: Parseia os dados de ingredientes
+                allIngredientsData = parseCsvData(ingredientsCsvText, 'ingredients');
+                // NOVO: Parseia os dados de contatos
+                parseCsvData(contactsCsvText, 'contacts'); 
                 
                 let orderedUniqueCategories = [];
                 const seenCategories = new Set();
@@ -2654,7 +2718,9 @@
                 updateCartCount(); 
                 updateOrderDisplay(); 
                 updateCheckoutButtonText(); 
-                showAddressSummary(); 
+                showAddressSummary();
+                // NOVO: Popula o rodapé com os contatos
+                populateFooterContacts(allContactsData);
                 
                 toggleAddItemButtons(true);
                 toggleCategoryButtons(true);
@@ -2680,7 +2746,6 @@
             burgerTotalPriceEl.textContent = `R$ ${currentBurgerBuild.basePrice.toFixed(2).replace('.', ',')}`;
             burgerIngredientsContainer.innerHTML = '';
             
-            // NOVO: Filtra e agrupa os ingredientes por categoria
             const ingredientsByCategory = allIngredientsData.filter(ing => ing.available).reduce((acc, ingredient) => {
                 const category = ingredient.category || 'Outros';
                 if (!acc[category]) {
@@ -2693,9 +2758,13 @@
             for (const category in ingredientsByCategory) {
                 const categorySection = document.createElement('div');
                 categorySection.className = 'mb-4';
+                
+                const categoryData = ingredientsByCategory[category][0];
+                const limitText = categoryData.limit < Infinity ? ` (Máximo: ${categoryData.limit})` : '';
+
                 categorySection.innerHTML = `
                     <div class="bg-gray-200 p-2 rounded-md mb-2">
-                        <h4 class="text-md font-semibold text-gray-800">${category}</h4>
+                        <h4 class="text-md font-semibold text-gray-800">${category}${limitText}</h4>
                     </div>
                     <div id="ingredients-${category.toLowerCase().replace(' ', '-')}" class="space-y-2"></div>
                 `;
@@ -2727,10 +2796,20 @@
         function handleIngredientToggle(label, checkbox) {
             const ingredientName = checkbox.dataset.name;
             const ingredientPrice = parseFloat(checkbox.dataset.price);
+            const ingredientCategory = checkbox.dataset.category;
             
+            const categoryIngredients = Array.from(currentBurgerBuild.ingredients).filter(ing => ing.category === ingredientCategory);
+            const categoryData = allIngredientsData.find(ing => ing.category === ingredientCategory);
+            const limit = categoryData.limit;
+
             if (checkbox.checked) {
+                 if (categoryIngredients.length >= limit) {
+                    showMessageModal(`Você pode selecionar no máximo ${limit} item(s) da categoria "${ingredientCategory}".`);
+                    checkbox.checked = false; // Desfaz a seleção
+                    return;
+                }
                 label.classList.add('selected');
-                currentBurgerBuild.ingredients.add({ name: ingredientName, price: ingredientPrice });
+                currentBurgerBuild.ingredients.add({ name: ingredientName, price: ingredientPrice, category: ingredientCategory });
             } else {
                 label.classList.remove('selected');
                 const ingredientToRemove = Array.from(currentBurgerBuild.ingredients).find(ing => ing.name === ingredientName);
