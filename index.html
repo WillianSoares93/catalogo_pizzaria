@@ -471,7 +471,7 @@
             animation: fadeIn 0.3s ease-out;
             border: 2px solid #ef4444;
         }
-        /* NOVO: Estilo para o placeholder quando não há imagem */
+        /* Estilo para o placeholder quando não há imagem */
         .no-image-placeholder {
             background-color: #dc2626; /* red-600 */
             height: 160px; /* Mesma altura das imagens para manter o layout consistente */
@@ -1183,13 +1183,12 @@
                                 // Caso 1: Usuário informou "Sem Imagem"
                                 imageElement = `<div class="no-image-placeholder">Sem Imagem</div>`;
                             } else if (trimmedImageUrl.length > 0) {
-                                // Caso 2 e 3: URL informada ou campo vazio
-                                // Se a URL não for válida, o 'onerror' vai carregar a defaultImage
-                                // Se a URL for válida, ela será usada
-                                imageElement = `<img src="${trimmedImageUrl}" alt="Imagem de ${item.name}" class="w-full h-40 object-cover" onerror="this.onerror=null;this.src='${defaultImage}';">`;
+                                // Caso 2: URL de imagem fornecida
+                                imageElement = `<img src="${trimmedImageUrl}" alt="Imagem de ${item.name}" class="w-full h-40 object-cover" onerror="this.onerror=null;this.src='';">`;
                             } else {
-                                // Caso 3: Campo de imagem vazio
-                                imageElement = `<img src="${defaultImage}" alt="Imagem de ${item.name}" class="w-full h-40 object-cover" onerror="this.onerror=null;this.src='${defaultImage}';">`;
+                                // Caso 3: Campo de imagem em branco
+                                // Deixa a variável 'imageElement' como string vazia para não renderizar nada
+                                imageElement = '';
                             }
 
                             if (item.isPizza) {
@@ -1246,9 +1245,9 @@
                                 if (trimmedImageUrl.toLowerCase() === 'sem imagem') {
                                     imageElement = `<div class="no-image-placeholder">Sem Imagem</div>`;
                                 } else if (trimmedImageUrl.length > 0) {
-                                    imageElement = `<img src="${trimmedImageUrl}" alt="${item.name}" class="w-full h-40 object-cover" onerror="this.onerror=null;this.src='${defaultImage}';">`;
+                                    imageElement = `<img src="${trimmedImageUrl}" alt="${item.name}" class="w-full h-40 object-cover" onerror="this.onerror=null;this.src='';">`;
                                 } else {
-                                    imageElement = `<img src="${defaultImage}" alt="${item.name}" class="w-full h-40 object-cover" onerror="this.onerror=null;this.src='${defaultImage}';">`;
+                                    imageElement = '';
                                 }
 
                                 itemHtml = `
