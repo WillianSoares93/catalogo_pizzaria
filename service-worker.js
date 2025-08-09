@@ -3,7 +3,7 @@ const urlsToCache = [
   './',
   'index.html',
   'manifest.json',
-  'https://cdn.tailwindcss.com',
+  // 'https://cdn.tailwindcss.com', // Removido devido à política de CORS
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
   'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap',
   'https://raw.githubusercontent.com/WillianSoares93/catalogo_pizzaria/refs/heads/main/logo.png',
