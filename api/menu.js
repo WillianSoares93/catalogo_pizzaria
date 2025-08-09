@@ -14,6 +14,8 @@ const CARDAPIO_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2
 const PROMOCOES_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=600393470&single=true&output=csv'; 
 // NOVA URL para a planilha de taxas de entrega
 const DELIVERY_FEES_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=1695668250&single=true&output=csv';
+// NOVO: URL para a planilha de ingredientes
+const INGREDIENTS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=1816106560&single=true&output=csv';
 
 // A função principal que será exportada e executada pelo Vercel.
 // 'req' é o objeto de requisição (request) e 'res' é o objeto de resposta (response).
@@ -28,7 +30,7 @@ export default async (req, res) => {
 
         // --- 1. Busca os dados do Cardápio ---
         console.log('Vercel Function: Tentando buscar dados do Cardápio da URL:', CARDAPIO_CSV_URL);
-        const cardapioResponse = await fetch(CARDAPIO_CSV_URL);
+        const cardapioResponse = await fetch(CARDAPio_CSV_URL);
 
         // Verifica se a requisição do cardápio foi bem-sucedida (status 200 OK)
         if (!cardapioResponse.ok) {
@@ -70,14 +72,27 @@ export default async (req, res) => {
         }
         const deliveryFeesData = await deliveryFeesResponse.text();
         console.log('Vercel Function: Dados das Taxas de Entrega buscados com sucesso.');
+        
+        // NOVO: 4. Busca os dados dos Ingredientes
+        console.log('Vercel Function: Tentando buscar dados dos Ingredientes da URL:', INGREDIENTS_CSV_URL);
+        const ingredientsResponse = await fetch(INGREDIENTS_CSV_URL);
+
+        if (!ingredientsResponse.ok) {
+            const errorText = await ingredientsResponse.text();
+            console.error(`Vercel Function: Erro HTTP ao buscar Ingredientes. Status: ${ingredientsResponse.status}, StatusText: ${ingredientsResponse.statusText}. Corpo da Resposta (parcial): ${errorText.substring(0, 200)}...`);
+            throw new Error(`Falha ao buscar os ingredientes: ${ingredientsResponse.statusText || 'Erro desconhecido'}`);
+        }
+        const ingredientsData = await ingredientsResponse.text();
+        console.log('Vercel Function: Dados dos Ingredientes buscados com sucesso.');
 
 
-        // --- 4. Envia a resposta de sucesso ---
-        console.log('Vercel Function: Todos os dados (cardápio, promoções e taxas de entrega) foram buscados com sucesso. Enviando resposta JSON.');
+        // --- 5. Envia a resposta de sucesso ---
+        console.log('Vercel Function: Todos os dados (cardápio, promoções, taxas de entrega e ingredientes) foram buscados com sucesso. Enviando resposta JSON.');
         res.status(200).json({
             cardapio: cardapioData,      // Inclui os dados CSV do cardápio
             promocoes: promocoesData,    // Inclui os dados CSV das promoções
-            deliveryFees: deliveryFeesData // Inclui os dados CSV das taxas de entrega
+            deliveryFees: deliveryFeesData, // Inclui os dados CSV das taxas de entrega
+            ingredients: ingredientsData   // NOVO: Inclui os dados CSV dos ingredientes
         });
 
     } catch (error) {
