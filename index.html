@@ -471,7 +471,20 @@
             animation: fadeIn 0.3s ease-out;
             border: 2px solid #ef4444;
         }
-
+        /* NOVO: Estilo para o placeholder quando não há imagem */
+        .no-image-placeholder {
+            background-color: #dc2626; /* red-600 */
+            height: 160px; /* Mesma altura das imagens para manter o layout consistente */
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+            padding: 10px;
+            object-fit: cover;
+        }
     </style>
 </head>
 <body>
@@ -1168,10 +1181,15 @@
                     itemsByCategory[category].forEach(item => {
                         if (item.available) { 
                             let itemHtml = '';
+
+                            // NOVO: Lógica para decidir o que exibir no lugar da imagem
+                            const noImage = item.imageUrl && item.imageUrl.toLowerCase() === 'sem imagem';
+                            const hasValidImage = item.imageUrl && !noImage;
+                            const imageUrl = hasValidImage ? item.imageUrl : defaultImage;
                             
-                            // NOVO: Verifica se a imagem deve ser exibida
-                            const shouldDisplayImage = item.imageUrl.toLowerCase() !== 'sem imagem';
-                            const imageUrl = shouldDisplayImage ? item.imageUrl : '';
+                            const imageElement = noImage 
+                                ? `<div class="no-image-placeholder">Sem Imagem</div>` 
+                                : `<img src="${imageUrl}" alt="Imagem de ${item.name}" class="w-full h-40 object-cover" onerror="this.onerror=null;this.src='${defaultImage}';">`;
 
                             if (item.isPizza) {
                                 let priceDisplayHtml = '';
@@ -1205,7 +1223,7 @@
                                 
                                 itemHtml = `
                                     <div class="flavor-card bg-white rounded-xl overflow-hidden shadow-lg transition duration-300">
-                                        ${shouldDisplayImage ? `<img src="${imageUrl}" alt="Pizza de ${item.name}" class="w-full h-40 object-cover" onerror="this.onerror=null;this.src='${defaultImage}';">` : ''}
+                                        ${imageElement}
                                         <div class="p-6">
                                             <h3 class="text-xl font-bold text-gray-800 mb-2">${item.name}</h3>
                                             <div class="flex justify-around items-start text-sm mb-4 w-full overflow-x-auto py-1">
@@ -1222,10 +1240,13 @@
                                     </div>
                                 `;
 							} else {
-							    // NOVO: Verifica se a imagem deve ser exibida para itens que não são pizza
+							    const imageElement = noImage 
+                                    ? `<div class="no-image-placeholder">Sem Imagem</div>`
+                                    : (hasValidImage ? `<img src="${item.imageUrl}" alt="${item.name}" class="w-full h-40 object-cover" onerror="this.onerror=null;this.src='${defaultImage}';">` : '');
+
                                 itemHtml = `
                                     <div class="flavor-card bg-white rounded-xl overflow-hidden shadow-lg transition duration-300">
-                                        ${shouldDisplayImage ? `<img src="${imageUrl}" alt="${item.name}" class="w-full h-40 object-cover" onerror="this.onerror=null;this.src='${defaultImage}';">` : ''}
+                                        ${imageElement}
                                         <div class="p-6">
                                         <h3 class="text-xl font-bold text-gray-800 mb-2">${item.name}</h3>
                                         <p class="text-gray-600 text-sm mb-4">${item.description}</p>
