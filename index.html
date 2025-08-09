@@ -485,6 +485,27 @@
             padding: 10px;
             object-fit: cover;
         }
+
+        /* Estilos para as opções de ingredientes */
+        .burger-option {
+            background-color: #fef2f2; /* red-50 */
+            border: 2px solid #fca5a5; /* red-300 */
+            border-radius: 8px;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+            padding: 10px;
+            margin-bottom: 8px;
+            width: 100%;
+            text-align: left;
+        }
+
+        .burger-option.selected {
+            background-color: #ef4444; /* red-500 */
+            color: white;
+            border-color: #b91c1c; /* red-700 */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
     </style>
 </head>
 <body>
@@ -605,6 +626,30 @@
             </div>
         </div>
     </div>
+
+    <!-- NOVO: Modal de Montagem de Hambúrguer -->
+    <div id="burger-build-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="close-burger-build-modal">&times;</span>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Monte seu Hambúrguer</h3>
+            <p class="text-gray-600 mb-4">Selecione os ingredientes para o seu hambúrguer. O preço total será atualizado.</p>
+            
+            <div id="burger-ingredients-container">
+                <!-- Seções de ingredientes serão geradas dinamicamente aqui -->
+            </div>
+
+            <div class="mt-6 p-4 bg-gray-100 rounded-lg">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-lg font-bold">Total:</span>
+                    <span id="burger-total-price" class="text-lg font-bold text-red-600">R$ 0,00</span>
+                </div>
+                <button id="add-custom-burger-btn" class="w-full py-3 bg-green-600 text-white rounded-full font-bold hover:bg-green-700 transition">
+                    Adicionar ao Pedido
+                </button>
+            </div>
+        </div>
+    </div>
+
 
     <!-- Modal de Mensagem (para feedback do usuário) -->
     <div id="message-modal" class="message-modal">
@@ -812,12 +857,16 @@
         const CARDAPIO_CSV_URL_REF = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=664943668&single=true&output=csv';
         const PROMOCOES_CSV_URL_REF = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=600393470&single=true&output=csv'; 
         const DELIVERY_FEES_CSV_URL_REF = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=1695668250&single=true&output=csv';
+        // NOVO: URL da planilha de ingredientes para hambúrguer
+        const INGREDIENTS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=1816106560&single=true&output=csv';
 
         // Variáveis globais
         let order = [];
         let allMenuData = []; // Armazenará todos os itens do cardápio (pizzas e bebidas)
         let allPromotionsData = [];
         let deliveryFeesData = []; // NOVO: Armazenará os dados de taxas de entrega
+        let allIngredientsData = []; // NOVO: Armazena os dados de ingredientes
+        let currentBurgerBuild = { item: null, ingredients: new Set(), basePrice: 0 }; // NOVO: Objeto para montar o hambúrguer
         let isSelectingHalfPizza = false; 
         let isFirstHalfPromotional = false; 
         let deferredPrompt; 
@@ -833,9 +882,6 @@
             deliveryFee: 0.00 // Inicializa com 0, será atualizado dinamicamente
         };
         let isAddressInputVisible = false; // NOVO: Controla a visibilidade do modal de endereço
-
-        // Imagem padrão para pizzas sem link na planilha
-        const defaultImage = 'https://www.bakelitsul.com.br/Assets/img/sem-produto-detalhe.png';
 
         // Referências para os elementos DOM
         const orderSidebar = document.getElementById('orderSidebar');
@@ -862,6 +908,13 @@
         const modalPizzaName = document.getElementById('modal-pizza-name');
         const modalPizzaDescription = document.getElementById('modal-pizza-description');
         const pizzaSizeOptions = document.getElementById('pizza-size-options');
+
+        // NOVO: Referências para o modal de montagem de hambúrguer
+        const burgerBuildModal = document.getElementById('burger-build-modal');
+        const closeBurgerBuildModalBtn = document.getElementById('close-burger-build-modal');
+        const burgerIngredientsContainer = document.getElementById('burger-ingredients-container');
+        const burgerTotalPriceEl = document.getElementById('burger-total-price');
+        const addCustomBurgerBtn = document.getElementById('add-custom-burger-btn');
 
         // Referências para o novo modal de sugestão de bebidas
         const drinkSuggestionModal = document.getElementById('drink-suggestion-modal');
@@ -1004,6 +1057,10 @@
             updatePromotionButtonVisibility(); 
             resetHalfPizzaSelection(); // Chama o reset ao fechar o modal
         });
+        
+        closeBurgerBuildModalBtn.addEventListener('click', () => {
+            burgerBuildModal.style.display = 'none';
+        });
 
         window.addEventListener('click', function(event) {
             if (event.target == pizzaOptionModal) {
@@ -1012,11 +1069,10 @@
                 updatePromotionButtonVisibility(); 
                 resetHalfPizzaSelection(); // Chama o reset ao clicar fora do modal
             }
+            if (event.target == burgerBuildModal) {
+                burgerBuildModal.style.display = 'none';
+            }
         });
-
-        function getGenericPizzaSliceImage() {
-            return ''; 
-        }
 
         // Função para parsear dados CSV (agora mais genérica para diferentes tipos de dados)
         function parseCsvData(csvText, type) {
@@ -1074,6 +1130,7 @@
                     case 'É Pizza? (SIM/NÃO)': return 'isPizza';
                     case 'Disponível (SIM/NÃO)': return 'available'; 
                     case 'Imagem': return 'imageUrl'; 
+                    case 'É Montável? (SIM/NÃO)': return 'isCustomizable';
                     // Headers para Promoções
                     case 'ID Promocao': return 'id';
                     case 'Nome da Promocao': return 'name';
@@ -1081,11 +1138,17 @@
                     case 'Preco Promocional': return 'promoPrice';
                     case 'ID Item Aplicavel': return 'itemId';
                     case 'Ativo (SIM/NAO)': return 'active';
-                    // Headers para Taxas de Entrega - CORRIGIDO O MAPEAMENTO
-                    case 'Bairros': return 'neighborhood'; // CORREÇÃO AQUI: De 'Bairro' para 'Bairros'
+                    // Headers para Taxas de Entrega
+                    case 'Bairros': return 'neighborhood';
                     case 'Valor Frete': return 'deliveryFee';
+                    // Headers para Ingredientes
+                    case 'ID Intem': return 'id'; // CORREÇÃO: "ID Intem" para "ID Item"
+                    case 'Ingredientes': return 'name';
+                    case 'Catelogira': return 'category'; // CORREÇÃO: "Catelogira" para "Categoria"
+                    case 'Preço': return 'price';
+                    case 'Disponível': return 'available';
                     default: 
-                        console.warn(`DEBUG: Header CSV desconhecido encontrado para ${type}: "${cleanedHeader}"`); // Log para depuração
+                        console.warn(`DEBUG: Header CSV desconhecido encontrado para ${type}: "${cleanedHeader}"`);
                         return cleanedHeader.replace(/[^a-zA-Z0-9]+(.)?/g, (match, chr) => chr ? chr.toUpperCase() : '').replace(/^./, (match) => match.toLowerCase());
                 }
             });
@@ -1100,40 +1163,36 @@
                         let headerKey = mappedHeaders[j];
                         let value = rowValues[j];
 
-                        // Tratamento específico para campos críticos para evitar 'undefined'
                         if (headerKey === 'neighborhood' && (value === undefined || value === null || value.trim() === '')) {
                             console.warn(`DEBUG: Bairro vazio ou indefinido na linha ${i + 1} para ${type}: "${line}"`);
-                            value = ''; // Garante que é uma string vazia, não undefined
+                            value = '';
                         }
                         if (headerKey === 'deliveryFee' && (value === undefined || value === null || value.trim() === '')) {
                             console.warn(`DEBUG: Valor Frete vazio ou indefinido na linha ${i + 1} para ${type}: "${line}"`);
-                            value = '0.00'; // Default para 0 se ausente
+                            value = '0.00';
                         }
-
-                        if (['basePrice', 'price6Slices', 'price4Slices', 'promoPrice', 'deliveryFee'].includes(headerKey)) { // Adicionado 'deliveryFee'
+                        if (['price', 'basePrice', 'price6Slices', 'price4Slices', 'promoPrice', 'deliveryFee'].includes(headerKey)) {
                             const parsedValue = parseFloat(String(value).replace(',', '.'));
                             item[headerKey] = isNaN(parsedValue) ? 0 : parsedValue;
-                        } else if (['isPizza', 'available', 'active'].includes(headerKey)) {
+                        } else if (['isPizza', 'available', 'active', 'isCustomizable'].includes(headerKey)) {
                             item[headerKey] = value.toUpperCase() === 'SIM';
                         } else {
                             item[headerKey] = value;
                         }
                     }
-                    // NOVA LÓGICA: Não altera o valor de 'imageUrl' no parsing
+
                     if (type === 'cardapio') {
                         item.imageUrl = (String(item.imageUrl || '').trim());
                     }
-
-                    // Apenas adiciona se estiver disponível (para cardápio) ou ativo (para promoções)
-                    // Para deliveryFees, adiciona todos os bairros
-                    if ((type === 'cardapio' && item.available) || (type === 'promocoes' && item.active) || type === 'deliveryFees') {
+                    
+                    if ((type === 'cardapio' && item.available) || (type === 'promocoes' && item.active) || (type === 'ingredients' && item.available) || type === 'deliveryFees') {
                         parsedData.push(item);
                     }
                 } else {
                     console.warn(`DEBUG: Linha ${i + 1} ignorada ou malformada (${type} - esperado ${mappedHeaders.length} colunas, encontrado ${rowValues.length}): "${line}"`);
                 }
             }
-            console.log(`DEBUG: Dados parseados para ${type}:`, parsedData); // Adicionado log para depuração
+            console.log(`DEBUG: Dados parseados para ${type}:`, parsedData);
             return parsedData;
         }
 
@@ -1175,19 +1234,15 @@
                         if (item.available) { 
                             let itemHtml = '';
                             
-                            // NOVA LÓGICA DE EXIBIÇÃO DA IMAGEM
+                            // Lógica de exibição da imagem
                             const trimmedImageUrl = String(item.imageUrl || '').trim();
                             let imageElement = '';
 
                             if (trimmedImageUrl.toLowerCase() === 'sem imagem') {
-                                // Caso 1: Usuário informou "Sem Imagem"
                                 imageElement = `<div class="no-image-placeholder">Sem Imagem</div>`;
                             } else if (trimmedImageUrl.length > 0) {
-                                // Caso 2: URL de imagem fornecida
                                 imageElement = `<img src="${trimmedImageUrl}" alt="Imagem de ${item.name}" class="w-full h-40 object-cover" onerror="this.onerror=null;this.src='';">`;
                             } else {
-                                // Caso 3: Campo de imagem em branco
-                                // Deixa a variável 'imageElement' como string vazia para não renderizar nada
                                 imageElement = '';
                             }
 
@@ -1240,14 +1295,18 @@
                                     </div>
                                 `;
 							} else {
-							    let imageElement = '';
-                                const trimmedImageUrl = String(item.imageUrl || '').trim();
-                                if (trimmedImageUrl.toLowerCase() === 'sem imagem') {
-                                    imageElement = `<div class="no-image-placeholder">Sem Imagem</div>`;
-                                } else if (trimmedImageUrl.length > 0) {
-                                    imageElement = `<img src="${trimmedImageUrl}" alt="${item.name}" class="w-full h-40 object-cover" onerror="this.onerror=null;this.src='';">`;
+							    // Lógica para Hambúrgueres e outros itens
+                                let buttonHtml = '';
+                                if (item.isCustomizable) {
+                                    buttonHtml = `<button class="add-item-btn btn-add-more text-white px-4 py-2 rounded-full text-sm font-medium transition duration-300"
+                                                        data-item-id="${item.id}" data-image-url="${trimmedImageUrl}">
+                                                        Montar
+                                                </button>`;
                                 } else {
-                                    imageElement = '';
+                                    buttonHtml = `<button class="add-item-btn bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full text-sm font-medium transition duration-300"
+                                                        data-item-id="${item.id}" data-image-url="${trimmedImageUrl}">
+                                                        Adicionar
+                                                </button>`;
                                 }
 
                                 itemHtml = `
@@ -1258,10 +1317,7 @@
                                         <p class="text-gray-600 text-sm mb-4">${item.description}</p>
                                         <div class="flex justify-between items-center">
                                             <span class="font-bold text-red-600 text-lg">R$ ${item.basePrice.toFixed(2).replace('.', ',')}</span>
-                                            <button class="add-item-btn bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full text-sm font-medium transition duration-300"
-                                            data-item-id="${item.id}">
-                                                Adicionar
-                                            </button>
+                                            ${buttonHtml}
                                         </div>
                                     </div>
                                 </div>										
@@ -1423,6 +1479,13 @@
             }
 
             const itemImageUrl = item.isPizza ? item.imageUrl : null;
+            
+            // NOVO: Lógica para hambúrguer montável
+            if (item.isCustomizable) {
+                // Abre o modal de montagem de hambúrguer
+                handleBurgerBuild(item);
+                return;
+            }
 
             if (isSelectingSecondHalf) {
                 console.log('DEBUG: isSelectingSecondHalf é TRUE. Tentando adicionar segunda metade.'); // Log
@@ -1624,7 +1687,7 @@
             const flyingEl = document.createElement('div');
             flyingEl.classList.add('fly-to-cart-animation');
             
-            if (imageUrl) {
+            if (imageUrl && imageUrl.toLowerCase() !== 'sem imagem') {
                 flyingEl.innerHTML = `<img src="${imageUrl}" alt="item" class="w-full h-full object-cover rounded-full">`;
             } else {
                 flyingEl.innerHTML = '<i class="fas fa-plus"></i>'; 
@@ -1694,6 +1757,9 @@
                     } else if (item.selected_slices) {
                         const sizeLabel = `${item.selected_slices} FATIAS`.toUpperCase();
                         itemName = `<b>${sizeLabel}</b>: ${item.name}`;
+                    } else if (item.type === 'burger') {
+                        itemName = item.name;
+                        itemDescription = `Ingredientes: ${item.ingredients.map(ing => ing.name).join(', ')}`;
                     }
                     
                     const isLastItem = (index === order.length - 1);
@@ -1822,12 +1888,21 @@
 
             order.forEach(item => {
                 let itemName = item.name;
+                let itemDescription = item.description || '';
+
                 if (item.type === 'promotion') {
                     itemName = item.name.replace('<i class="fas fa-tags text-red-600 mr-2"></i> ', ''); 
                 } else if (item.selected_slices) {
                     itemName = `${item.selected_slices} FATIAS: ${item.name}`;
+                } else if (item.type === 'burger') {
+                    itemName = item.name;
+                    itemDescription = `Ingredientes: ${item.ingredients.map(ing => ing.name).join(', ')}`;
                 }
+                
                 message += `- ${itemName}: R$ ${item.price.toFixed(2).replace('.', ',')}\n`;
+                if (itemDescription) {
+                    message += `  - ${itemDescription}\n`;
+                }
                 subtotal += item.price;
             });
 
@@ -2541,11 +2616,13 @@
                 
                 const cardapioCsvText = data.cardapio;
                 const promocoesCsvText = data.promocoes;
-                const deliveryFeesCsvText = data.deliveryFees; 
+                const deliveryFeesCsvText = data.deliveryFees;
+                const ingredientsCsvText = data.ingredients; // NOVO: Dados de ingredientes
 
                 allMenuData = parseCsvData(cardapioCsvText, 'cardapio');
                 allPromotionsData = parseCsvData(promocoesCsvText, 'promocoes');
-                deliveryFeesData = parseCsvData(deliveryFeesCsvText, 'deliveryFees'); 
+                deliveryFeesData = parseCsvData(deliveryFeesCsvText, 'deliveryFees');
+                allIngredientsData = parseCsvData(ingredientsCsvText, 'ingredients'); // NOVO: Parseia os dados de ingredientes
                 
                 let orderedUniqueCategories = [];
                 const seenCategories = new Set();
@@ -2580,6 +2657,115 @@
                 showMessageModal('Não foi possível carregar o cardápio no momento. Por favor, tente novamente mais tarde.');
             }
         }
+
+        // --- Lógica para o modal de montagem de Hambúrguer ---
+        function handleBurgerBuild(burgerItem) {
+            currentBurgerBuild.item = burgerItem;
+            currentBurgerBuild.ingredients.clear();
+            currentBurgerBuild.basePrice = burgerItem.basePrice;
+
+            burgerTotalPriceEl.textContent = `R$ ${currentBurgerBuild.basePrice.toFixed(2).replace('.', ',')}`;
+            burgerIngredientsContainer.innerHTML = '';
+            
+            const ingredientsByCategory = allIngredientsData.reduce((acc, ingredient) => {
+                const category = ingredient.category || 'Outros';
+                if (!acc[category]) {
+                    acc[category] = [];
+                }
+                acc[category].push(ingredient);
+                return acc;
+            }, {});
+
+            for (const category in ingredientsByCategory) {
+                const categorySection = document.createElement('div');
+                categorySection.className = 'mb-4';
+                categorySection.innerHTML = `<h4 class="text-md font-semibold text-gray-800 mb-2">${category}</h4>`;
+
+                const categoryButtonsContainer = document.createElement('div');
+                categoryButtonsContainer.className = 'grid grid-cols-2 gap-2';
+
+                ingredientsByCategory[category].forEach(ingredient => {
+                    const ingredientEl = document.createElement('button');
+                    ingredientEl.className = 'burger-option text-gray-800 font-medium transition duration-300';
+                    ingredientEl.textContent = `${ingredient.name} (${ingredient.price > 0 ? 'R$ ' + ingredient.price.toFixed(2).replace('.', ',') : 'Grátis'})`;
+                    ingredientEl.dataset.name = ingredient.name;
+                    ingredientEl.dataset.price = ingredient.price;
+                    ingredientEl.dataset.category = ingredient.category;
+
+                    ingredientEl.addEventListener('click', () => {
+                        handleIngredientClick(ingredientEl);
+                    });
+                    
+                    categoryButtonsContainer.appendChild(ingredientEl);
+                });
+                
+                categorySection.appendChild(categoryButtonsContainer);
+                burgerIngredientsContainer.appendChild(categorySection);
+            }
+            burgerBuildModal.style.display = 'flex';
+        }
+
+        function handleIngredientClick(ingredientEl) {
+            const ingredientName = ingredientEl.dataset.name;
+            const ingredientPrice = parseFloat(ingredientEl.dataset.price);
+            const ingredientCategory = ingredientEl.dataset.category;
+            
+            const isSelected = ingredientEl.classList.contains('selected');
+
+            // Find if there's an already selected ingredient in the same category
+            const alreadySelectedInSameCategory = Array.from(currentBurgerBuild.ingredients).find(ing => ing.category === ingredientCategory);
+
+            if (isSelected) {
+                ingredientEl.classList.remove('selected');
+                currentBurgerBuild.ingredients.delete(
+                    Array.from(currentBurgerBuild.ingredients).find(ing => ing.name === ingredientName)
+                );
+            } else {
+                if (alreadySelectedInSameCategory && !isMultipleChoiceCategory(ingredientCategory)) {
+                    // Unselect the previous one
+                    const prevSelectedEl = document.querySelector(`.burger-option[data-name="${alreadySelectedInSameCategory.name}"]`);
+                    if (prevSelectedEl) {
+                        prevSelectedEl.classList.remove('selected');
+                    }
+                    currentBurgerBuild.ingredients.delete(alreadySelectedInSameCategory);
+                }
+                ingredientEl.classList.add('selected');
+                currentBurgerBuild.ingredients.add({ name: ingredientName, price: ingredientPrice, category: ingredientCategory });
+            }
+            updateBurgerTotalPrice();
+        }
+
+        function isMultipleChoiceCategory(category) {
+            const multipleCategories = ['Queijo', 'Adicionais', 'Molho']; // Adapte as categorias conforme sua planilha
+            return multipleCategories.includes(category);
+        }
+
+        function updateBurgerTotalPrice() {
+            let total = currentBurgerBuild.basePrice;
+            currentBurgerBuild.ingredients.forEach(ing => {
+                total += ing.price;
+            });
+            burgerTotalPriceEl.textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
+        }
+        
+        addCustomBurgerBtn.addEventListener('click', () => {
+            const selectedIngredients = Array.from(currentBurgerBuild.ingredients);
+            
+            if (selectedIngredients.length === 0) {
+                showMessageModal('Por favor, selecione pelo menos um ingrediente.');
+                return;
+            }
+
+            const customBurger = {
+                type: 'burger',
+                name: currentBurgerBuild.item.name,
+                description: currentBurgerBuild.item.description,
+                price: parseFloat(burgerTotalPriceEl.textContent.replace('R$', '').replace(',', '.')),
+                ingredients: selectedIngredients
+            };
+            addToOrder(customBurger);
+            burgerBuildModal.style.display = 'none';
+        });
 
         // Evento que garante que a UI será carregada após o DOM estar pronto
         document.addEventListener('DOMContentLoaded', function() {
