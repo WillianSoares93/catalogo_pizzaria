@@ -1169,9 +1169,9 @@
                     case 'Bairros': return 'neighborhood';
                     case 'Valor Frete': return 'deliveryFee';
                     // Headers para Ingredientes
-                    case 'ID Item': return 'id';
-                    case 'Ingrediente': return 'name';
-                    case 'Categoria': return 'category';
+                    case 'ID Intem': return 'id';
+                    case 'Ingredientes': return 'name';
+                    case 'Catelogira': return 'category';
                     case 'Preço': return 'price';
                     case 'Disponível': return 'available';
                     case 'Limite': return 'limit';
@@ -1245,18 +1245,14 @@
 
             orderedCategories.forEach(category => {
                 const sectionId = `${category}-section`;
-                let sectionEl = document.getElementById(sectionId);
-
-                if (!sectionEl) {
-                    sectionEl = document.createElement('div');
-                    sectionEl.id = sectionId;
-                    sectionEl.className = 'pizza-category-section mb-8';
-                    sectionEl.innerHTML = `
-                        <h3 class="text-xl font-bold text-white p-2 rounded-md bg-red-600 mb-6">${capitalizeFirstLetter(category)}</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="${category}-items"></div>
-                    `;
-                    dynamicSectionsContainer.appendChild(sectionEl);
-                }
+                let sectionEl = document.createElement('div');
+                sectionEl.id = sectionId;
+                sectionEl.className = 'pizza-category-section mb-8';
+                sectionEl.innerHTML = `
+                    <h3 class="text-xl font-bold text-white p-2 rounded-md bg-red-600 mb-6">${capitalizeFirstLetter(category)}</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="${category}-items"></div>
+                `;
+                dynamicSectionsContainer.appendChild(sectionEl);
 
                 const categoryItemsEl = document.getElementById(`${category}-items`);
                 categoryItemsEl.innerHTML = ''; 
@@ -1313,9 +1309,6 @@
                                         ${imageElement}
                                         <div class="p-6">
                                             <h3 class="text-xl font-bold text-gray-800 mb-2">${item.name}</h3>
-                                            <div class="flex justify-around items-start text-sm mb-4 w-full overflow-x-auto py-1">
-                                                ${priceDisplayHtml}
-                                            </div>
                                             <p class="text-gray-600 text-sm mb-4">${item.description}</p>
                                             <div class="flex justify-end mt-auto">
                                                 <button class="add-item-btn bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full text-sm font-medium transition duration-300"
@@ -2361,6 +2354,10 @@
                     const totalOrder = calculateOrderTotal();
                     const trocoParaValue = parseFloat(trocoParaInput.value);
 
+                    if (!customerNameInput.value.trim()) {
+                         showMessageModal('Por favor, informe seu nome antes de continuar.');
+                         return;
+                    }
                     if (isNaN(trocoParaValue) || trocoParaValue < totalOrder) {
                         showMessageModal(`O valor para troco (R$ ${totalOrder.toFixed(2).replace('.', ',')}) não pode ser menor que o total do pedido (R$ ${totalOrder.toFixed(2).replace('.', ',')}).`);
                         console.log('DEBUG: Valor para troco inválido.'); // Log
@@ -2373,6 +2370,10 @@
                         trocoTotal: trocoCalculado
                     };
                 } else {
+                     if (!customerNameInput.value.trim()) {
+                         showMessageModal('Por favor, informe seu nome antes de continuar.');
+                         return;
+                    }
                     selectedPaymentMethod = selectedRadio.value;
                 }
                 
@@ -2742,6 +2743,7 @@
             currentBurgerBuild.item = burgerItem;
             currentBurgerBuild.ingredients.clear();
             currentBurgerBuild.basePrice = burgerItem.basePrice;
+            promotionButton.style.display = 'none'; // Oculta o botão de promoções
 
             burgerTotalPriceEl.textContent = `R$ ${currentBurgerBuild.basePrice.toFixed(2).replace('.', ',')}`;
             burgerIngredientsContainer.innerHTML = '';
@@ -2801,9 +2803,9 @@
             const categoryIngredients = Array.from(currentBurgerBuild.ingredients).filter(ing => ing.category === ingredientCategory);
             const categoryData = allIngredientsData.find(ing => ing.category === ingredientCategory);
             const limit = categoryData.limit;
-
+            
             if (checkbox.checked) {
-                 if (categoryIngredients.length >= limit) {
+                if (categoryIngredients.length >= limit) {
                     showMessageModal(`Você pode selecionar no máximo ${limit} item(s) da categoria "${ingredientCategory}".`);
                     checkbox.checked = false; // Desfaz a seleção
                     return;
