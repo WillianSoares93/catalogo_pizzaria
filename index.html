@@ -443,6 +443,15 @@
             transform: scale(1.02);
             box-shadow: 0 5px 15px rgba(34, 197, 94, 0.4);
         }
+         /* NOVO: Estilo para o botão vermelho de checkout */
+        .dynamic-checkout-button.red-gradient {
+            background: linear-gradient(135deg, #f59e0b, #ef4444);
+        }
+        .dynamic-checkout-button.red-gradient:hover {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            transform: scale(1.02);
+            box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
+        }
 
         /* Estilos para o modal de endereço */
         .address-modal {
@@ -485,6 +494,39 @@
             padding: 10px;
             object-fit: cover;
         }
+
+        /* Estilos para as opções de ingredientes (temática do cardápio) */
+        .burger-option {
+            background-color: #f9fafb; /* gray-50 */
+            border: 2px solid #e5e7eb; /* gray-200 */
+            border-radius: 8px;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+            padding: 10px;
+            margin-bottom: 8px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 500;
+        }
+        .burger-option:hover {
+            border-color: #fca5a5; /* red-300 */
+        }
+        .burger-option.selected {
+            background-color: #ef4444; /* red-500 */
+            color: white;
+            border-color: #b91c1c; /* red-700 */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .burger-option.selected span {
+            color: white;
+        }
+        .burger-option:has(input:disabled) {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
     </style>
 </head>
 <body>
@@ -597,7 +639,7 @@
     <!-- Modal de Seleção de Pizza (Inteira/Meia) -->
     <div id="pizza-option-modal" class="modal">
         <div class="modal-content">
-            <span class="close-button" id="close-pizza-option-modal">&times;</span>
+            <span class="close-button" id="close-pizza-option-modal" onclick="closePizzaOptionModal()">&times;</span>
             <h3 class="text-xl font-bold text-gray-800 mb-4" id="modal-pizza-name"></h3>
             <p class="text-gray-600 mb-6" id="modal-pizza-description"></p>
             <div id="pizza-size-options" class="grid grid-cols-1 sm:grid-cols-3 gap-2 justify-items-center">
@@ -717,7 +759,7 @@
                     <i class="fas fa-qrcode icon"></i>
                     <div class="text-content">
                         <h4>Pix</h4>
-                        <p></p> <!-- Descrição removida -->
+                        <p id="pix-key-display" class="text-sm text-gray-600 hidden"></p>
                     </div>
                 </label>
             </div>
@@ -744,6 +786,13 @@
         <div class="address-modal-content">
             <span class="close-button" id="close-address-modal">&times;</span>
             <h3 class="text-xl font-bold text-gray-800 mb-4">Informe seu Endereço</h3>
+             <!-- NOVO: Campo de Nome do Cliente -->
+            <div class="mb-4">
+                <label for="customerNameInput" class="block text-gray-700 text-sm font-bold mb-2">
+                    Nome Completo:
+                </label>
+                <input type="text" id="customerNameInput" placeholder="Seu nome" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            </div>
             <div class="mb-4">
                 <label for="neighborhoodSelect" class="block text-gray-700 text-sm font-bold mb-2">
                     Bairro:
@@ -792,12 +841,12 @@
                 </div>
                 <div>
                     <h3 class="text-xl font-bold mb-4">Contato</h3>
-                    <p class="text-gray-400"><i class="fas fa-phone mr-2"></i> (85) 98765-4321</p>
-                    <p class="text-gray-400"><i class="fas fa-envelope mr-2"></i> contato@suapizzaria.com</p>
+                    <p id="footer-phone" class="text-gray-400"><i class="fas fa-phone mr-2"></i></p>
+                    <p id="footer-email" class="text-gray-400"><i class="fas fa-envelope mr-2"></i></p>
                     <div class="flex justify-center md:justify-start space-x-4 mt-2">
-                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-instagram text-xl"></i></a>
-                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-facebook text-xl"></i></a>
-                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-whatsapp text-xl"></i></a>
+                        <a id="footer-instagram" href="#" target="_blank" class="text-gray-400 hover:text-white"><i class="fab fa-instagram text-xl"></i></a>
+                        <a id="footer-facebook" href="#" target="_blank" class="text-gray-400 hover:text-white"><i class="fab fa-facebook text-xl"></i></a>
+                        <a id="footer-whatsapp" href="#" target="_blank" class="text-gray-400 hover:text-white"><i class="fab fa-whatsapp text-xl"></i></a>
                     </div>
                 </div>
             </div>
@@ -812,35 +861,37 @@
         const CARDAPIO_CSV_URL_REF = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=664943668&single=true&output=csv';
         const PROMOCOES_CSV_URL_REF = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=600393470&single=true&output=csv'; 
         const DELIVERY_FEES_CSV_URL_REF = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=1695668250&single=true&output=csv';
+        const INGREDIENTS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=1816106560&single=true&output=csv';
+        const CONTACTS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=2043568216&single=true&output=csv';
 
         // Variáveis globais
         let order = [];
-        let allMenuData = []; // Armazenará todos os itens do cardápio (pizzas e bebidas)
+        let allMenuData = [];
         let allPromotionsData = [];
-        let deliveryFeesData = []; // NOVO: Armazenará os dados de taxas de entrega
+        let deliveryFeesData = [];
+        let allIngredientsData = []; 
+        let allContactsData = {}; 
+        let currentBurgerBuild = { item: null, ingredients: new Set(), basePrice: 0 }; 
         let isSelectingHalfPizza = false; 
         let isFirstHalfPromotional = false; 
         let deferredPrompt; 
         let selectedPaymentMethod = null; 
         let isCheckoutInitiated = false; 
+        let customerName = ''; 
         
-        // NOVO: Objeto para armazenar o endereço selecionado e sua taxa de entrega
         let selectedAddress = {
             bairro: null,
             rua: null,
             numero: null,
             referencia: null,
-            deliveryFee: 0.00 // Inicializa com 0, será atualizado dinamicamente
+            deliveryFee: 0.00
         };
-        let isAddressInputVisible = false; // NOVO: Controla a visibilidade do modal de endereço
-
-        // Imagem padrão para pizzas sem link na planilha
-        const defaultImage = 'https://www.bakelitsul.com.br/Assets/img/sem-produto-detalhe.png';
+        let isAddressInputVisible = false;
 
         // Referências para os elementos DOM
         const orderSidebar = document.getElementById('orderSidebar');
         const cartCount = document.getElementById('cartCount');
-        const emptyOrderMessage = document.getElementById('orderItems').querySelector('#emptyOrderMessage'); // Ajustado para pegar dentro de orderItems
+        const emptyOrderMessage = document.getElementById('orderItems').querySelector('#emptyOrderMessage');
         const messageModal = document.getElementById('message-modal');
         const closeMessageModalBtn = document.getElementById('close-message-modal');
         const okMessageModalBtn = document.getElementById('ok-message-modal');
@@ -852,35 +903,35 @@
         const promotionButton = document.getElementById('promotion-button'); 
         const cartButton = document.getElementById('cart-button'); 
         const subtotalEl = document.getElementById('subtotal');
-        const deliveryFeeDisplay = document.getElementById('deliveryFeeDisplay'); // NOVO: Elemento para a taxa de entrega dinâmica
+        const deliveryFeeDisplay = document.getElementById('deliveryFeeDisplay');
         const totalEl = document.getElementById('total');
-        const checkoutButton = document.getElementById('checkoutButton'); // Referência ao botão Finalizar Pedido
+        const checkoutButton = document.getElementById('checkoutButton'); 
 
-        // Referências para o modal de seleção de pizza
         const pizzaOptionModal = document.getElementById('pizza-option-modal');
         const closePizzaOptionModalBtn = document.getElementById('close-pizza-option-modal');
         const modalPizzaName = document.getElementById('modal-pizza-name');
         const modalPizzaDescription = document.getElementById('modal-pizza-description');
         const pizzaSizeOptions = document.getElementById('pizza-size-options');
 
-        // Referências para o novo modal de sugestão de bebidas
+        const burgerBuildModal = document.getElementById('burger-build-modal');
+        const burgerIngredientsContainer = document.getElementById('burger-ingredients-container');
+        const burgerTotalPriceEl = document.getElementById('burger-total-price');
+        const addCustomBurgerBtn = document.getElementById('add-custom-burger-btn');
+
         const drinkSuggestionModal = document.getElementById('drink-suggestion-modal');
         const closeDrinkSuggestionModalBtn = document.getElementById('close-drink-suggestion-modal');
         const suggestedDrinksList = document.getElementById('suggested-drinks-list');
         const proceedWithoutDrinksBtn = document.getElementById('proceed-without-drinks'); 
 
-        // Referências para o modal de confirmação de pedido sem bebida
         const confirmNoDrinkModal = document.getElementById('confirm-no-drink-modal');
         const closeConfirmNoDrinkModalBtn = document.getElementById('close-confirm-no-drink-modal');
         const confirmNoDrinkYesBtn = document.getElementById('confirm-no-drink-yes');
         const confirmNoDrinkNoBtn = document.getElementById('confirm-no-drink-no-btn');
 
-        // Referências para o modal de instalação do PWA
         const installPromptModal = document.getElementById('install-prompt-modal');
         const closeInstallPromptModalBtn = document.getElementById('close-install-prompt-modal');
         const installAppButton = document.getElementById('install-app-button');
 
-        // Referências para o modal de seleção de forma de pagamento
         const paymentMethodModal = document.getElementById('payment-method-modal');
         const closePaymentMethodModalBtn = document.getElementById('close-payment-method-modal');
         const paymentOptionsContainer = document.getElementById('payment-options-container');
@@ -889,10 +940,11 @@
         const trocoParaInput = document.getElementById('trocoPara'); 
         const trocoTotalDisplay = document.getElementById('trocoTotalDisplay'); 
         const paymentModalTotal = document.getElementById('payment-modal-total'); 
+        const pixKeyDisplay = document.getElementById('pix-key-display');
 
-        // NOVO: Referências para elementos do modal de endereço
         const addressInputModal = document.getElementById('address-input-modal');
         const closeAddressModalBtn = document.getElementById('close-address-modal');
+        const customerNameInput = document.getElementById('customerNameInput'); 
         const neighborhoodSelect = document.getElementById('neighborhoodSelect');
         const streetInput = document.getElementById('streetInput');
         const numberInput = document.getElementById('numberInput');
@@ -903,16 +955,18 @@
         const neighborhoodDisplay = document.getElementById('neighborhood-display');
         const referenceDisplay = document.getElementById('reference-display');
         const editAddressBtn = document.getElementById('editAddressBtn');
-        // NOVO: Referências para os novos elementos de taxa de entrega
         const informAddressBtn = document.getElementById('informAddressBtn');
         const editDeliveryAddressBtn = document.getElementById('editDeliveryAddressBtn');
-
+        const footerPhone = document.getElementById('footer-phone');
+        const footerEmail = document.getElementById('footer-email');
+        const footerInstagram = document.getElementById('footer-instagram');
+        const footerFacebook = document.getElementById('footer-facebook');
+        const footerWhatsapp = document.getElementById('footer-whatsapp');
 
         let currentPizzaData = {}; 
         let firstHalfPizza = null; 
         let isSelectingSecondHalf = false; 
 
-        // Define tamanhos e seus multiplicadores de preço em relação ao preço de 8 fatias
         const sizes = [
             { slices: 4, label: '4 Fatias', priceKey: 'price4Slices' },
             { slices: 6, label: '6 Fatias', priceKey: 'price6Slices' },
@@ -921,14 +975,13 @@
 
         const whatsappNumber = '5587996070638'; 
 
-        // Funções de controle de modais e sidebar
         function toggleOrderSidebar() {
             orderSidebar.classList.toggle('translate-x-full');
             orderSidebar.classList.toggle('translate-x-0');
 
             if (orderSidebar.classList.contains('translate-x-0')) {
                 promotionButton.style.display = 'none';
-                orderSidebar.scrollTop = orderSidebar.scrollHeight; // Rola para o final ao abrir
+                orderSidebar.scrollTop = orderSidebar.scrollHeight;
             } else {
                 updatePromotionButtonVisibility();
             }
@@ -941,7 +994,7 @@
         }
         
         function showMessageModal(message, onOkCallback = null) {
-            console.log('DEBUG: showMessageModal chamado com:', message); // Log
+            console.log('DEBUG: showMessageModal chamado com:', message);
             messageModalText.textContent = message;
             messageModal.style.display = 'flex';
 
@@ -973,19 +1026,18 @@
         }
 
         function hideMessageModal() {
-            console.log('DEBUG: hideMessageModal chamado.'); // Log
+            console.log('DEBUG: hideMessageModal chamado.');
             messageModal.style.display = 'none';
         }
 
-        // NOVO: Função para resetar o estado de seleção de meia pizza
         function resetHalfPizzaSelection() {
-            console.log('DEBUG: resetHalfPizzaSelection chamado. isSelectingHalfPizza:', isSelectingHalfPizza); // Log
+            console.log('DEBUG: resetHalfPizzaSelection chamado. isSelectingHalfPizza:', isSelectingHalfPizza);
             if (isSelectingHalfPizza && firstHalfPizza) {
                 const pendingHalfIndex = order.findIndex(orderItem => orderItem.id === 'pending-half-pizza');
                 if (pendingHalfIndex > -1) {
                     order.splice(pendingHalfIndex, 1);
                     updateOrderDisplay(); 
-                    console.log('DEBUG: Meia pizza pendente removida do pedido.'); // Log
+                    console.log('DEBUG: Meia pizza pendente removida do pedido.');
                 }
                 firstHalfPizza = null;
                 isSelectingSecondHalf = false;
@@ -994,33 +1046,21 @@
                 toggleAddItemButtons(true);
                 toggleCategoryButtons(true);
                 showMessageModal('Seleção de meia pizza cancelada.');
-                console.log('DEBUG: Estado de meia pizza resetado.'); // Log
+                console.log('DEBUG: Estado de meia pizza resetado.');
             }
         }
 
-        closePizzaOptionModalBtn.addEventListener('click', function() {
-            console.log('DEBUG: Fechando modal de opção de pizza via botão X.'); // Log
-            pizzaOptionModal.style.display = 'none';
-            updatePromotionButtonVisibility(); 
-            resetHalfPizzaSelection(); // Chama o reset ao fechar o modal
-        });
+        closePizzaOptionModalBtn.addEventListener('click', closePizzaOptionModal);
 
         window.addEventListener('click', function(event) {
             if (event.target == pizzaOptionModal) {
-                console.log('DEBUG: Fechando modal de opção de pizza clicando fora.'); // Log
-                pizzaOptionModal.style.display = 'none';
-                updatePromotionButtonVisibility(); 
-                resetHalfPizzaSelection(); // Chama o reset ao clicar fora do modal
+                closePizzaOptionModal();
             }
         });
 
-        function getGenericPizzaSliceImage() {
-            return ''; 
-        }
-
-        // Função para parsear dados CSV (agora mais genérica para diferentes tipos de dados)
+        // Função para parsear dados CSV
         function parseCsvData(csvText, type) {
-            console.log(`DEBUG: parseCsvData para ${type} - CSV Bruto (primeiras 100 chars):`, csvText.substring(0, 100)); // Log
+            console.log(`DEBUG: parseCsvData para ${type} - CSV Bruto (primeiras 100 chars):`, csvText.substring(0, 100));
             const lines = csvText.split('\n').filter(line => line.trim() !== '');
 
             if (lines.length === 0) {
@@ -1063,7 +1103,6 @@
             const mappedHeaders = headersRaw.map(header => {
                 let cleanedHeader = header.trim();
                 switch (cleanedHeader) {
-                    // Headers para Cardápio
                     case 'ID Item (único)': return 'id';
                     case 'Nome do Item': return 'name';
                     case 'Descrição': return 'description';
@@ -1074,18 +1113,19 @@
                     case 'É Pizza? (SIM/NÃO)': return 'isPizza';
                     case 'Disponível (SIM/NÃO)': return 'available'; 
                     case 'Imagem': return 'imageUrl'; 
-                    // Headers para Promoções
+                    // Removido o mapeamento para hambúrgueres montáveis
                     case 'ID Promocao': return 'id';
                     case 'Nome da Promocao': return 'name';
                     case 'Descrição': return 'description';
                     case 'Preco Promocional': return 'promoPrice';
                     case 'ID Item Aplicavel': return 'itemId';
                     case 'Ativo (SIM/NAO)': return 'active';
-                    // Headers para Taxas de Entrega - CORRIGIDO O MAPEAMENTO
-                    case 'Bairros': return 'neighborhood'; // CORREÇÃO AQUI: De 'Bairro' para 'Bairros'
+                    case 'Bairros': return 'neighborhood';
                     case 'Valor Frete': return 'deliveryFee';
+                    case 'Dados': return 'data';
+                    case 'Valor': return 'value';
                     default: 
-                        console.warn(`DEBUG: Header CSV desconhecido encontrado para ${type}: "${cleanedHeader}"`); // Log para depuração
+                        console.warn(`DEBUG: Header CSV desconhecido encontrado para ${type}: "${cleanedHeader}"`);
                         return cleanedHeader.replace(/[^a-zA-Z0-9]+(.)?/g, (match, chr) => chr ? chr.toUpperCase() : '').replace(/^./, (match) => match.toLowerCase());
                 }
             });
@@ -1099,18 +1139,11 @@
                     for (let j = 0; j < mappedHeaders.length; j++) {
                         let headerKey = mappedHeaders[j];
                         let value = rowValues[j];
-
-                        // Tratamento específico para campos críticos para evitar 'undefined'
                         if (headerKey === 'neighborhood' && (value === undefined || value === null || value.trim() === '')) {
                             console.warn(`DEBUG: Bairro vazio ou indefinido na linha ${i + 1} para ${type}: "${line}"`);
-                            value = ''; // Garante que é uma string vazia, não undefined
+                            value = '';
                         }
-                        if (headerKey === 'deliveryFee' && (value === undefined || value === null || value.trim() === '')) {
-                            console.warn(`DEBUG: Valor Frete vazio ou indefinido na linha ${i + 1} para ${type}: "${line}"`);
-                            value = '0.00'; // Default para 0 se ausente
-                        }
-
-                        if (['basePrice', 'price6Slices', 'price4Slices', 'promoPrice', 'deliveryFee'].includes(headerKey)) { // Adicionado 'deliveryFee'
+                        if (['price', 'basePrice', 'price6Slices', 'price4Slices', 'promoPrice', 'deliveryFee'].includes(headerKey)) {
                             const parsedValue = parseFloat(String(value).replace(',', '.'));
                             item[headerKey] = isNaN(parsedValue) ? 0 : parsedValue;
                         } else if (['isPizza', 'available', 'active'].includes(headerKey)) {
@@ -1119,28 +1152,28 @@
                             item[headerKey] = value;
                         }
                     }
-                    // NOVA LÓGICA: Não altera o valor de 'imageUrl' no parsing
+
                     if (type === 'cardapio') {
                         item.imageUrl = (String(item.imageUrl || '').trim());
+                    } else if (type === 'contacts') {
+                        allContactsData[item.data] = item.value;
                     }
-
-                    // Apenas adiciona se estiver disponível (para cardápio) ou ativo (para promoções)
-                    // Para deliveryFees, adiciona todos os bairros
-                    if ((type === 'cardapio' && item.available) || (type === 'promocoes' && item.active) || type === 'deliveryFees') {
+                    
+                    if ((type === 'cardapio' && item.available) || (type === 'promocoes' && item.active) || type === 'deliveryFees' || type === 'contacts') {
                         parsedData.push(item);
                     }
                 } else {
                     console.warn(`DEBUG: Linha ${i + 1} ignorada ou malformada (${type} - esperado ${mappedHeaders.length} colunas, encontrado ${rowValues.length}): "${line}"`);
                 }
             }
-            console.log(`DEBUG: Dados parseados para ${type}:`, parsedData); // Adicionado log para depuração
+            console.log(`DEBUG: Dados parseados para ${type}:`, parsedData);
             return parsedData;
         }
 
 
         // Função para popular o cardápio dinamicamente
         function populateMenu(menuItems, orderedCategories) {
-            console.log('DEBUG: populateMenu: Iniciando populamento do menu.'); // Log
+            console.log('DEBUG: populateMenu: Iniciando populamento do menu.');
             const dynamicSectionsContainer = document.getElementById('dynamic-pizza-sections');
             dynamicSectionsContainer.innerHTML = ''; 
 
@@ -1154,18 +1187,14 @@
 
             orderedCategories.forEach(category => {
                 const sectionId = `${category}-section`;
-                let sectionEl = document.getElementById(sectionId);
-
-                if (!sectionEl) {
-                    sectionEl = document.createElement('div');
-                    sectionEl.id = sectionId;
-                    sectionEl.className = 'pizza-category-section mb-8';
-                    sectionEl.innerHTML = `
-                        <h3 class="text-xl font-bold text-white p-2 rounded-md bg-red-600 mb-6">${capitalizeFirstLetter(category)}</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="${category}-items"></div>
-                    `;
-                    dynamicSectionsContainer.appendChild(sectionEl);
-                }
+                let sectionEl = document.createElement('div');
+                sectionEl.id = sectionId;
+                sectionEl.className = 'pizza-category-section mb-8';
+                sectionEl.innerHTML = `
+                    <h3 class="text-xl font-bold text-white p-2 rounded-md bg-red-600 mb-6">${capitalizeFirstLetter(category)}</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="${category}-items"></div>
+                `;
+                dynamicSectionsContainer.appendChild(sectionEl);
 
                 const categoryItemsEl = document.getElementById(`${category}-items`);
                 categoryItemsEl.innerHTML = ''; 
@@ -1174,20 +1203,14 @@
                     itemsByCategory[category].forEach(item => {
                         if (item.available) { 
                             let itemHtml = '';
-                            
-                            // NOVA LÓGICA DE EXIBIÇÃO DA IMAGEM
                             const trimmedImageUrl = String(item.imageUrl || '').trim();
                             let imageElement = '';
 
                             if (trimmedImageUrl.toLowerCase() === 'sem imagem') {
-                                // Caso 1: Usuário informou "Sem Imagem"
                                 imageElement = `<div class="no-image-placeholder">Sem Imagem</div>`;
                             } else if (trimmedImageUrl.length > 0) {
-                                // Caso 2: URL de imagem fornecida
                                 imageElement = `<img src="${trimmedImageUrl}" alt="Imagem de ${item.name}" class="w-full h-40 object-cover" onerror="this.onerror=null;this.src='';">`;
                             } else {
-                                // Caso 3: Campo de imagem em branco
-                                // Deixa a variável 'imageElement' como string vazia para não renderizar nada
                                 imageElement = '';
                             }
 
@@ -1226,9 +1249,6 @@
                                         ${imageElement}
                                         <div class="p-6">
                                             <h3 class="text-xl font-bold text-gray-800 mb-2">${item.name}</h3>
-                                            <div class="flex justify-around items-start text-sm mb-4 w-full overflow-x-auto py-1">
-                                                ${priceDisplayHtml}
-                                            </div>
                                             <p class="text-gray-600 text-sm mb-4">${item.description}</p>
                                             <div class="flex justify-end mt-auto">
                                                 <button class="add-item-btn bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full text-sm font-medium transition duration-300"
@@ -1240,14 +1260,17 @@
                                     </div>
                                 `;
 							} else {
-							    let imageElement = '';
-                                const trimmedImageUrl = String(item.imageUrl || '').trim();
-                                if (trimmedImageUrl.toLowerCase() === 'sem imagem') {
-                                    imageElement = `<div class="no-image-placeholder">Sem Imagem</div>`;
-                                } else if (trimmedImageUrl.length > 0) {
-                                    imageElement = `<img src="${trimmedImageUrl}" alt="${item.name}" class="w-full h-40 object-cover" onerror="this.onerror=null;this.src='';">`;
+							    let buttonHtml = '';
+                                if (item.isCustomizable) {
+                                    buttonHtml = `<button class="add-item-btn bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full text-sm font-medium transition duration-300"
+                                                        data-item-id="${item.id}" data-image-url="${trimmedImageUrl}">
+                                                        Montar
+                                                </button>`;
                                 } else {
-                                    imageElement = '';
+                                    buttonHtml = `<button class="add-item-btn bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full text-sm font-medium transition duration-300"
+                                                        data-item-id="${item.id}" data-image-url="${trimmedImageUrl}">
+                                                        Adicionar
+                                                </button>`;
                                 }
 
                                 itemHtml = `
@@ -1258,10 +1281,7 @@
                                         <p class="text-gray-600 text-sm mb-4">${item.description}</p>
                                         <div class="flex justify-between items-center">
                                             <span class="font-bold text-red-600 text-lg">R$ ${item.basePrice.toFixed(2).replace('.', ',')}</span>
-                                            <button class="add-item-btn bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full text-sm font-medium transition duration-300"
-                                            data-item-id="${item.id}">
-                                                Adicionar
-                                            </button>
+                                            ${buttonHtml}
                                         </div>
                                     </div>
                                 </div>										
@@ -1274,7 +1294,7 @@
             });
 
             attachAddButtonListeners();
-            console.log('DEBUG: populateMenu: Menu populado e listeners anexados.'); // Log
+            console.log('DEBUG: populateMenu: Menu populado e listeners anexados.');
         }
 
         function capitalizeFirstLetter(string) {
@@ -1282,7 +1302,7 @@
         }
 
         function createCategoryButtons(categories) {
-            console.log('DEBUG: createCategoryButtons: Criando botões de categoria.'); // Log
+            console.log('DEBUG: createCategoryButtons: Criando botões de categoria.');
             const categoryButtonsContainer = document.getElementById('category-buttons-container');
             categoryButtonsContainer.innerHTML = ''; 
 
@@ -1340,11 +1360,11 @@
                     currentActiveCategoryByScroll = category;
                 }
             });
-            console.log('DEBUG: createCategoryButtons: Botões de categoria criados.'); // Log
+            console.log('DEBUG: createCategoryButtons: Botões de categoria criados.');
         }
 
         function attachAddButtonListeners() {
-            console.log('DEBUG: attachAddButtonListeners: Anexando listeners aos botões de adicionar item.'); // Log
+            console.log('DEBUG: attachAddButtonListeners: Anexando listeners aos botões de adicionar item.');
             document.querySelectorAll('.add-item-btn').forEach(button => {
                 button.removeEventListener('click', handleAddButtonClick); 
                 button.addEventListener('click', handleAddButtonClick);
@@ -1352,7 +1372,7 @@
         }
 
         function toggleAddItemButtons(enableAll = true) {
-            console.log('DEBUG: toggleAddItemButtons: Habilitando/Desabilitando botões de adicionar item. enableAll:', enableAll); // Log
+            console.log('DEBUG: toggleAddItemButtons: Habilitando/Desabilitando botões de adicionar item. enableAll:', enableAll);
             document.querySelectorAll('.add-item-btn').forEach(button => {
                 const itemId = button.dataset.itemId;
                 const item = allMenuData.find(i => i.id === itemId);
@@ -1383,7 +1403,7 @@
         }
 
         function toggleCategoryButtons(enableAll = true) {
-            console.log('DEBUG: toggleCategoryButtons: Habilitando/Desabilitando botões de categoria. enableAll:', enableAll); // Log
+            console.log('DEBUG: toggleCategoryButtons: Habilitando/Desabilitando botões de categoria. enableAll:', enableAll);
             document.querySelectorAll('.category-btn').forEach(button => {
                 const category = button.dataset.category.toLowerCase();
                 if (enableAll || !isSelectingHalfPizza) { 
@@ -1412,7 +1432,7 @@
         }
 
         function handleAddButtonClick(e) {
-            console.log('DEBUG: handleAddButtonClick: Botão de adicionar clicado.'); // Log
+            console.log('DEBUG: handleAddButtonClick: Botão de adicionar clicado.');
             const clickedButton = e.target; 
             const itemId = clickedButton.dataset.itemId;
             const item = allMenuData.find(i => i.id === itemId);
@@ -1423,60 +1443,9 @@
             }
 
             const itemImageUrl = item.isPizza ? item.imageUrl : null;
-
-            if (isSelectingSecondHalf) {
-                console.log('DEBUG: isSelectingSecondHalf é TRUE. Tentando adicionar segunda metade.'); // Log
-                if (!item.isPizza) {
-                    showMessageModal('Por favor, escolha uma pizza para a segunda metade.');
-                    return;
-                }
-
-                if (isFirstHalfPromotional && item.category.toLowerCase() !== 'promocionais') {
-                    showMessageModal('Para pizzas promocionais, a segunda metade deve ser também de uma pizza promocional.', () => {
-                        document.getElementById('promocionais-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        setActiveCategoryButton('promocionais');
-                    });
-                    return;
-                } else if (!isFirstHalfPromotional && item.category.toLowerCase() === 'promocionais') {
-                    showMessageModal('Você começou a montar uma pizza meio a meio com um sabor não promocional. A segunda metade não pode ser de uma pizza promocional.');
-                    return;
-                }
-
-                const pendingHalfIndex = order.findIndex(orderItem => orderItem.id === 'pending-half-pizza');
-                if (pendingHalfIndex > -1) {
-                    order.splice(pendingHalfIndex, 1);
-                    console.log('DEBUG: Meia pizza pendente removida para combinação.'); // Log
-                }
-
-                const cleanFirstName = firstHalfPizza.name;
-                const combinedName = `Meia ${cleanFirstName} & Meia ${item.name}`;
-                
-                const priceFirstHalfFullSize = firstHalfPizza.original_full_price; 
-                const priceSecondHalfFullSize = item[firstHalfPizza.priceKeyForSlices]; 
-
-                const combinedPrice = ((priceFirstHalfFullSize || 0) / 2) + ((priceSecondHalfFullSize || 0) / 2);
-                const combinedDescription = `${firstHalfPizza.description.replace('Primeira metade: ', '')} e ${item.description}`;
-
-                addToOrder({
-                    type: 'split',
-                    name: combinedName,
-                    price: combinedPrice,
-                    description: combinedDescription,
-                    category: 'pizzas', 
-                    selected_slices: firstHalfPizza.selected_slices
-                }, clickedButton, itemImageUrl); 
-
-                firstHalfPizza = null;
-                isSelectingSecondHalf = false;
-                isSelectingHalfPizza = false; 
-                isFirstHalfPromotional = false; 
-                toggleAddItemButtons(true); 
-                toggleCategoryButtons(true); 
-                showTemporaryFeedback('Pizza meio a meio adicionada ao pedido!', 'bg-green-500'); 
-                console.log('DEBUG: Pizza meio a meio adicionada. Estado de meia pizza resetado.'); // Log
-                
-            } else if (item.isPizza) {
-                console.log('DEBUG: Item é pizza. Abrindo modal de seleção de tamanho.'); // Log
+            
+            if (item.isPizza) {
+                console.log('DEBUG: Item é pizza. Abrindo modal de seleção de tamanho.');
                 currentPizzaData = { ...item }; 
                 modalPizzaName.textContent = item.name;
                 modalPizzaDescription.textContent = item.description;
@@ -1514,7 +1483,7 @@
                     pizzaSizeOptions.appendChild(optionDiv);
 
                     optionDiv.querySelector('.add-full-size-pizza-btn').addEventListener('click', function() {
-                        console.log('DEBUG: Adicionar Inteira clicado.'); // Log
+                        console.log('DEBUG: Adicionar Inteira clicado.');
                         const selectedSlices = parseInt(this.dataset.slices);
                         const selectedPriceKey = this.dataset.priceKey;
                         addToOrder({
@@ -1525,13 +1494,13 @@
                             category: currentPizzaData.category,
                             selected_slices: selectedSlices
                         }, this, currentPizzaData.imageUrl); 
-                        pizzaOptionModal.style.display = 'none'; // FECHA O MODAL AQUI
+                        pizzaOptionModal.style.display = 'none';
                         updatePromotionButtonVisibility(); 
-                        console.log('DEBUG: Modal de opção de pizza fechado após adicionar inteira.'); // Log
+                        console.log('DEBUG: Modal de opção de pizza fechado após adicionar inteira.');
                     });
 
                     optionDiv.querySelector('.add-half-size-pizza-btn').addEventListener('click', function() {
-                        console.log('DEBUG: Adicionar Meia Pizza clicado.'); // Log
+                        console.log('DEBUG: Adicionar Meia Pizza clicado.');
                         const selectedSlices = parseInt(this.dataset.slices);
                         const selectedPriceKey = this.dataset.priceKey;
                         firstHalfPizza = {
@@ -1546,9 +1515,9 @@
                         isSelectingSecondHalf = true;
                         isSelectingHalfPizza = true; 
                         isFirstHalfPromotional = (currentPizzaData.category.toLowerCase() === 'promocionais'); 
-                        pizzaOptionModal.style.display = 'none'; // FECHA O MODAL AQUI
+                        pizzaOptionModal.style.display = 'none';
                         updatePromotionButtonVisibility(); 
-                        console.log('DEBUG: Modal de opção de pizza fechado após adicionar primeira metade.'); // Log
+                        console.log('DEBUG: Modal de opção de pizza fechado após adicionar primeira metade.');
 
                         toggleAddItemButtons(false); 
                         toggleCategoryButtons(false); 
@@ -1564,19 +1533,18 @@
                                 selected_slices: selectedSlices
                             }, this, currentPizzaData.imageUrl 
                         );
-                        // Exibe a mensagem de instrução para a segunda metade
                         setTimeout(() => {
                             showMessageModal('Agora, escolha a segunda metade da sua pizza.'); 
                         }, 100);
-                        console.log('DEBUG: Estado de meia pizza ativado.'); // Log
+                        console.log('DEBUG: Estado de meia pizza ativado.');
                     });
                 });
 
                 pizzaOptionModal.style.display = 'flex';
                 promotionButton.style.display = 'none'; 
-                console.log('DEBUG: Modal de opção de pizza exibido.'); // Log
+                console.log('DEBUG: Modal de opção de pizza exibido.');
             } else { 
-                console.log('DEBUG: Item não é pizza. Adicionando diretamente ao pedido.'); // Log
+                console.log('DEBUG: Item não é pizza. Adicionando diretamente ao pedido.');
                 addToOrder({
                     type: 'full',
                     name: item.name,
@@ -1591,8 +1559,8 @@
             console.log('DEBUG: addToOrder: Adicionando item:', item.name);
             order.push(item);
             updateOrderDisplay();
-            updateCartCount(); // Garante que o contador é atualizado
-            console.log('DEBUG: addToOrder: Ordem e contador atualizados. Itens no carrinho:', order.length); // Log
+            updateCartCount();
+            console.log('DEBUG: addToOrder: Ordem e contador atualizados. Itens no carrinho:', order.length);
 
             if (clickedButton) {
                 console.log('DEBUG: addToOrder: Iniciando animação para o carrinho.');
@@ -1607,24 +1575,23 @@
             console.log('DEBUG: addToOrderOnly: Adicionando item (apenas):', item.name);
             order.push(item);
             updateOrderDisplay();
-            updateCartCount(); // Garante que o contador é atualizado
+            updateCartCount();
             if (clickedButton) {
                 console.log('DEBUG: addToOrderOnly: Iniciando animação para o carrinho.');
                 animateItemToCart(clickedButton, itemImageUrl); 
             }
-            // No temporary feedback here, as it's typically followed by another action/message
-            console.log('DEBUG: addToOrderOnly: Ordem e contador atualizados. Itens no carrinho:', order.length); // Log
+            console.log('DEBUG: addToOrderOnly: Ordem e contador atualizados. Itens no carrinho:', order.length);
         }
 
         function animateItemToCart(originElement, imageUrl = null) {
-            console.log('DEBUG: animateItemToCart: Iniciando animação.'); // Log
+            console.log('DEBUG: animateItemToCart: Iniciando animação.');
             const cartButtonRect = cartButton.getBoundingClientRect();
             const originRect = originElement.getBoundingClientRect();
 
             const flyingEl = document.createElement('div');
             flyingEl.classList.add('fly-to-cart-animation');
             
-            if (imageUrl) {
+            if (imageUrl && imageUrl.toLowerCase() !== 'sem imagem') {
                 flyingEl.innerHTML = `<img src="${imageUrl}" alt="item" class="w-full h-full object-cover rounded-full">`;
             } else {
                 flyingEl.innerHTML = '<i class="fas fa-plus"></i>'; 
@@ -1638,13 +1605,13 @@
             document.body.appendChild(flyingEl);
 
             flyingEl.addEventListener('animationend', () => {
-                console.log('DEBUG: animateItemToCart: Animação finalizada, removendo elemento voador.'); // Log
+                console.log('DEBUG: animateItemToCart: Animação finalizada, removendo elemento voador.');
                 flyingEl.remove();
             });
         }
 
         function showTemporaryFeedback(message, bgColorClass) {
-            console.log('DEBUG: showTemporaryFeedback: Exibindo feedback temporário:', message); // Log
+            console.log('DEBUG: showTemporaryFeedback: Exibindo feedback temporário:', message);
             const feedback = document.createElement('div');
             feedback.textContent = message;
             feedback.className = `fixed right-4 ${bgColorClass} text-white px-4 py-2 rounded-lg shadow-lg slide-in`;
@@ -1726,16 +1693,15 @@
                 informAddressBtn.classList.add('hidden');
                 editDeliveryAddressBtn.classList.remove('hidden');
             } else {
-                deliveryFeeDisplay.textContent = ''; // Limpa o texto
-                deliveryFeeDisplay.classList.add('hidden'); // Esconde o span do valor
-                informAddressBtn.classList.remove('hidden'); // Mostra o botão "Informar Endereço"
-                editDeliveryAddressBtn.classList.add('hidden'); // Esconde o ícone de edição
+                deliveryFeeDisplay.textContent = '';
+                deliveryFeeDisplay.classList.add('hidden');
+                informAddressBtn.classList.remove('hidden');
+                editDeliveryAddressBtn.classList.add('hidden');
             }
             
-            const total = subtotal + selectedAddress.deliveryFee; // O total sempre inclui a taxa de entrega, mesmo que o subtotal seja 0
+            const total = subtotal + selectedAddress.deliveryFee;
             totalEl.textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
 
-            // Adiciona a forma de pagamento ao resumo do pedido se selecionada
             if (selectedPaymentMethod) {
                 let paymentMethodText = '';
                 let trocoInfo = '';
@@ -1762,14 +1728,14 @@
                     </div>
                 `);
             }
-            console.log('DEBUG: updateOrderDisplay: Pedido atualizado. Subtotal:', subtotal, 'Total:', total); // Log
+            console.log('DEBUG: updateOrderDisplay: Pedido atualizado. Subtotal:', subtotal, 'Total:', total);
             
             updateDrinkSuggestionButtons(); 
-            updateAddressDisplay(); // Garante que o resumo do endereço esteja atualizado
+            updateAddressDisplay(); 
         }
         
         function removeItem(index) {
-            console.log('DEBUG: removeItem: Removendo item no índice:', index); // Log
+            console.log('DEBUG: removeItem: Removendo item no índice:', index);
             const removedItem = order[index];
             order.splice(index, 1);
             updateOrderDisplay();
@@ -1783,14 +1749,14 @@
                 toggleAddItemButtons(true); 
                 toggleCategoryButtons(true); 
                 showMessageModal('Seleção de meia pizza cancelada.', 'bg-red-600'); 
-                console.log('DEBUG: Item removido era meia pizza pendente, estado resetado.'); // Log
+                console.log('DEBUG: Item removido era meia pizza pendente, estado resetado.');
             }
         }
         
         function clearOrder() {
-            console.log('DEBUG: clearOrder: Limpando pedido.'); // Log
-            order = []; // Apenas limpa o array de itens do pedido
-            updateOrderDisplay(); // Isso agora atualizará a UI corretamente, mantendo o endereço se já informado
+            console.log('DEBUG: clearOrder: Limpando pedido.');
+            order = [];
+            updateOrderDisplay();
             updateCartCount();
             firstHalfPizza = null;
             isSelectingSecondHalf = false;
@@ -1798,14 +1764,12 @@
             isFirstHalfPromotional = false; 
             toggleAddItemButtons(true); 
             toggleCategoryButtons(true);
-            // NÃO RESETA selectedAddress AQUI, ele deve persistir
-            updateCheckoutButtonText(); // Atualiza o texto do botão de checkout
-            // hideAddressSummary(); // Isso é tratado por updateAddressDisplay agora
-            console.log('DEBUG: Pedido limpo e estados resetados.'); // Log
+            updateCheckoutButtonText();
+            console.log('DEBUG: Pedido limpo e estados resetados.');
         }
         
         function updateCartCount() {
-            console.log('DEBUG: updateCartCount: Atualizando contador do carrinho. Itens no pedido:', order.length); // Log
+            console.log('DEBUG: updateCartCount: Atualizando contador do carrinho. Itens no pedido:', order.length);
             if (order.length > 0) {
                 cartCount.textContent = order.length;
                 cartCount.classList.remove('hidden');
@@ -1815,29 +1779,38 @@
         }
         
         function proceedToWhatsappCheckout() {
-            console.log('DEBUG: proceedToWhatsappCheckout: Preparando mensagem para WhatsApp.'); // Log
+            console.log('DEBUG: proceedToWhatsappCheckout: Preparando mensagem para WhatsApp.');
             const phoneNumber = whatsappNumber; 
             let message = 'Olá! Gostaria de fazer o seguinte pedido:\n\n';
             let subtotal = 0;
 
             order.forEach(item => {
                 let itemName = item.name;
+                let itemDescription = item.description || '';
+
                 if (item.type === 'promotion') {
                     itemName = item.name.replace('<i class="fas fa-tags text-red-600 mr-2"></i> ', ''); 
                 } else if (item.selected_slices) {
                     itemName = `${item.selected_slices} FATIAS: ${item.name}`;
                 }
+                
                 message += `- ${itemName}: R$ ${item.price.toFixed(2).replace('.', ',')}\n`;
+                if (itemDescription) {
+                    message += `  - ${itemDescription}\n`;
+                }
                 subtotal += item.price;
             });
 
-            const total = subtotal + selectedAddress.deliveryFee; // Usa a taxa dinâmica
+            const total = subtotal + selectedAddress.deliveryFee;
 
             message += `\nSubtotal: R$ ${subtotal.toFixed(2).replace('.', ',')}`;
-            message += `\nTaxa de entrega (${selectedAddress.bairro || 'Não informado'}): R$ ${selectedAddress.deliveryFee.toFixed(2).replace('.', ',')}`; // Mensagem de taxa dinâmica
+            message += `\nTaxa de entrega (${selectedAddress.bairro || 'Não informado'}): R$ ${selectedAddress.deliveryFee.toFixed(2).replace('.', ',')}`;
             message += `\nTotal: R$ ${total.toFixed(2).replace('.', ',')}`;
             
-            // INFORMAÇÕES DE ENDEREÇO NA MENSAGEM DO WHATSAPP
+            if (customerName) {
+                message += `\n\nNome do Cliente: ${customerName}`;
+            }
+            
             if (selectedAddress.bairro && selectedAddress.rua && selectedAddress.numero) {
                 message += `\n\nEndereço de Entrega:\n`;
                 message += `Bairro: ${selectedAddress.bairro}\n`;
@@ -1857,6 +1830,9 @@
                     message += `\nTroco: R$ ${selectedPaymentMethod.trocoTotal.toFixed(2).replace('.', ',')}`;
                 } else {
                     message += `\nForma de Pagamento: ${selectedPaymentMethod}`;
+                    if (selectedPaymentMethod === 'Pix') {
+                         message += ` (Chave Pix: ${allContactsData['Chave Pix'] || 'Não informada'})`;
+                    }
                 }
             }
 
@@ -1865,70 +1841,69 @@
             const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
             window.open(whatsappUrl, '_blank');
             
-            clearOrder(); // Limpa o pedido após finalizar
-            console.log('DEBUG: Mensagem WhatsApp gerada e pedido limpo.'); // Log
+            clearOrder();
+            console.log('DEBUG: Mensagem WhatsApp gerada e pedido limpo.');
         }
 
-        // Função para gerenciar o fluxo de checkout (ATUALIZADA)
+        // Função para gerenciar o fluxo de checkout
         function handleCheckoutFlow() {
-            console.log('DEBUG: handleCheckoutFlow: Iniciando fluxo de checkout.'); // Log
+            console.log('DEBUG: handleCheckoutFlow: Iniciando fluxo de checkout.');
             if (order.length === 0) {
                 showMessageModal('O seu pedido está vazio. Adicione itens antes de finalizar.');
-                console.log('DEBUG: Checkout abortado: Pedido vazio.'); // Log
+                console.log('DEBUG: Checkout abortado: Pedido vazio.');
                 return;
             }
             
             if (isSelectingHalfPizza) { 
                 showMessageModal('Por favor, escolha a segunda metade da sua pizza antes de finalizar o pedido.');
-                console.log('DEBUG: Checkout abortado: Seleção de meia pizza pendente.'); // Log
+                console.log('DEBUG: Checkout abortado: Seleção de meia pizza pendente.');
                 return;
             }
 
-            // NOVO: Verifica se o endereço foi informado
-            if (!selectedAddress.bairro || !selectedAddress.rua || !selectedAddress.numero) {
-                console.log('DEBUG: Endereço não informado. Abrindo modal de endereço.'); // Log
+            if (!selectedAddress.bairro || !selectedAddress.rua || !selectedAddress.numero || !customerNameInput.value.trim()) {
+                console.log('DEBUG: Endereço ou nome não informado. Abrindo modal de endereço.');
                 showAddressInputModal();
                 return;
             }
 
             const hasDrinks = order.some(item => item.category === 'bebidas');
             if (!hasDrinks) {
-                console.log('DEBUG: Pedido sem bebidas. Exibindo sugestão de bebidas.'); // Log
+                console.log('DEBUG: Pedido sem bebidas. Exibindo sugestão de bebidas.');
                 displayDrinkSuggestionModal(); 
                 return; 
             }
 
             if (!selectedPaymentMethod) {
                 isCheckoutInitiated = true; 
-                console.log('DEBUG: Forma de pagamento não selecionada. Abrindo modal de pagamento.'); // Log
+                console.log('DEBUG: Forma de pagamento não selecionada. Abrindo modal de pagamento.');
                 openPaymentMethodModal(true); 
             } else {
-                console.log('DEBUG: Todos os passos OK. Prosseguindo para WhatsApp.'); // Log
+                console.log('DEBUG: Todos os passos OK. Prosseguindo para WhatsApp.');
                 proceedToWhatsappCheckout();
             }
         }
 
-        // Função para atualizar o texto do botão de checkout (SIMPLIFICADA)
+        // Função para atualizar o texto do botão de checkout
         function updateCheckoutButtonText() {
             checkoutButton.textContent = 'Finalizar Pedido';
-            checkoutButton.onclick = handleCheckoutFlow; // Volta para a função principal do checkout
-            console.log('DEBUG: updateCheckoutButtonText: Texto do botão de checkout atualizado.'); // Log
+            checkoutButton.onclick = handleCheckoutFlow;
+            console.log('DEBUG: updateCheckoutButtonText: Texto do botão de checkout atualizado.');
         }
 
         function backToMenu() {
-            console.log('DEBUG: backToMenu: Voltando ao menu.'); // Log
+            console.log('DEBUG: backToMenu: Voltando ao menu.');
             closeOrderSidebar();
             document.getElementById('menu').scrollIntoView({ behavior: 'smooth' });
         }
 
         function backToOrderSidebarFromDrinkSuggestion() {
-            console.log('DEBUG: backToOrderSidebarFromDrinkSuggestion: Voltando para a sidebar do pedido.'); // Log
+            console.log('DEBUG: backToOrderSidebarFromDrinkSuggestion: Voltando para a sidebar do pedido.');
             drinkSuggestionModal.style.display = 'none'; 
             orderSidebar.scrollTop = orderSidebar.scrollHeight;
         }
 
         function displayPromotionsPopup() {
-            console.log('DEBUG: displayPromotionsPopup: Exibindo popup de promoções.'); // Log
+            console.log('DEBUG: displayPromotionsPopup: Exibindo popup de promoções.');
             promotionsListEl.innerHTML = '';
             const activePromotions = allPromotionsData.filter(promo => promo.active && promo.promoPrice !== null);
 
@@ -1959,17 +1934,17 @@
                     });
                 });
                 promotionPopup.style.display = 'flex';
-                console.log('DEBUG: Promoções ativas encontradas e exibidas.'); // Log
+                console.log('DEBUG: Promoções ativas encontradas e exibidas.');
             } else {
                 promotionPopup.style.display = 'none';
-                console.log('DEBUG: Nenhuma promoção ativa encontrada.'); // Log
+                console.log('DEBUG: Nenhuma promoção ativa encontrada.');
             }
         }
 
         function addPromotionToOrder(promoId, clickedButton = null, itemImageUrl = null) { 
             const promotion = allPromotionsData.find(p => p.id === promoId);
             if (promotion) {
-                console.log('DEBUG: addPromotionToOrder: Adicionando promoção:', promotion.name); // Log
+                console.log('DEBUG: addPromotionToOrder: Adicionando promoção:', promotion.name);
                 order.push({
                     type: 'promotion',
                     name: promotion.name,
@@ -1984,7 +1959,7 @@
                     animateItemToCart(clickedButton, itemImageUrl); 
                 }
                 showTemporaryFeedback(`Promoção "${promotion.name}" adicionada ao pedido!`, 'bg-green-500'); 
-                console.log('DEBUG: addPromotionToOrder: Promoção adicionada e UI atualizada.'); // Log
+                console.log('DEBUG: addPromotionToOrder: Promoção adicionada e UI atualizada.');
             } else {
                 console.error('DEBUG: addPromotionToOrder: Promoção não encontrada:', promoId);
                 showMessageModal('Erro ao adicionar promoção. Por favor, tente novamente.');
@@ -2001,16 +1976,16 @@
         }
 
         closePromotionPopupBtn.addEventListener('click', function() {
-            console.log('DEBUG: Fechando popup de promoção via botão X.'); // Log
+            console.log('DEBUG: Fechando popup de promoção via botão X.');
             promotionPopup.style.display = 'none';
         });
         closePromotionPopupBtnBottom.addEventListener('click', function() {
-            console.log('DEBUG: Fechando popup de promoção via botão inferior.'); // Log
+            console.log('DEBUG: Fechando popup de promoção via botão inferior.');
             promotionPopup.style.display = 'none';
         });
         window.addEventListener('click', function(event) {
             if (event.target == promotionPopup) {
-                console.log('DEBUG: Fechando popup de promoção clicando fora.'); // Log
+                console.log('DEBUG: Fechando popup de promoção clicando fora.');
                 promotionPopup.style.display = 'none';
             }
         });
@@ -2020,7 +1995,7 @@
         });
 
         function displayDrinkSuggestionModal() {
-            console.log('DEBUG: displayDrinkSuggestionModal: Exibindo modal de sugestão de bebidas.'); // Log
+            console.log('DEBUG: displayDrinkSuggestionModal: Exibindo modal de sugestão de bebidas.');
             suggestedDrinksList.innerHTML = ''; 
             const availableDrinks = allMenuData.filter(item => item.category === 'bebidas' && item.available);
 
@@ -2053,27 +2028,27 @@
                         }
                     });
                 });
-                console.log('DEBUG: Bebidas disponíveis e sugestões populadas.'); // Log
+                console.log('DEBUG: Bebidas disponíveis e sugestões populadas.');
             } else {
                 suggestedDrinksList.innerHTML = '<p class="text-gray-500">Nenhuma bebida disponível para sugestão no momento.</p>';
-                console.log('DEBUG: Nenhuma bebida disponível para sugestão.'); // Log
+                console.log('DEBUG: Nenhuma bebida disponível para sugestão.');
             }
             drinkSuggestionModal.style.display = 'flex'; 
             updateDrinkSuggestionButtons(); 
         }
 
         closeDrinkSuggestionModalBtn.addEventListener('click', function() {
-            console.log('DEBUG: Fechando modal de sugestão de bebidas.'); // Log
+            console.log('DEBUG: Fechando modal de sugestão de bebidas.');
             drinkSuggestionModal.style.display = 'none';
         });
 
         proceedWithoutDrinksBtn.addEventListener('click', function() {
-            console.log('DEBUG: Botão Finalizar sem Bebidas/com Bebidas clicado.'); // Log
+            console.log('DEBUG: Botão Finalizar sem Bebidas/com Bebidas clicado.');
             drinkSuggestionModal.style.display = 'none';
             const hasDrinks = order.some(item => item.category === 'bebidas');
 
             if (!selectedPaymentMethod) {
-                isCheckoutInitiated = true;
+                isCheckoutInitiated = true; 
                 openPaymentMethodModal(true); 
             } else {
                 proceedToWhatsappCheckout();
@@ -2084,24 +2059,24 @@
             const hasDrinks = order.some(item => item.category === 'bebidas');
             if (hasDrinks) {
                 proceedWithoutDrinksBtn.textContent = 'Finalizar com Bebidas';
-                proceedWithoutDrinksBtn.classList.add('green-gradient');
+                proceedWithoutDrinksBtn.classList.add('dynamic-checkout-button', 'red-gradient');
                 proceedWithoutDrinksBtn.classList.remove('btn-order');
             } else {
                 proceedWithoutDrinksBtn.textContent = 'Finalizar sem Bebidas';
-                proceedWithoutDrinksBtn.classList.add('btn-order'); 
-                proceedWithoutDrinksBtn.classList.remove('green-gradient');
+                proceedWithoutDrinksBtn.classList.add('dynamic-checkout-button', 'btn-order'); 
+                proceedWithoutDrinksBtn.classList.remove('red-gradient');
             }
         }
 
 
         closeConfirmNoDrinkModalBtn.addEventListener('click', function() {
-            console.log('DEBUG: Fechando modal de confirmação sem bebida.'); // Log
+            console.log('DEBUG: Fechando modal de confirmação sem bebida.');
             confirmNoDrinkModal.style.display = 'none';
             drinkSuggestionModal.style.display = 'flex'; 
         });
 
         confirmNoDrinkYesBtn.addEventListener('click', function() {
-            console.log('DEBUG: Confirmado pedido sem bebida.'); // Log
+            console.log('DEBUG: Confirmado pedido sem bebida.');
             confirmNoDrinkModal.style.display = 'none';
             if (selectedPaymentMethod) {
                 console.log("DEBUG: Confirmou sem bebida, pagamento já selecionado. Indo para WhatsApp.");
@@ -2114,21 +2089,21 @@
         });
 
         confirmNoDrinkNoBtn.addEventListener('click', function() { 
-            console.log('DEBUG: Negado pedido sem bebida, voltando para sugestão.'); // Log
+            console.log('DEBUG: Negado pedido sem bebida, voltando para sugestão.');
             confirmNoDrinkModal.style.display = 'none';
             drinkSuggestionModal.style.display = 'flex'; 
         });
 
         window.addEventListener('click', function(event) {
             if (event.target == confirmNoDrinkModal) {
-                console.log('DEBUG: Fechando modal de confirmação sem bebida clicando fora.'); // Log
+                console.log('DEBUG: Fechando modal de confirmação sem bebida clicando fora.');
                 confirmNoDrinkModal.style.display = 'none';
                 drinkSuggestionModal.style.display = 'flex'; 
             }
         });
 
         function openPaymentMethodModal(fromCheckout = false) { 
-            console.log('DEBUG: openPaymentMethodModal: Abrindo modal de pagamento. fromCheckout:', fromCheckout); // Log
+            console.log('DEBUG: openPaymentMethodModal: Abrindo modal de pagamento. fromCheckout:', fromCheckout);
             isCheckoutInitiated = fromCheckout; 
             paymentMethodModal.style.display = 'flex';
             
@@ -2138,6 +2113,7 @@
             trocoInputContainer.classList.add('hidden');
             trocoParaInput.value = ''; 
             trocoTotalDisplay.textContent = 'R$ 0,00'; 
+            pixKeyDisplay.classList.add('hidden');
 
             if (selectedPaymentMethod) {
                 const methodValue = typeof selectedPaymentMethod === 'object' ? selectedPaymentMethod.method : selectedPaymentMethod;
@@ -2154,6 +2130,9 @@
                             const trocoCalculado = selectedPaymentMethod.trocoPara - totalOrder;
                             trocoTotalDisplay.textContent = `R$ ${trocoCalculado.toFixed(2).replace('.', ',')}`;
                         }
+                    } else if (methodValue === 'Pix') {
+                         pixKeyDisplay.textContent = `Chave Pix: ${allContactsData['Chave Pix'] || 'Não informada'}`;
+                         pixKeyDisplay.classList.remove('hidden');
                     }
                 }
             } else {
@@ -2166,7 +2145,7 @@
         }
 
         function closePaymentMethodModal() {
-            console.log('DEBUG: closePaymentMethodModal: Fechando modal de pagamento.'); // Log
+            console.log('DEBUG: closePaymentMethodModal: Fechando modal de pagamento.');
             paymentMethodModal.style.display = 'none';
         }
 
@@ -2184,6 +2163,7 @@
 
                 if (radio && radio.value === 'Dinheiro') {
                     trocoInputContainer.classList.remove('hidden');
+                    pixKeyDisplay.classList.add('hidden');
                     const totalOrder = calculateOrderTotal();
                     const trocoParaValue = parseFloat(trocoParaInput.value) || 0;
                     if (trocoParaValue >= totalOrder) {
@@ -2192,10 +2172,17 @@
                     } else {
                         trocoTotalDisplay.textContent = 'R$ 0,00';
                     }
-                } else {
+                } else if (radio && radio.value === 'Pix') {
                     trocoInputContainer.classList.add('hidden');
+                    pixKeyDisplay.textContent = `Chave Pix: ${allContactsData['Chave Pix'] || 'Não informada'}`;
+                    pixKeyDisplay.classList.remove('hidden');
                     trocoParaInput.value = ''; 
                     trocoTotalDisplay.textContent = 'R$ 0,00'; 
+                } else {
+                    trocoInputContainer.classList.add('hidden');
+                    pixKeyDisplay.classList.add('hidden');
+                    trocoParaInput.value = '';
+                    trocoTotalDisplay.textContent = 'R$ 0,00';
                 }
             }
         });
@@ -2221,20 +2208,24 @@
             order.forEach(item => {
                 currentSubtotal += item.price;
             });
-            return currentSubtotal + selectedAddress.deliveryFee; // Soma a taxa de entrega DINÂMICA
+            return currentSubtotal + selectedAddress.deliveryFee;
         }
 
         confirmPaymentMethodBtn.addEventListener('click', () => {
-            console.log('DEBUG: Botão Confirmar Pagamento clicado.'); // Log
+            console.log('DEBUG: Botão Confirmar Pagamento clicado.');
             const selectedRadio = document.querySelector('input[name="paymentMethod"]:checked');
             if (selectedRadio) {
                 if (selectedRadio.value === 'Dinheiro') {
                     const totalOrder = calculateOrderTotal();
                     const trocoParaValue = parseFloat(trocoParaInput.value);
 
+                    if (!customerNameInput.value.trim()) {
+                         showMessageModal('Por favor, informe seu nome antes de continuar.');
+                         return;
+                    }
                     if (isNaN(trocoParaValue) || trocoParaValue < totalOrder) {
                         showMessageModal(`O valor para troco (R$ ${totalOrder.toFixed(2).replace('.', ',')}) não pode ser menor que o total do pedido (R$ ${totalOrder.toFixed(2).replace('.', ',')}).`);
-                        console.log('DEBUG: Valor para troco inválido.'); // Log
+                        console.log('DEBUG: Valor para troco inválido.');
                         return; 
                     }
                     const trocoCalculado = trocoParaValue - totalOrder;
@@ -2244,6 +2235,10 @@
                         trocoTotal: trocoCalculado
                     };
                 } else {
+                     if (!customerNameInput.value.trim()) {
+                         showMessageModal('Por favor, informe seu nome antes de continuar.');
+                         return;
+                    }
                     selectedPaymentMethod = selectedRadio.value;
                 }
                 
@@ -2260,7 +2255,7 @@
                 updateOrderDisplay(); 
             } else {
                 showMessageModal('Por favor, selecione uma forma de pagamento.');
-                console.log('DEBUG: Nenhuma forma de pagamento selecionada.'); // Log
+                console.log('DEBUG: Nenhuma forma de pagamento selecionada.');
             }
         });
 
@@ -2290,7 +2285,7 @@
         let categoryObserver; 
 
         function setupCategoryObserver() {
-            console.log('DEBUG: setupCategoryObserver: Configurando observador de categoria.'); // Log
+            console.log('DEBUG: setupCategoryObserver: Configurando observador de categoria.');
             if (categoryObserver) {
                 categoryObserver.disconnect();
             }
@@ -2372,31 +2367,33 @@
             categorySections.forEach(section => {
                 categoryObserver.observe(section);
             });
-            console.log('DEBUG: setupCategoryObserver: Observador de categoria configurado.'); // Log
+            console.log('DEBUG: setupCategoryObserver: Observador de categoria configurado.');
         }
 
         // --- Funções para o Modal de Endereço ---
         function showAddressInputModal() {
-            console.log('DEBUG: showAddressInputModal: Abrindo modal de endereço.'); // Log
+            console.log('DEBUG: showAddressInputModal: Abrindo modal de endereço.');
             addressInputModal.style.display = 'flex';
-            promotionButton.style.display = 'none'; // Esconde o botão de promoção ao abrir o modal de endereço
+            promotionButton.style.display = 'none';
 
-            // Preenche os campos se já houver dados no selectedAddress
+            if (customerName) {
+                customerNameInput.value = customerName;
+            }
             if (selectedAddress.bairro) {
                 neighborhoodSelect.value = selectedAddress.bairro;
             } else {
-                neighborhoodSelect.value = ""; // Reseta para "Selecione um bairro"
+                neighborhoodSelect.value = "";
             }
             streetInput.value = selectedAddress.rua || '';
             numberInput.value = selectedAddress.numero || '';
             referencePointInput.value = selectedAddress.referencia || '';
-            console.log('DEBUG: Modal de endereço exibido e campos preenchidos.'); // Log
+            console.log('DEBUG: Modal de endereço exibido e campos preenchidos.');
         }
 
         function hideAddressInputModal() {
-            console.log('DEBUG: hideAddressInputModal: Fechando modal de endereço.'); // Log
+            console.log('DEBUG: hideAddressInputModal: Fechando modal de endereço.');
             addressInputModal.style.display = 'none';
-            updatePromotionButtonVisibility(); // Reexibe o botão de promoção se aplicável
+            updatePromotionButtonVisibility();
         }
 
         closeAddressModalBtn.addEventListener('click', hideAddressInputModal);
@@ -2407,48 +2404,49 @@
         });
 
         function populateNeighborhoodDropdown(feesData) {
-            console.log('DEBUG: populateNeighborhoodDropdown: Populando dropdown de bairros.'); // Log
+            console.log('DEBUG: populateNeighborhoodDropdown: Populando dropdown de bairros.');
             neighborhoodSelect.innerHTML = '<option value="">Selecione um bairro</option>';
             if (!feesData || feesData.length === 0) {
                 console.warn('DEBUG: populateNeighborhoodDropdown: feesData está vazio ou nulo.');
                 return;
             }
             feesData.forEach(fee => {
-                console.log('DEBUG: Processando taxa de entrega:', fee); // Log detalhado
-                // Garante que fee.neighborhood é uma string não vazia
+                console.log('DEBUG: Processando taxa de entrega:', fee);
                 if (typeof fee.neighborhood === 'string' && fee.neighborhood.trim() !== '') {
                     const option = document.createElement('option');
                     option.value = fee.neighborhood;
                     option.textContent = `${fee.neighborhood} (R$ ${fee.deliveryFee.toFixed(2).replace('.', ',')})`;
                     neighborhoodSelect.appendChild(option);
-                    console.log('DEBUG: Adicionada opção de bairro:', option.textContent); // Log
+                    console.log('DEBUG: Adicionada opção de bairro:', option.textContent);
                 } else {
                     console.warn("DEBUG: Bairro inválido ou vazio encontrado nos dados de entrega:", fee);
                 }
             });
-            console.log('DEBUG: populateNeighborhoodDropdown: Dropdown de bairros populado.'); // Log
+            console.log('DEBUG: populateNeighborhoodDropdown: Dropdown de bairros populado.');
         }
 
         confirmAddressBtn.addEventListener('click', function() {
-            console.log('DEBUG: Botão Confirmar Endereço clicado.'); // Log
+            console.log('DEBUG: Botão Confirmar Endereço clicado.');
+            const nome = customerNameInput.value.trim();
             const bairro = neighborhoodSelect.value;
             const rua = streetInput.value.trim();
             const numero = numberInput.value.trim();
             const referencia = referencePointInput.value.trim();
 
-            if (!bairro || !rua || !numero) {
-                showMessageModal('Por favor, preencha o bairro, a rua e o número para continuar.');
-                console.log('DEBUG: Campos de endereço obrigatórios não preenchidos.'); // Log
+            if (!nome || !bairro || !rua || !numero) {
+                showMessageModal('Por favor, preencha o nome, bairro, a rua e o número para continuar.');
+                console.log('DEBUG: Campos de endereço obrigatórios não preenchidos.');
                 return;
             }
 
             const selectedFee = deliveryFeesData.find(fee => fee.neighborhood === bairro);
             if (!selectedFee) {
                 showMessageModal('Bairro selecionado inválido. Por favor, selecione um bairro da lista.');
-                console.log('DEBUG: Bairro selecionado não encontrado nos dados de taxa.'); // Log
+                console.log('DEBUG: Bairro selecionado não encontrado nos dados de taxa.');
                 return;
             }
-
+            
+            customerName = nome;
             selectedAddress = {
                 bairro: bairro,
                 rua: rua,
@@ -2456,30 +2454,29 @@
                 referencia: referencia,
                 deliveryFee: selectedFee.deliveryFee
             };
-            console.log('DEBUG: Endereço selecionado:', selectedAddress); // Log
+            console.log('DEBUG: Endereço selecionado:', selectedAddress);
 
             hideAddressInputModal();
-            updateOrderDisplay(); // Atualiza o resumo do pedido com a nova taxa
-            showAddressSummary(); // Mostra o resumo do endereço
+            updateOrderDisplay();
+            showAddressSummary();
             
-            // Se o checkout foi iniciado e o endereço foi confirmado, continua o fluxo
             if (isCheckoutInitiated) {
-                console.log('DEBUG: Endereço confirmado, continuando fluxo de checkout.'); // Log
+                console.log('DEBUG: Endereço confirmado, continuando fluxo de checkout.');
                 handleCheckoutFlow();
             }
         });
 
         function showAddressSummary() {
-            console.log('DEBUG: showAddressSummary: Exibindo resumo do endereço.'); // Log
+            console.log('DEBUG: showAddressSummary: Exibindo resumo do endereço.');
             if (selectedAddress.bairro) {
                 addressSummarySection.classList.remove('hidden');
                 addressDisplay.textContent = `${selectedAddress.rua}, Nº ${selectedAddress.numero}`;
                 neighborhoodDisplay.textContent = `Bairro: ${selectedAddress.bairro}`;
                 referenceDisplay.textContent = selectedAddress.referencia ? `Ponto de Referência: ${selectedAddress.referencia}` : '';
-                console.log('DEBUG: Resumo do endereço exibido.'); // Log
+                console.log('DEBUG: Resumo do endereço exibido.');
             } else {
                 hideAddressSummary();
-                console.log('DEBUG: Nenhum endereço selecionado, resumo oculto.'); // Log
+                console.log('DEBUG: Nenhum endereço selecionado, resumo oculto.');
             }
         }
 
@@ -2491,11 +2488,10 @@
         }
 
         editAddressBtn.addEventListener('click', function() {
-            console.log('DEBUG: Botão Editar Endereço clicado.'); // Log
+            console.log('DEBUG: Botão Editar Endereço clicado.');
             showAddressInputModal();
         });
 
-        // NOVO: Definição da função updateAddressDisplay
         function updateAddressDisplay() {
             console.log('DEBUG: updateAddressDisplay: Chamado para atualizar a exibição do endereço.');
             if (selectedAddress.bairro && selectedAddress.rua && selectedAddress.numero) {
@@ -2510,23 +2506,34 @@
             }
         }
 
-        // NOVO: Event listener para o botão "Informar Endereço"
         informAddressBtn.addEventListener('click', function() {
             console.log('DEBUG: Botão Informar Endereço clicado.');
             showAddressInputModal();
         });
 
-        // NOVO: Event listener para o botão "Editar Endereço" ao lado da taxa de entrega
         editDeliveryAddressBtn.addEventListener('click', function() {
             console.log('DEBUG: Botão Editar Endereço (taxa) clicado.');
             showAddressInputModal();
         });
+        
+        function populateFooterContacts(contactsData) {
+            const whatsappLink = `https://wa.me/${contactsData['Whatsapp']}` || '#';
+            const facebookLink = contactsData['Facebook'] || '#';
+            const instagramLink = contactsData['Instagram'] || '#';
+            const phoneText = contactsData['Telefone'] || 'Não informado';
+            const emailText = contactsData['Email'] || 'Não informado';
+
+            footerWhatsapp.href = whatsappLink;
+            footerFacebook.href = facebookLink;
+            footerInstagram.href = instagramLink;
+            footerPhone.innerHTML = `<i class="fas fa-phone mr-2"></i> ${phoneText}`;
+            footerEmail.innerHTML = `<i class="fas fa-envelope mr-2"></i> ${emailText}`;
+        }
 
         // =======================================================================================
-        // CÓDIGO REESTRUTURADO PARA MELHORAR O FLUXO DE ATUALIZAÇÃO
+        // CÓDIGO ANTERIOR ÀS ALTERAÇÕES QUE CAUSARAM O ERRO
         // =======================================================================================
 
-        // Nova função principal para buscar e renderizar todos os dados
         async function loadMenuAndRender() {
             try {
                 console.log('DEBUG: loadMenuAndRender: Iniciando busca da API...');
@@ -2541,11 +2548,11 @@
                 
                 const cardapioCsvText = data.cardapio;
                 const promocoesCsvText = data.promocoes;
-                const deliveryFeesCsvText = data.deliveryFees; 
-
+                const deliveryFeesCsvText = data.deliveryFees;
+                
                 allMenuData = parseCsvData(cardapioCsvText, 'cardapio');
                 allPromotionsData = parseCsvData(promocoesCsvText, 'promocoes');
-                deliveryFeesData = parseCsvData(deliveryFeesCsvText, 'deliveryFees'); 
+                deliveryFeesData = parseCsvData(deliveryFeesCsvText, 'deliveryFees');
                 
                 let orderedUniqueCategories = [];
                 const seenCategories = new Set();
@@ -2564,7 +2571,7 @@
                 updateCartCount(); 
                 updateOrderDisplay(); 
                 updateCheckoutButtonText(); 
-                showAddressSummary(); 
+                showAddressSummary();
                 
                 toggleAddItemButtons(true);
                 toggleCategoryButtons(true);
@@ -2580,10 +2587,8 @@
                 showMessageModal('Não foi possível carregar o cardápio no momento. Por favor, tente novamente mais tarde.');
             }
         }
-
-        // Evento que garante que a UI será carregada após o DOM estar pronto
+        
         document.addEventListener('DOMContentLoaded', function() {
-            // A chamada inicial do PWA, garantindo que o service worker seja registrado
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('/service-worker.js')
                     .then(registration => {
@@ -2591,25 +2596,18 @@
                     })
                     .catch(error => {
                         console.log('DEBUG: Falha no registo do Service Worker:', error);
-                        if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-                            console.warn('DEBUG: Erro de rede/CORS no Service Worker. Isso pode ser esperado para recursos de terceiros não-cacheáveis.');
-                        }
                     });
             }
-            // Chamada inicial para carregar todos os dados assim que o DOM estiver pronto
             loadMenuAndRender();
         });
         
-        // Listener para o problema do bfcache: atualiza os dados quando o usuário volta para a página
-        document.addEventListener("visibilitychange", () => {
+        window.addEventListener("visibilitychange", () => {
             if (document.visibilityState === "visible") {
                 console.log("DEBUG: Página retornou ao foco. Atualizando dados do cardápio.");
                 loadMenuAndRender();
             }
         });
-
-        // --- Lógica de Instalação do PWA ---
-
+        
         function isPwaInstalled() {
             if (window.matchMedia('(display-mode: standalone)').matches) {
                 return true;
