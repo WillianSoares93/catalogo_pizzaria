@@ -547,7 +547,7 @@
     <!-- Menu Section -->
     <section id="menu" class="py-8 px-4 max-w-6xl mx-auto">
         <div class="text-center mb-8">
-            <h2 class="text-4xl font-bold text-gray-800 mb-4">Nosso Cardápio- teste</h2>
+            <h2 class="text-4xl font-bold text-gray-800 mb-4">Nosso Cardápio</h2>
             <p class="text-gray-600 text-lg mx-auto">Escolha sua pizza favorita ou uma bebida refrescante!</p>
         </div>
 
@@ -721,7 +721,7 @@
             <h3 class="text-xl font-bold text-gray-800 mb-4">Que tal adicionar uma bebida?</h3>
             <p class="text-gray-600 mb-6">Seu pedido não contém bebidas. Gostaria de adicionar alguma?</p>
             <!-- Botões "Voltar ao Pedido" e "Finalizar sem Bebidas" / "Finalizar com Bebidas" -->
-            <button onclick="backToOrderSidebarFromDrinkSuggestion()" class="px-4 py-2 bg-gray-500 text-white rounded-lg font-bold hover:bg-gray-600 transition w-full mb-3 whitespace-nowrap text-sm">
+            <button id="back-to-order-btn" onclick="backToOrderSidebarFromDrinkSuggestion()" class="px-4 py-2 bg-gray-500 text-white rounded-lg font-bold hover:bg-gray-600 transition w-full mb-3 whitespace-nowrap text-sm">
                 Voltar ao Pedido
             </button>
             <button id="proceed-without-drinks" class="dynamic-checkout-button btn-order w-full py-3 text-white font-bold rounded-full mb-6 whitespace-nowrap text-sm">
@@ -890,7 +890,6 @@
         const PROMOCOES_CSV_URL_REF = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=600393470&single=true&output=csv'; 
         const DELIVERY_FEES_CSV_URL_REF = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=1695668250&single=true&output=csv';
         const INGREDIENTS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=1816106560&single=true&output=csv';
-        // NOVO: URL da planilha de contatos
         const CONTACTS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=2043568216&single=true&output=csv';
 
         // Variáveis globais
@@ -899,14 +898,14 @@
         let allPromotionsData = [];
         let deliveryFeesData = [];
         let allIngredientsData = []; 
-        let allContactsData = {}; // NOVO: Objeto para armazenar os dados de contato
+        let allContactsData = {}; 
         let currentBurgerBuild = { item: null, ingredients: new Set(), basePrice: 0 }; 
         let isSelectingHalfPizza = false; 
         let isFirstHalfPromotional = false; 
         let deferredPrompt; 
         let selectedPaymentMethod = null; 
         let isCheckoutInitiated = false; 
-        let customerName = ''; // NOVO: Variável para armazenar o nome do cliente
+        let customerName = ''; 
         
         let selectedAddress = {
             bairro: null,
@@ -969,11 +968,11 @@
         const trocoParaInput = document.getElementById('trocoPara'); 
         const trocoTotalDisplay = document.getElementById('trocoTotalDisplay'); 
         const paymentModalTotal = document.getElementById('payment-modal-total'); 
-        const pixKeyDisplay = document.getElementById('pix-key-display'); // NOVO: Elemento para exibir a chave Pix
+        const pixKeyDisplay = document.getElementById('pix-key-display');
 
         const addressInputModal = document.getElementById('address-input-modal');
         const closeAddressModalBtn = document.getElementById('close-address-modal');
-        const customerNameInput = document.getElementById('customerNameInput'); // NOVO: Referência para o campo de nome
+        const customerNameInput = document.getElementById('customerNameInput'); 
         const neighborhoodSelect = document.getElementById('neighborhoodSelect');
         const streetInput = document.getElementById('streetInput');
         const numberInput = document.getElementById('numberInput');
@@ -2761,8 +2760,10 @@
                 const categorySection = document.createElement('div');
                 categorySection.className = 'mb-4';
                 
-                const categoryData = ingredientsByCategory[category][0];
-                const limitText = categoryData.limit < Infinity ? ` (Máximo: ${categoryData.limit})` : '';
+                // NOVO: Encontrar o limite para a categoria atual
+                const categoryData = allIngredientsData.find(ing => ing.category === category);
+                const limit = categoryData ? categoryData.limit : Infinity;
+                const limitText = limit < Infinity ? ` (Máximo: ${limit})` : '';
 
                 categorySection.innerHTML = `
                     <div class="bg-gray-200 p-2 rounded-md mb-2">
@@ -2808,6 +2809,7 @@
                 if (categoryIngredients.length >= limit) {
                     showMessageModal(`Você pode selecionar no máximo ${limit} item(s) da categoria "${ingredientCategory}".`);
                     checkbox.checked = false; // Desfaz a seleção
+                    label.classList.remove('selected');
                     return;
                 }
                 label.classList.add('selected');
