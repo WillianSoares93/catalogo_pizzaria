@@ -547,7 +547,7 @@
     <!-- Menu Section -->
     <section id="menu" class="py-8 px-4 max-w-6xl mx-auto">
         <div class="text-center mb-8">
-            <h2 class="text-4xl font-bold text-gray-800 mb-4">Nosso Cardápio- teste</h2>
+            <h2 class="text-4xl font-bold text-gray-800 mb-4">Nosso Cardápio</h2>
             <p class="text-gray-600 text-lg mx-auto">Escolha sua pizza favorita ou uma bebida refrescante!</p>
         </div>
 
@@ -1168,9 +1168,9 @@
                     case 'Bairros': return 'neighborhood';
                     case 'Valor Frete': return 'deliveryFee';
                     // Headers para Ingredientes
-                    case 'ID Intem': return 'id'; // CORRIGIDO o mapeamento
+                    case 'ID Intem': return 'id'; 
                     case 'Ingredientes': return 'name';
-                    case 'Catelogira': return 'category'; // CORRIGIDO o mapeamento
+                    case 'Catelogira': return 'category'; 
                     case 'Preço': return 'price';
                     case 'Disponível': return 'available';
                     case 'Limite': return 'limit';
@@ -2757,6 +2757,7 @@
                 const categorySection = document.createElement('div');
                 categorySection.className = 'mb-4';
                 
+                // NOVO: Encontrar o limite para a categoria atual
                 const categoryData = allIngredientsData.find(ing => ing.category === category);
                 const limit = categoryData ? categoryData.limit : Infinity;
                 const limitText = limit < Infinity ? ` (Máximo: ${limit})` : '';
@@ -2933,16 +2934,3 @@
     </script>
 </body>
 </html>
-" code between  and  in the most up-to-date Canvas "Código index.html atualizado" document above and am asking a query about/based on this code below.
-Instructions to follow:
-  * Don't output/edit the document if the query is Direct/Simple. For example, if the query asks for a simple explanation, output a direct answer.
-  * Make sure to **edit** the document if the query shows the intent of editing the document, in which case output the entire edited document, **not just that section or the edits**.
-    * Don't output the same document/empty document and say that you have edited it.
-    * Don't change unrelated code in the document.
-  * Don't output  and  in your final response.
-  * Any references like "this" or "selected code" refers to the code between  and  tags.
-  * Just acknowledge my request in the introduction.
-  * Make sure to refer to the document as "Canvas" in your response.
-
-(actual user query begins now)
-está com o mesmo erro na planilha de ingrediente, preciso que você corrija para que o código leia corretamente a planilha e que ao clicar no botão montar o pop up de montar hambúrguer seja exibido corretame
