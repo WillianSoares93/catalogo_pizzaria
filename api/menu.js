@@ -21,7 +21,7 @@ export default async (req, res) => {
     // Define cabeçalhos de cache para otimizar o desempenho no Vercel.
     // 's-maxage=300' significa que o CDN do Vercel irá cachear a resposta por 300 segundos (5 minutos).
     // 'stale-while-revalidate' permite que o CDN sirva uma versão cacheada enquanto busca uma nova em segundo plano.
-    res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate'); 
+    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate'); 
 
     try {
         console.log('Vercel Function: Iniciando processo de busca de dados...');
