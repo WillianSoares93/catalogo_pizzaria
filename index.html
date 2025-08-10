@@ -1,4 +1,3 @@
-teste
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1791,7 +1790,7 @@ teste
                 isFirstHalfPromotional = false; 
                 toggleAddItemButtons(true); 
                 toggleCategoryButtons(true); 
-                showTemporaryFeedback('Pizza meio a meio adicionada ao pedido!', 'bg-green-500'); 
+                showTemporaryFeedback('Pizza meio a meia adicionada ao pedido!', 'bg-green-500'); 
                 
             } else if (item.isPizza) {
                 currentPizzaData = { ...item }; 
@@ -2122,7 +2121,7 @@ teste
         }
         
         function proceedToWhatsappCheckout() {
-            const whatsappNumber = contactInfo['whatsapp'] ? contactInfo['whatsapp'].replace(/\D/g, '') : '5587996070638'; 
+            const whatsappNumber = contactInfo.whatsapp ? `55${contactInfo.whatsapp.replace(/\D/g, '')}` : '5587996070638'; 
             let message = 'Olá! Gostaria de fazer o seguinte pedido:\n\n';
             let subtotal = 0;
 
@@ -2179,9 +2178,9 @@ teste
                     message += `\nForma de Pagamento: ${selectedPaymentMethod.method}`;
                     message += `\nTroco para: R$ ${selectedPaymentMethod.trocoPara.toFixed(2).replace('.', ',')}`;
                     message += `\nTroco: R$ ${selectedPaymentMethod.trocoTotal.toFixed(2).replace('.', ',')}`;
-                } else if (selectedPaymentMethod === 'Pix' && contactInfo['chave-pix']) {
+                } else if (selectedPaymentMethod === 'Pix' && contactInfo.chavepix) {
                      message += `\nForma de Pagamento: Pix`;
-                     message += `\nChave Pix: ${contactInfo['chave-pix']}`;
+                     message += `\nChave Pix: ${contactInfo.chavepix}`;
                 } else {
                     message += `\nForma de Pagamento: ${selectedPaymentMethod}`;
                 }
@@ -2880,8 +2879,9 @@ teste
             if (contactData.facebook) {
                 socialLinksEl.insertAdjacentHTML('beforeend', `<a href="${contactData.facebook}" class="text-gray-400 hover:text-white" target="_blank"><i class="fab fa-facebook text-xl"></i></a>`);
             }
+            // MODIFICADO: Cria o link do WhatsApp com o código do país.
             if (contactData.whatsapp) {
-                socialLinksEl.insertAdjacentHTML('beforeend', `<a href="https://wa.me/${contactData.whatsapp}" class="text-gray-400 hover:text-white" target="_blank"><i class="fab fa-whatsapp text-xl"></i></a>`);
+                socialLinksEl.insertAdjacentHTML('beforeend', `<a href="https://wa.me/55${contactData.whatsapp.replace(/\D/g, '')}" class="text-gray-400 hover:text-white" target="_blank"><i class="fab fa-whatsapp text-xl"></i></a>`);
             }
             
             return contactData;
