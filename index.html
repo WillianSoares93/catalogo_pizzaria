@@ -1,3 +1,4 @@
+teste
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -345,7 +346,7 @@
             background-color: #16a34a; /* green-600 */
         }
         
-        /* NOVO: Estilo para o botão de confirmar endereço com gradiente verde */
+        /* Estilos para o botão de confirmar endereço com gradiente verde */
         .btn-confirm-green {
             background: linear-gradient(135deg, #22c55e, #10b981);
             transition: all 0.3s ease;
@@ -2154,8 +2155,10 @@
                 return;
             }
 
+            // MODIFICAÇÃO: Em vez de mostrar um modal de mensagem, abre o modal de endereço.
             if (!selectedAddress.clientName || !selectedAddress.bairro || (!selectedAddress.numero && !noNumberCheckbox.checked)) {
-                showMessageModal('Por favor, preencha o nome do cliente, o bairro, a rua e o número ou marque "Sem Número" para continuar.');
+                isCheckoutInitiated = true; // Define a flag para continuar o checkout após preencher o endereço
+                showAddressInputModal();
                 return;
             }
 
