@@ -1,3 +1,4 @@
+teste
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1310,15 +1311,12 @@
                         optionDiv.appendChild(label);
                         
                         // CORREÇÃO DO BUG: Torna o retângulo inteiro clicável para selecionar o ingrediente.
-                        // O listener anterior estava impedindo o clique no texto de funcionar.
-                        optionDiv.addEventListener('click', (e) => {
-                            // Se o clique não foi diretamente no input, nós o acionamos manualmente.
-                            // Isso evita o duplo-toggle caso o usuário clique diretamente na bolinha/caixa.
-                            if (e.target !== input) {
-                                input.checked = !input.checked;
-                                // Dispara o evento de 'change' para que a lógica de preço seja executada.
-                                input.dispatchEvent(new Event('change', { bubbles: true }));
-                            }
+                        // Remove a verificação anterior e simplesmente alterna o estado
+                        // do input, garantindo que o clique na div inteira funcione.
+                        optionDiv.addEventListener('click', () => {
+                            input.checked = !input.checked;
+                            // Dispara o evento de 'change' para que a lógica de preço seja executada.
+                            input.dispatchEvent(new Event('change', { bubbles: true }));
                         });
                         
                         // Ouve o evento de `change` para os inputs
