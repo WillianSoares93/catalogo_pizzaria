@@ -819,7 +819,7 @@
                     <i class="fas fa-qrcode icon"></i>
                     <div class="text-content">
                         <h4>Pix</h4>
-                        <p></p> <!-- Descrição removida -->
+                        <p id="pix-key-display" class="text-gray-600 text-sm hidden"></p>
                     </div>
                 </label>
             </div>
@@ -907,12 +907,10 @@
                 </div>
                 <div>
                     <h3 class="text-xl font-bold mb-4">Contato</h3>
-                    <p class="text-gray-400"><i class="fas fa-phone mr-2"></i> (85) 98765-4321</p>
-                    <p class="text-gray-400"><i class="fas fa-envelope mr-2"></i> contato@suapizzaria.com</p>
-                    <div class="flex justify-center md:justify-start space-x-4 mt-2">
-                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-instagram text-xl"></i></a>
-                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-facebook text-xl"></i></a>
-                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-whatsapp text-xl"></i></a>
+                    <p class="text-gray-400"><i class="fas fa-phone mr-2"></i> <span id="footer-phone"></span></p>
+                    <p class="text-gray-400"><i class="fas fa-envelope mr-2"></i> <span id="footer-email"></span></p>
+                    <div class="flex justify-center md:justify-start space-x-4 mt-2" id="social-links-container">
+                        <!-- Links serão preenchidos via JS -->
                     </div>
                 </div>
             </div>
@@ -935,6 +933,7 @@
         let selectedPaymentMethod = null; 
         let isCheckoutInitiated = false; 
         let discountPromotion = null; // Variável global para a promoção de desconto
+        let contactInfo = {};
         
         let selectedAddress = {
             clientName: null, 
@@ -945,8 +944,10 @@
             deliveryFee: 0.00
         };
 
-        const defaultImage = '[https://www.bakelitsul.com.br/Assets/img/sem-produto-detalhe.png](https://www.bakelitsul.com.br/Assets/img/sem-produto-detalhe.png)';
-        const whatsappNumber = '5587996070638'; 
+        const defaultImage = 'https://www.bakelitsul.com.br/Assets/img/sem-produto-detalhe.png';
+        
+        // URL da nova planilha de contatos
+        const CONTACT_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=2043568216&single=true&output=csv';
 
         // Referências para os elementos DOM
         const orderSidebar = document.getElementById('orderSidebar');
@@ -1031,6 +1032,11 @@
         const discountSection = document.getElementById('discount-section');
         const discountPercentageDisplay = document.getElementById('discount-percentage-display');
         const discountValueDisplay = document.getElementById('discount-value-display');
+
+        // Referências para elementos do rodapé
+        const footerPhone = document.getElementById('footer-phone');
+        const footerEmail = document.getElementById('footer-email');
+        const socialLinksContainer = document.getElementById('social-links-container');
 
 
         let currentPizzaData = {}; 
@@ -1148,7 +1154,6 @@
         }
 
         function parseCsvData(csvText, type) {
-            console.log(`DEBUG: parseCsvData para ${type} - CSV Bruto (primeiras 100 chars):`, csvText.substring(0, 100));
             const lines = csvText.split('\n').filter(line => line.trim() !== '');
 
             if (lines.length === 0) {
@@ -1191,7 +1196,6 @@
             const mappedHeaders = headersRaw.map(header => {
                 let cleanedHeader = header.trim();
                 switch (cleanedHeader) {
-                    // Headers para Cardápio
                     case 'ID Item (único)': return 'id';
                     case 'Nome do Item': return 'name';
                     case 'Descrição': return 'description';
@@ -1203,17 +1207,14 @@
                     case 'É Montável? (SIM/NAO)': return 'isCustomizable';
                     case 'Disponível (SIM/NÃO)': return 'available'; 
                     case 'Imagem': return 'imageUrl'; 
-                    // Headers para Promoções
                     case 'ID Promocao': return 'id';
                     case 'Nome da Promocao': return 'name';
                     case 'Descrição': return 'description';
                     case 'Preco Promocional': return 'promoPrice';
                     case 'ID Item Aplicavel': return 'itemId';
                     case 'Ativo (SIM/NAO)': return 'active';
-                    // Headers para Taxas de Entrega
                     case 'Bairros': return 'neighborhood';
                     case 'Valor Frete': return 'deliveryFee';
-                    // NOVO: Headers para Ingredientes de Hambúrguer
                     case 'ID Intem': return 'id';
                     case 'Ingredientes': return 'name';
                     case 'Preço': return 'price';
@@ -1222,6 +1223,8 @@
                     case 'Limite': return 'limit';
                     case 'É Obrigatório?(SIM/NÃO)': return 'isRequired';
                     case 'Disponível': return 'available'; 
+                    case 'Dados': return 'data';
+                    case 'Valor': return 'value';
                     default: 
                         console.warn(`DEBUG: Header CSV desconhecido encontrado para ${type}: "${cleanedHeader}"`);
                         return cleanedHeader.replace(/[^a-zA-Z0-9]+(.)?/g, (match, chr) => chr ? chr.toUpperCase() : '').replace(/^./, (match) => match.toLowerCase());
@@ -1238,7 +1241,7 @@
                         let headerKey = mappedHeaders[j];
                         let value = rowValues[j];
                         
-                        if (['neighborhood', 'name', 'category'].includes(headerKey) && (value === undefined || value === null || value.trim() === '')) {
+                        if (['neighborhood', 'name', 'category', 'data'].includes(headerKey) && (value === undefined || value === null || value.trim() === '')) {
                             value = '';
                         }
                         if (['basePrice', 'price6Slices', 'price4Slices', 'promoPrice', 'deliveryFee', 'price'].includes(headerKey)) {
@@ -1258,7 +1261,7 @@
                         item.imageUrl = (String(item.imageUrl || '').trim());
                     }
 
-                    if ((type === 'cardapio' && item.available) || (type === 'promocoes' && item.active) || type === 'deliveryFees' || (type === 'ingredientesHamburguer' && item.available)) {
+                    if ((type === 'cardapio' && item.available) || (type === 'promocoes' && item.active) || type === 'deliveryFees' || (type === 'ingredientesHamburguer' && item.available) || (type === 'contact')) {
                         parsedData.push(item);
                     }
                 } else {
@@ -1347,7 +1350,7 @@
                             }
                             
                             // Lógica de limite para checkboxes
-                            if (!isCurrentSingleChoice && limit !== Infinity) {
+                            if (!isSingleChoice && limit !== Infinity) {
                                 const checkedCount = document.querySelectorAll(`input[name="${e.target.name}"]:checked`).length;
                                 if (checkedCount > limit) {
                                     e.target.checked = false;
@@ -1776,7 +1779,7 @@
                 isFirstHalfPromotional = false; 
                 toggleAddItemButtons(true); 
                 toggleCategoryButtons(true); 
-                showTemporaryFeedback('Pizza meio a meio adicionada ao pedido!', 'bg-green-500'); 
+                showTemporaryFeedback('Pizza meio a meia adicionada ao pedido!', 'bg-green-500'); 
                 
             } else if (item.isPizza) {
                 currentPizzaData = { ...item }; 
@@ -1972,7 +1975,7 @@
                 order.forEach((item, index) => {
                     let itemName = item.name;
                     let itemDescription = '';
-                    let sizeLabel = ''; // Definido aqui para ser acessível em todo o escopo
+                    let sizeLabel = ''; 
                     let priceHtml = `<span class="font-bold mr-4">R$ ${item.price.toFixed(2).replace('.', ',')}</span>`;
 
                     if (item.type === 'promotion') {
@@ -2109,7 +2112,7 @@
         }
         
         function proceedToWhatsappCheckout() {
-            const whatsappNumber = '5587996070638'; 
+            const whatsappNumber = contactInfo['whatsapp'] || '5587996070638'; 
             let message = 'Olá! Gostaria de fazer o seguinte pedido:\n\n';
             let subtotal = 0;
 
@@ -2121,8 +2124,8 @@
                 if (item.type === 'promotion') {
                     itemName = item.name.replace('<i class="fas fa-tags text-red-600 mr-2"></i> ', ''); 
                 } else if (item.selected_slices) {
-                    itemName = `${item.selected_slices} FATIAS`.toUpperCase();
-                    message += `- ${itemName}: ${item.name} R$ ${item.price.toFixed(2).replace('.', ',')}\n`;
+                    let sizeLabel = `${item.selected_slices} FATIAS`.toUpperCase();
+                    message += `- ${sizeLabel}: ${item.name} R$ ${item.price.toFixed(2).replace('.', ',')}\n`;
                     return; // Retorna para evitar a duplicação do nome do item
                 } else if (item.type === 'custom_burger') {
                     itemName = `Hambúrguer Personalizado`;
@@ -2166,6 +2169,8 @@
                     message += `\nForma de Pagamento: ${selectedPaymentMethod.method}`;
                     message += `\nTroco para: R$ ${selectedPaymentMethod.trocoPara.toFixed(2).replace('.', ',')}`;
                     message += `\nTroco: R$ ${selectedPaymentMethod.trocoTotal.toFixed(2).replace('.', ',')}`;
+                } else if (selectedPaymentMethod === 'Pix' && contactInfo['chave-pix']) {
+                     message += `\nForma de Pagamento: Pix`;
                 } else {
                     message += `\nForma de Pagamento: ${selectedPaymentMethod}`;
                 }
@@ -2442,12 +2447,19 @@
                             trocoTotalDisplay.textContent = `R$ ${trocoCalculado.toFixed(2).replace('.', ',')}`;
                         }
                     }
+                    if (methodValue === 'Pix' && contactInfo['chave-pix']) {
+                        document.getElementById('pix-key-display').textContent = `Chave Pix: ${contactInfo['chave-pix']}`;
+                        document.getElementById('pix-key-display').classList.remove('hidden');
+                    } else {
+                        document.getElementById('pix-key-display').classList.add('hidden');
+                    }
                 }
             } else {
                 document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
                     radio.checked = false;
                     radio.closest('.payment-option').classList.remove('selected');
                 });
+                document.getElementById('pix-key-display').classList.add('hidden');
             }
         }
 
@@ -2481,6 +2493,13 @@
                     trocoInputContainer.classList.add('hidden');
                     trocoParaInput.value = ''; 
                     trocoTotalDisplay.textContent = 'R$ 0,00'; 
+                }
+
+                if (radio && radio.value === 'Pix' && contactInfo['chave-pix']) {
+                    document.getElementById('pix-key-display').textContent = `Chave Pix: ${contactInfo['chave-pix']}`;
+                    document.getElementById('pix-key-display').classList.remove('hidden');
+                } else {
+                    document.getElementById('pix-key-display').classList.add('hidden');
                 }
             }
         });
@@ -2806,32 +2825,61 @@
             showAddressInputModal();
         });
 
+        function populateContactInfo(contacts) {
+            const phoneEl = document.getElementById('footer-phone');
+            const emailEl = document.getElementById('footer-email');
+            const socialLinksEl = document.getElementById('social-links-container');
+
+            socialLinksEl.innerHTML = '';
+            
+            const contactData = contacts.reduce((acc, current) => {
+                acc[current.data.toLowerCase().replace(/[^a-z0-9]/g, '')] = current.value;
+                return acc;
+            }, {});
+
+            if (contactData.telefone) {
+                phoneEl.textContent = contactData.telefone;
+            }
+            if (contactData.email) {
+                emailEl.textContent = contactData.email;
+            }
+
+            if (contactData.instagram) {
+                socialLinksEl.insertAdjacentHTML('beforeend', `<a href="${contactData.instagram}" class="text-gray-400 hover:text-white" target="_blank"><i class="fab fa-instagram text-xl"></i></a>`);
+            }
+            if (contactData.facebook) {
+                socialLinksEl.insertAdjacentHTML('beforeend', `<a href="${contactData.facebook}" class="text-gray-400 hover:text-white" target="_blank"><i class="fab fa-facebook text-xl"></i></a>`);
+            }
+            if (contactData.whatsapp) {
+                socialLinksEl.insertAdjacentHTML('beforeend', `<a href="https://wa.me/${contactData.whatsapp}" class="text-gray-400 hover:text-white" target="_blank"><i class="fab fa-whatsapp text-xl"></i></a>`);
+            }
+            
+            return contactData;
+        }
+
         async function loadMenuAndRender() {
             try {
-                const response = await fetch('/api/menu'); 
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('DEBUG: loadMenuAndRender: Erro HTTP ao buscar dados da API:', response.status, errorText);
-                    throw new Error(`Erro ao buscar dados da API: ${response.statusText || errorText}`);
-                }
-                const data = await response.json(); 
+                // Fetch de todos os dados em paralelo
+                const [menuResponse, promosResponse, feesResponse, burgerResponse, contactResponse] = await Promise.all([
+                    fetch('/api/menu'),
+                    fetch('/api/promos'),
+                    fetch('/api/fees'),
+                    fetch('/api/burger-ingredients'),
+                    fetch(CONTACT_CSV_URL) // Nova requisição para a planilha de contatos
+                ]);
                 
-                const cardapioCsvText = data.cardapio;
-                const promocoesCsvText = data.promocoes;
-                const deliveryFeesCsvText = data.deliveryFees;
-                const ingredientesHamburguerCsvText = data.ingredientesHamburguer;
-
-                allMenuData = parseCsvData(cardapioCsvText, 'cardapio');
-                allPromotionsData = parseCsvData(promocoesCsvText, 'promocoes');
-                deliveryFeesData = parseCsvData(deliveryFeesCsvText, 'deliveryFees');
+                const menuData = await menuResponse.text();
+                const promosData = await promosResponse.text();
+                const feesData = await feesResponse.text();
+                const burgerData = await burgerResponse.text();
+                const contactData = await contactResponse.text(); // Extrai os dados da planilha de contatos
                 
-                // Encontrar e armazenar a promoção de desconto se ela existir e estiver ativa
-                discountPromotion = allPromotionsData.find(promo => promo.name === 'Desconto no Pedido' && promo.active);
-                if (discountPromotion) {
-                    console.log(`DEBUG: Promoção de desconto de ${discountPromotion.promoPrice}% encontrada e ativa.`);
-                }
-
-                const rawBurgerIngredients = parseCsvData(ingredientesHamburguerCsvText, 'ingredientesHamburguer');
+                // Parse dos dados
+                allMenuData = parseCsvData(menuData, 'cardapio');
+                allPromotionsData = parseCsvData(promosData, 'promocoes');
+                deliveryFeesData = parseCsvData(feesData, 'deliveryFees');
+                
+                const rawBurgerIngredients = parseCsvData(burgerData, 'ingredientesHamburguer');
                 allBurgerIngredients = rawBurgerIngredients.reduce((acc, current) => {
                     if (!acc[current.category]) {
                         acc[current.category] = [];
@@ -2839,6 +2887,20 @@
                     acc[current.category].push(current);
                     return acc;
                 }, {});
+
+                const parsedContactInfo = parseCsvData(contactData, 'contact');
+                contactInfo = parsedContactInfo.reduce((acc, curr) => {
+                    if (curr.data && curr.value) {
+                        acc[curr.data.toLowerCase().replace(/[^a-z0-9]/g, '')] = curr.value;
+                    }
+                    return acc;
+                }, {});
+                
+                // Encontrar e armazenar a promoção de desconto se ela existir e estiver ativa
+                discountPromotion = allPromotionsData.find(promo => promo.name === 'Desconto no Pedido' && promo.active);
+                if (discountPromotion) {
+                    console.log(`DEBUG: Promoção de desconto de ${discountPromotion.promoPrice}% encontrada e ativa.`);
+                }
 
                 let orderedUniqueCategories = [];
                 const seenCategories = new Set();
@@ -2852,6 +2914,7 @@
                 createCategoryButtons(orderedUniqueCategories); 
                 populateMenu(allMenuData, orderedUniqueCategories); 
                 populateNeighborhoodDropdown(deliveryFeesData); 
+                populateContactInfo(parsedContactInfo); // Chama a nova função para popular os contatos
                 setupCategoryObserver(); 
                 updatePromotionButtonVisibility(); 
                 updateCartCount(); 
