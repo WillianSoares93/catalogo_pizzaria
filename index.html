@@ -2165,7 +2165,7 @@
             }
 
             if (!selectedAddress.clientName || !selectedAddress.bairro || (!selectedAddress.rua) || (!selectedAddress.numero && !noNumberCheckbox.checked)) {
-                address-input-modal();
+                showMessageModal('Por favor, preencha o nome do cliente, o bairro, a rua e o número ou marque "Sem Número" para continuar.');
                 return;
             }
 
@@ -2345,14 +2345,15 @@
 
         function updateDrinkSuggestionButtons() {
             const hasDrinks = order.some(item => item.category === 'bebidas');
+            const proceedBtn = document.getElementById('proceed-without-drinks');
             if (hasDrinks) {
-                proceedWithoutDrinksBtn.textContent = 'Finalizar com Bebidas';
-                proceedWithoutDrinksBtn.classList.remove('btn-order');
-                proceedWithoutDrinksBtn.classList.add('green-gradient');
+                proceedBtn.textContent = 'Finalizar com Bebidas';
+                proceedBtn.classList.add('btn-order');
+                proceedBtn.classList.remove('green-gradient');
             } else {
-                proceedWithoutDrinksBtn.textContent = 'Finalizar sem Bebidas';
-                proceedWithoutDrinksBtn.classList.remove('green-gradient');
-                proceedWithoutDrinksBtn.classList.add('btn-order'); 
+                proceedBtn.textContent = 'Finalizar sem Bebidas';
+                proceedBtn.classList.add('btn-order'); 
+                proceedBtn.classList.remove('green-gradient');
             }
         }
 
@@ -2506,7 +2507,7 @@
                 closePaymentMethodModal();
                 
                 if (isCheckoutInitiated) {
-                    proceedToWhatsappCheckout(); 
+                    handleCheckoutFlow(); 
                 }
                 isCheckoutInitiated = false; 
                 updateOrderDisplay(); 
