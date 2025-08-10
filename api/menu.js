@@ -1,6 +1,6 @@
 // Este arquivo é uma função Serverless para o Vercel.
 // Ele é responsável por buscar os dados do cardápio, promoções, taxas de entrega
-// e agora os ingredientes de hambúrguer de planilhas Google Sheets publicadas como CSV e retorná-los para a aplicação front-end.
+// e agora os ingredientes de hambúrguer e informações de contato de planilhas Google Sheets publicadas como CSV e retorná-los para a aplicação front-end.
 //
 // Para garantir que o Node.js no ambiente Vercel trate este arquivo como um módulo ES (permitindo 'import'),
 // você deve ter "type": "module" no seu arquivo package.json.
@@ -13,7 +13,8 @@ import fetch from 'node-fetch'; // Importa a biblioteca 'node-fetch' para fazer 
 const CARDAPIO_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=664943668&single=true&output=csv'; 
 const PROMOCOES_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=600393470&single=true&output=csv'; 
 const DELIVERY_FEES_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=1695668250&single=true&output=csv';
-const INGREDIENTES_HAMBURGER_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=1816106560&single=true&output=csv';
+const INGREDIENTES_HAMBURGUER_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=1816106560&single=true&output=csv';
+const CONTACT_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=2043568216&single=true&output=csv';
 
 // A função principal que será exportada e executada pelo Vercel.
 // 'req' é o objeto de requisição (request) e 'res' é o objeto de resposta (response).
@@ -38,25 +39,29 @@ export default async (req, res) => {
             return data;
         };
 
-        // --- 1. Busca os dados do Cardápio ---
-        const cardapioData = await fetchData(CARDAPIO_CSV_URL, 'Cardápio');
+        // --- Busca de dados em paralelo para otimizar o tempo de resposta ---
+        const [
+            cardapioData,
+            promocoesData,
+            deliveryFeesData,
+            ingredientesHamburguerData,
+            contactData
+        ] = await Promise.all([
+            fetchData(CARDAPIO_CSV_URL, 'Cardápio'),
+            fetchData(PROMOCOES_CSV_URL, 'Promoções'),
+            fetchData(DELIVERY_FEES_CSV_URL, 'Taxas de Entrega'),
+            fetchData(INGREDIENTES_HAMBURGUER_CSV_URL, 'Ingredientes de Hambúrguer'),
+            fetchData(CONTACT_CSV_URL, 'Informações de Contato') // Nova busca
+        ]);
 
-        // --- 2. Busca os dados das Promoções ---
-        const promocoesData = await fetchData(PROMOCOES_CSV_URL, 'Promoções');
-
-        // --- 3. Busca os dados das Taxas de Entrega ---
-        const deliveryFeesData = await fetchData(DELIVERY_FEES_CSV_URL, 'Taxas de Entrega');
-        
-        // --- 4. Busca os dados dos Ingredientes de Hambúrguer ---
-        const ingredientesHamburguerData = await fetchData(INGREDIENTES_HAMBURGER_CSV_URL, 'Ingredientes de Hambúrguer');
-
-        // --- 5. Envia a resposta de sucesso ---
+        // --- Envia a resposta de sucesso ---
         console.log('Vercel Function: Todos os dados foram buscados com sucesso. Enviando resposta JSON.');
         res.status(200).json({
-            cardapio: cardapioData,      // Inclui os dados CSV do cardápio
-            promocoes: promocoesData,    // Inclui os dados CSV das promoções
-            deliveryFees: deliveryFeesData, // Inclui os dados CSV das taxas de entrega
-            ingredientesHamburguer: ingredientesHamburguerData // Inclui os dados CSV dos ingredientes de hambúrguer
+            cardapio: cardapioData,
+            promocoes: promocoesData,
+            deliveryFees: deliveryFeesData,
+            ingredientesHamburguer: ingredientesHamburguerData,
+            contact: contactData // Inclui os dados de contato na resposta
         });
 
     } catch (error) {
