@@ -51,7 +51,7 @@ export default async (req, res) => {
             fetchData(PROMOCOES_CSV_URL, 'Promoções'),
             fetchData(DELIVERY_FEES_CSV_URL, 'Taxas de Entrega'),
             fetchData(INGREDIENTES_HAMBURGUER_CSV_URL, 'Ingredientes de Hambúrguer'),
-            fetchData(CONTACT_CSV_URL, 'Informações de Contato') // Nova busca
+            fetchData(CONTACT_CSV_URL, 'Informações de Contato')
         ]);
 
         // --- Envia a resposta de sucesso ---
@@ -61,7 +61,7 @@ export default async (req, res) => {
             promocoes: promocoesData,
             deliveryFees: deliveryFeesData,
             ingredientesHamburguer: ingredientesHamburguerData,
-            contact: contactData // Inclui os dados de contato na resposta
+            contact: contactData
         });
 
     } catch (error) {
