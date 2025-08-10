@@ -577,7 +577,7 @@
     <!-- Menu Section -->
     <section id="menu" class="py-8 px-4 max-w-6xl mx-auto">
         <div class="text-center mb-8">
-            <h2 class="text-4xl font-bold text-gray-800 mb-4">Nosso Cardápio- teste</h2>
+            <h2 class="text-4xl font-bold text-gray-800 mb-4">Nosso Cardápio</h2>
             <p class="text-gray-600 text-lg mx-auto">Escolha sua pizza favorita ou uma bebida refrescante!</p>
         </div>
 
@@ -693,7 +693,7 @@
                 <span id="burger-total-price" class="text-2xl font-bold text-red-600">R$ 0,00</span>
             </div>
             
-            <button id="add-custom-burger-btn" class="btn-order w-full py-3 text-white font-bold rounded-full mt-4">
+            <button id="add-custom-burger-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-full transition w-full">
                 Adicionar Hambúrguer ao Pedido
             </button>
         </div>
@@ -1035,6 +1035,7 @@
             console.log('DEBUG: showMessageModal chamado com:', message);
             messageModalText.textContent = message;
             messageModal.style.display = 'flex';
+            updatePromotionButtonVisibility();
 
             okMessageModalBtn.removeEventListener('click', hideMessageModal);
             closeMessageModalBtn.removeEventListener('click', hideMessageModal);
@@ -1065,6 +1066,7 @@
 
         function hideMessageModal() {
             messageModal.style.display = 'none';
+            updatePromotionButtonVisibility();
         }
 
         function resetHalfPizzaSelection() {
@@ -1187,6 +1189,7 @@
                     case 'Categoria': return 'category';
                     case 'Seleção Única': return 'isSingleChoice';
                     case 'Limite': return 'limit';
+                    case 'É Obrigatório?(SIM/NÃO)': return 'isRequired';
                     case 'Disponível': return 'available'; 
                     default: 
                         console.warn(`DEBUG: Header CSV desconhecido encontrado para ${type}: "${cleanedHeader}"`);
@@ -1214,7 +1217,7 @@
                             const parsedValue = parseInt(value, 10);
                             item[headerKey] = isNaN(parsedValue) ? Infinity : parsedValue;
                         }
-                        else if (['isPizza', 'available', 'active', 'isCustomizable', 'isSingleChoice'].includes(headerKey)) {
+                        else if (['isPizza', 'available', 'active', 'isCustomizable', 'isSingleChoice', 'isRequired'].includes(headerKey)) {
                             item[headerKey] = value.toUpperCase() === 'SIM';
                         } else {
                             item[headerKey] = value;
@@ -1245,12 +1248,15 @@
                 if (ingredients.length > 0) {
                     const isSingleChoice = ingredients[0]?.isSingleChoice;
                     const limit = ingredients[0]?.limit || Infinity;
+                    const isRequired = ingredients[0]?.isRequired || false;
                     
                     const categoryDiv = document.createElement('div');
                     categoryDiv.className = 'ingredient-category';
                     
                     let categoryTitle = capitalizeFirstLetter(category);
-                    if (!isSingleChoice && limit !== Infinity && limit > 1) {
+                    if (isRequired) {
+                        categoryTitle += ' (Obrigatório)';
+                    } else if (!isSingleChoice && limit !== Infinity && limit > 1) {
                         categoryTitle += ` (Escolha até ${limit})`;
                     } else if (!isSingleChoice && limit === 1) {
                         categoryTitle += ` (Escolha 1)`;
@@ -1284,26 +1290,41 @@
                         optionDiv.appendChild(label);
                         
                         // Ouve o evento de clique em toda a div
-                        optionDiv.addEventListener('click', () => {
-                            // Se o clique for na label ou em outra parte da div,
-                            // o input é acionado. Se for no próprio input, ele já lida com isso.
-                            input.checked = !input.checked;
+                        optionDiv.addEventListener('click', (e) => {
+                            // Se o clique for na div, forçamos o clique no input
+                            if (e.target !== input) {
+                                input.checked = !input.checked;
+                            }
+                            // A lógica de change é a mesma, então disparamos o evento manualmente
+                            input.dispatchEvent(new Event('change', { bubbles: true }));
+                        });
+                        
+                        // Lógica de `change` para os inputs
+                        input.addEventListener('change', (e) => {
+                            const currentInput = e.target;
+                            const currentCategory = currentInput.name.replace('multiple-', '');
+                            const isCurrentSingleChoice = allBurgerIngredients[currentCategory][0]?.isSingleChoice;
+                            const limit = allBurgerIngredients[currentCategory][0]?.limit || Infinity;
                             
-                            // Atualiza o estado da classe 'selected' visualmente
-                            document.querySelectorAll(`input[name="${inputName}"]`).forEach(el => {
-                                el.closest('.ingredient-option').classList.remove('selected');
-                            });
-                            if (input.checked) {
-                                input.closest('.ingredient-option').classList.add('selected');
+                            // Atualiza a classe 'selected' visualmente
+                            if (isCurrentSingleChoice) {
+                                document.querySelectorAll(`input[name="${currentCategory}"]`).forEach(el => {
+                                    el.closest('.ingredient-option').classList.remove('selected');
+                                });
+                            }
+                            if (currentInput.checked) {
+                                currentInput.closest('.ingredient-option').classList.add('selected');
+                            } else {
+                                currentInput.closest('.ingredient-option').classList.remove('selected');
                             }
                             
                             // Lógica de limite para checkboxes
-                            if (inputType === 'checkbox' && limit !== Infinity) {
-                                const checkedCount = document.querySelectorAll(`input[name="${inputName}"]:checked`).length;
+                            if (!isCurrentSingleChoice && limit !== Infinity) {
+                                const checkedCount = document.querySelectorAll(`input[name="${e.target.name}"]:checked`).length;
                                 if (checkedCount > limit) {
-                                    input.checked = false;
-                                    input.closest('.ingredient-option').classList.remove('selected');
-                                    showMessageModal(`Você pode escolher no máximo ${limit} item(s) da categoria "${capitalizeFirstLetter(category)}".`);
+                                    e.target.checked = false;
+                                    e.target.closest('.ingredient-option').classList.remove('selected');
+                                    showMessageModal(`Você pode escolher no máximo ${limit} item(s) da categoria "${capitalizeFirstLetter(currentCategory)}".`);
                                 }
                             }
                             
@@ -1321,7 +1342,7 @@
             addCustomBurgerBtn.onclick = () => addCustomBurgerToOrder(baseBurgerItem);
             
             burgerBuilderModal.style.display = 'flex';
-            promotionButton.style.display = 'none';
+            updatePromotionButtonVisibility();
         }
         
         function updateBurgerPrice() {
@@ -1355,7 +1376,17 @@
             for (const category in allBurgerIngredients) {
                 const ingredients = allBurgerIngredients[category];
                 const isSingleChoice = ingredients[0]?.isSingleChoice;
-                
+                const isRequired = ingredients[0]?.isRequired || false;
+
+                if (isRequired) {
+                    const selectedInputs = document.querySelectorAll(`input[name="${isSingleChoice ? category : `multiple-${category}`}"]:checked`);
+                    if (selectedInputs.length === 0) {
+                        showMessageModal(`Por favor, escolha uma opção na categoria "${capitalizeFirstLetter(category)}".`);
+                        allRequiredCategoriesFilled = false;
+                        break;
+                    }
+                }
+
                 if (isSingleChoice) {
                     const selectedInput = document.querySelector(`input[name="${category}"]:checked`);
                     if (selectedInput) {
@@ -1364,10 +1395,6 @@
                             selectedIngredients.push({ name: ingredient.name, category: ingredient.category });
                             total += ingredient.price;
                         }
-                    } else {
-                        showMessageModal(`Por favor, escolha uma opção na categoria "${capitalizeFirstLetter(category)}".`);
-                        allRequiredCategoriesFilled = false;
-                        break;
                     }
                 } else {
                     document.querySelectorAll(`input[name="multiple-${category}"]:checked`).forEach(input => {
