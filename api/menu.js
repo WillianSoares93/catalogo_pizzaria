@@ -19,7 +19,7 @@ const INGREDIENTES_HAMBURGER_CSV_URL = 'https://docs.google.com/spreadsheets/d/e
 // 'req' é o objeto de requisição (request) e 'res' é o objeto de resposta (response).
 export default async (req, res) => {
     // Define cabeçalhos de cache para otimizar o desempenho no Vercel.
-    res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate'); 
+    res.setHeader('Cache-Control', 's-maxage=5, stale-while-revalidate'); 
 
     try {
         console.log('Vercel Function: Iniciando processo de busca de dados...');
