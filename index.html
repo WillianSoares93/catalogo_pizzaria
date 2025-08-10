@@ -14,250 +14,238 @@
     <!-- Adicionado para PWA: Link para o arquivo de manifesto -->
     <link rel="manifest" href="/manifest.json">
 
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
-    
-    body {
-        font-family: 'Poppins', sans-serif;
-        background-color: #f8f4e9; /* Cor de fundo suave */
-    }
-    
-    /* Estilos para os cartões de sabor (pizza/bebida) */
-    .flavor-card {
-        transition: all 0.3s ease;
-    }
-    .flavor-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-    }
-    
-    /* Estilos para os botões de pedido */
-    .btn-order {
-        /* Gradiente de vermelho para um toque vibrante */
-        background: linear-gradient(135deg, #ef4444, #b91c1c);
-        color: white;
-        transition: all 0.3s ease;
-    }
-    .btn-order:hover {
-        transform: scale(1.05);
-        box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
-    }
-    
-    /* Novo estilo para "Finalizar sem Bebidas" */
-    .btn-orange-gradient {
-        background: linear-gradient(135deg, #f97316, #f59e0b); /* Laranja vibrante */
-        color: white;
-        transition: all 0.3s ease;
-    }
-    .btn-orange-gradient:hover {
-        transform: scale(1.05);
-        box-shadow: 0 5px 15px rgba(249, 115, 22, 0.4);
-    }
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8f4e9; /* Cor de fundo suave */
+        }
+        
+        /* Estilos para os cartões de sabor (pizza/bebida) */
+        .flavor-card {
+            transition: all 0.3s ease;
+        }
+        .flavor-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        /* Estilos para os botões de pedido */
+        .btn-order {
+            /* Gradiente de vermelho para um toque vibrante */
+            background: linear-gradient(135deg, #ef4444, #b91c1c);
+            transition: all 0.3s ease;
+        }
+        .btn-order:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
+        }
+        
+        /* Estilo para o botão "Adicionar mais" (mantido em tom amarelo/laranja para contraste) */
+        .btn-add-more {
+            background: linear-gradient(135deg, #fbbf24, #fcd34d); 
+            transition: all 0.3s ease;
+        }
+        .btn-add-more:hover {
+            transform: scale(1.02);
+            box-shadow: 0 3px 10px rgba(251, 191, 36, 0.4);
+        }
 
-    /* Estilo para o botão "Adicionar mais" (mantido em tom amarelo/laranja para contraste) */
-    .btn-add-more {
-        background: linear-gradient(135deg, #fbbf24, #fcd34d); 
-        transition: all 0.3s ease;
-    }
-    .btn-add-more:hover {
-        transform: scale(1.02);
-        box-shadow: 0 3px 10px rgba(251, 191, 36, 0.4);
-    }
+        /* Estilo para o cabeçalho com imagem de fundo (overlay vermelho já presente) */
+        .header-bg {
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://invexo.com.br/blog/wp-content/uploads/2022/12/pizza-pizzaria-gavea-rio-de-janeiro.jpg');
+            background-size: cover;
+            background-position: center;
+        }
 
-    /* Estilo para o cabeçalho com imagem de fundo (overlay vermelho já presente) */
-    .header-bg {
-        background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://invexo.com.br/blog/wp-content/uploads/2022/12/pizza-pizzaria-gavea-rio-de-janeiro.jpg');
-        background-size: cover;
-        background-position: center;
-    }
+        /* Estilos para o modal principal (usado para seleção de pizza) */
+        .modal {
+            display: none; /* Oculto por padrão */
+            position: fixed; /* Posição fixa na tela */
+            z-index: 1000; /* Acima de outros elementos */
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto; /* Habilita rolagem se o conteúdo for muito grande */
+            background-color: rgba(0,0,0,0.4); /* Fundo escuro semitransparente */
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            position: relative;
+            animation: fadeIn 0.3s ease-out;
+            border: 2px solid #ef4444; /* Borda vermelha */
+        }
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            cursor: pointer;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { transform: translateY(0); }
+        }
 
-    /* Estilos para o modal principal (usado para seleção de pizza) */
-    .modal {
-        display: none;
-        position: fixed;
-        z-index: 1000;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        overflow: auto;
-        background-color: rgba(0,0,0,0.4);
-        justify-content: center;
-        align-items: center;
-        padding: 20px;
-    }
-    .modal-content {
-        background-color: #fefefe;
-        margin: auto;
-        padding: 30px;
-        border-radius: 12px;
-        width: 90%;
-        max-width: 500px;
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-        position: relative;
-        animation: fadeIn 0.3s ease-out;
-        border: 2px solid #ef4444;
-    }
-    .close-button {
-        color: #aaa;
-        float: right;
-        font-size: 28px;
-        font-weight: bold;
-        position: absolute;
-        top: 10px;
-        right: 20px;
-        cursor: pointer;
-    }
-    .close-button:hover,
-    .close-button:focus {
-        color: black;
-        text-decoration: none;
-        cursor: pointer;
-    }
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(-20px); }
-        to { transform: translateY(0); }
-    }
+        /* Estilos para o modal de mensagem */
+        .message-modal {
+            display: none; /* Oculto por padrão */
+            position: fixed; /* Posição fixa na tela */
+            z-index: 1001; /* Acima de outros elementos */
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto; /* Habilita rolagem se o conteúdo for muito grande */
+            background-color: rgba(0,0,0,0.4); /* Fundo escuro semitransparente */
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .message-modal-content {
+            background-color: #fefefe; /* Revertido para cor neutra */
+            margin: auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: relative;
+            text-align: center;
+            animation: fadeIn 0.3s ease-out;
+        }
 
-    /* Estilos para o modal de mensagem */
-    .message-modal {
-        display: none;
-        position: fixed;
-        z-index: 1001;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        overflow: auto;
-        background-color: rgba(0,0,0,0.4);
-        justify-content: center;
-        align-items: center;
-        padding: 20px;
-    }
-    .message-modal-content {
-        background-color: #fefefe;
-        margin: auto;
-        padding: 20px;
-        border-radius: 8px;
-        width: 90%;
-        max-width: 400px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        position: relative;
-        text-align: center;
-        animation: fadeIn 0.3s ease-out;
-    }
+        /* Estilos para o popup de promoção */
+        .promotion-popup {
+            display: none; /* Oculto por padrão */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
 
-    /* Estilos para o popup de promoção */
-    .promotion-popup {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.7);
-        z-index: 2000;
-        justify-content: center;
-        align-items: center;
-    }
+        .promotion-popup-content {
+            background-color: #fff;
+            padding: 40px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 550px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            position: relative;
+            animation: popIn 0.4s ease-out;
+            border: 3px solid #dc2626; /* Borda vermelha para promoções */
+            overflow-y: auto;
+            max-height: 90vh;
+        }
 
-    .promotion-popup-content {
-        background-color: #fff;
-        padding: 40px;
-        border-radius: 15px;
-        width: 90%;
-        max-width: 550px;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-        text-align: center;
-        position: relative;
-        animation: popIn 0.4s ease-out;
-        border: 3px solid #dc2626;
-        overflow-y: auto;
-        max-height: 90vh;
-    }
+        @keyframes popIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
 
-    @keyframes popIn {
-        from { transform: scale(0.8); opacity: 0; }
-        to { transform: scale(1); opacity: 1; }
-    }
+        .promotion-popup-content h3 {
+            font-size: 2.25rem;
+            font-weight: bold;
+            color: #dc2626;
+            margin-bottom: 15px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
 
-    .promotion-popup-content h3 {
-        font-size: 2.25rem;
-        font-weight: bold;
-        color: #dc2626;
-        margin-bottom: 15px;
-        text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
-    }
+        .promotion-popup-content p {
+            font-size: 1.125rem;
+            color: #374151;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
 
-    .promotion-popup-content p {
-        font-size: 1.125rem;
-        color: #374151;
-        margin-bottom: 25px;
-        line-height: 1.6;
-    }
+        .promotion-popup-content .close-button {
+            top: 15px;
+            right: 25px;
+            font-size: 32px;
+            color: #6b7280;
+        }
 
-    .promotion-popup-content .close-button {
-        top: 15px;
-        right: 25px;
-        font-size: 32px;
-        color: #6b7280;
-    }
+        .promotion-popup-content .close-button:hover {
+            color: #1f2937;
+        }
 
-    .promotion-popup-content .close-button:hover {
-        color: #1f2937;
-    }
+        .promotion-item {
+            background-color: #fee2e2; /* Fundo vermelho claro para itens de promoção */
+            border: 1px solid #ef4444; /* Borda vermelha */
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            text-align: left;
+        }
 
-    .promotion-item {
-        background-color: #fee2e2;
-        border: 1px solid #ef4444;
-        border-radius: 8px;
-        padding: 15px;
-        margin-bottom: 10px;
-        text-align: left;
-    }
+        .promotion-item h4 {
+            font-weight: bold;
+            color: #dc2626; /* Título vermelho */
+            margin-bottom: 5px;
+        }
 
-    .promotion-item h4 {
-        font-weight: bold;
-        color: #dc2626;
-        margin-bottom: 5px;
-    }
+        .promotion-item p {
+            font-size: 0.95rem;
+            color: #4b5563;
+            margin-bottom: 5px;
+        }
 
-    .promotion-item p {
-        font-size: 0.95rem;
-        color: #4b5563;
-        margin-bottom: 5px;
-    }
+        .promotion-item .price {
+            font-weight: bold;
+            color: #dc2626; /* Preço vermelho */
+            font-size: 1.1rem;
+        }
 
-    .promotion-item .price {
-        font-weight: bold;
-        color: #dc2626;
-        font-size: 1.1rem;
-    }
+        /* Estilos para o botão flutuante de promoção */
+        #promotion-button {
+            display: none; /* Oculto por padrão, será exibido via JS */
+            position: fixed;
+            bottom: 20px;
+            left: 20px; /* Posição à esquerda */
+            background-color: #dc2626; /* Vermelho vibrante */
+            color: white;
+            padding: 15px 20px;
+            border-radius: 50px; /* Formato de pílula */
+            font-weight: bold;
+            font-size: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+            cursor: pointer;
+            z-index: 1500; /* Acima da maioria dos elementos, mas abaixo dos modais */
+            transition: background-color 0.3s ease;
+            animation: pulse 1.5s infinite; /* Animação de piscar */
+            align-items: center;
+            gap: 8px;
+        }
 
-    /* Estilos para o botão flutuante de promoção */
-    #promotion-button {
-        display: none;
-        position: fixed;
-        bottom: 20px;
-        left: 20px;
-        background-color: #dc2626;
-        color: white;
-        padding: 15px 20px;
-        border-radius: 50px;
-        font-weight: bold;
-        font-size: 1rem;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-        cursor: pointer;
-        z-index: 1500;
-        transition: background-color 0.3s ease;
-        animation: pulse 1.5s infinite;
-        align-items: center;
-        gap: 8px;
-    }
-
-    #promotion-button:hover {
-        background-color: #b91c1c;
-    }
+        #promotion-button:hover {
+            background-color: #b91c1c; /* Vermelho mais escuro no hover */
+        }
 
         @keyframes pulse {
             0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); } /* Usando rgba do red-600 */
@@ -581,7 +569,6 @@
             color: #4b5563;
         }
     </style>
-
 </head>
 <body>
     <!-- Header -->
@@ -601,7 +588,7 @@
     <!-- Menu Section -->
     <section id="menu" class="py-8 px-4 max-w-6xl mx-auto">
         <div class="text-center mb-8">
-            <h2 class="text-4xl font-bold text-gray-800 mb-4">Nosso Cardápio</h2>
+            <h2 class="text-4xl font-bold text-gray-800 mb-4">Nosso Cardápio- teste</h2>
             <p class="text-gray-600 text-lg mx-auto">Escolha sua pizza favorita ou uma bebida refrescante!</p>
         </div>
 
@@ -2362,7 +2349,7 @@
             if (hasDrinks) {
                 proceedBtn.textContent = 'Finalizar com Bebidas';
                 proceedBtn.classList.remove('btn-add-more');
-                proceedBtn.classList.add('btn-order');
+                proceedBtn.classList.add('btn-order'); 
             } else {
                 proceedBtn.textContent = 'Finalizar sem Bebidas';
                 proceedBtn.classList.remove('btn-order');
