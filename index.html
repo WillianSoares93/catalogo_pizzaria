@@ -577,7 +577,7 @@
     <!-- Menu Section -->
     <section id="menu" class="py-8 px-4 max-w-6xl mx-auto">
         <div class="text-center mb-8">
-            <h2 class="text-4xl font-bold text-gray-800 mb-4">Nosso Cardápio- teste</h2>
+            <h2 class="text-4xl font-bold text-gray-800 mb-4">Nosso Cardápio</h2>
             <p class="text-gray-600 text-lg mx-auto">Escolha sua pizza favorita ou uma bebida refrescante!</p>
         </div>
 
@@ -1012,7 +1012,7 @@
             { slices: 8, label: '8 Fatias', priceKey: 'basePrice' } 
         ];
 
-      
+        const whatsappNumber = '5587996070638'; 
 
         // Funções de controle de modais e sidebar
         function toggleOrderSidebar() {
@@ -1311,6 +1311,17 @@
                             
                             updateBurgerPrice();
                         });
+                        
+                        input.addEventListener('change', (e) => {
+                            // Este listener também é necessário para o comportamento padrão do input
+                            document.querySelectorAll(`input[name="${inputName}"]`).forEach(el => {
+                                el.closest('.ingredient-option').classList.remove('selected');
+                            });
+                            if (e.target.checked) {
+                                e.target.closest('.ingredient-option').classList.add('selected');
+                            }
+                            updateBurgerPrice();
+                        });
 
                         categoryDiv.appendChild(optionDiv);
                     });
@@ -1320,10 +1331,6 @@
             
             burgerTotalPriceEl.textContent = 'R$ ' + baseBurgerItem.basePrice.toFixed(2).replace('.', ',');
             
-            burgerIngredientsContainer.querySelectorAll('input').forEach(input => {
-                input.addEventListener('change', updateBurgerPrice);
-            });
-
             addCustomBurgerBtn.onclick = () => addCustomBurgerToOrder(baseBurgerItem);
             
             burgerBuilderModal.style.display = 'flex';
@@ -2458,7 +2465,7 @@
 
         function getStickyHeaderHeight() {
             const stickyHeader = document.querySelector('.category-bar-mobile-sticky');
-            return stickyHeader ? stickyHeader.offsetHeight : 0;
+            return stickyHeader.offsetHeight;
         }
 
         function setActiveCategoryButton(category) {
@@ -2553,7 +2560,7 @@
                 }
             }, {
                 root: null,
-                rootMargin: '0px 0px 0px 0px', 
+                rootMargin: `-${getStickyHeaderHeight()}px 0px 0px 0px`, 
                 threshold: 0 
             });
 
