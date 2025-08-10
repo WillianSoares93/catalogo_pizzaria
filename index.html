@@ -422,9 +422,6 @@
         .payment-option.selected .icon {
             color: #dc2626; /* red-600 */
         }
-        .payment-option .text-content {
-            flex-grow: 1;
-        }
         .payment-option .text-content h4 {
             font-weight: 600;
             color: #1f2937; /* gray-900 */
@@ -1112,38 +1109,56 @@
             const headersRaw = parseCsvLine(lines[0]);
             const mappedHeaders = headersRaw.map(header => {
                 let cleanedHeader = header.trim();
-                switch (cleanedHeader) {
-                    case 'ID Item (único)': return 'id';
-                    case 'Nome do Item': return 'name';
-                    case 'Descrição': return 'description';
-                    case 'Preço 8 fatias': return 'basePrice';
-                    case 'Preço 6 fatias': return 'price6Slices';
-                    case 'Preço 4 fatias': return 'price4Slices';
-                    case 'Categoria': return 'category';
-                    case 'É Pizza? (SIM/NÃO)': return 'isPizza';
-                    case 'Disponível (SIM/NÃO)': return 'available'; 
-                    case 'Imagem': return 'imageUrl'; 
-                    case 'É Montável? (SIM/NÃO)': return 'isCustomizable';
-                    case 'ID Promocao': return 'id';
-                    case 'Nome da Promocao': return 'name';
-                    case 'Descrição': return 'description';
-                    case 'Preco Promocional': return 'promoPrice';
-                    case 'ID Item Aplicavel': return 'itemId';
-                    case 'Ativo (SIM/NAO)': return 'active';
-                    case 'Bairros': return 'neighborhood';
-                    case 'Valor Frete': return 'deliveryFee';
-                    case 'ID Intem': return 'id';
-                    case 'Ingredientes': return 'name';
-                    case 'Catelogira': return 'category';
-                    case 'Preço': return 'price';
-                    case 'Disponível': return 'available';
-                    case 'Limite': return 'limit';
-                    case 'Dados': return 'data';
-                    case 'Valor': return 'value';
-                    default: 
-                        console.warn(`DEBUG: Header CSV desconhecido encontrado para ${type}: "${cleanedHeader}"`);
-                        return cleanedHeader.replace(/[^a-zA-Z0-9]+(.)?/g, (match, chr) => chr ? chr.toUpperCase() : '').replace(/^./, (match) => match.toLowerCase());
+                // Mapeamento específico para cada tipo de planilha
+                if (type === 'cardapio') {
+                    switch (cleanedHeader) {
+                        case 'ID Item (único)': return 'id';
+                        case 'Nome do Item': return 'name';
+                        case 'Descrição': return 'description';
+                        case 'Preço 8 fatias': return 'basePrice';
+                        case 'Preço 6 fatias': return 'price6Slices';
+                        case 'Preço 4 fatias': return 'price4Slices';
+                        case 'Categoria': return 'category';
+                        case 'É Pizza? (SIM/NÃO)': return 'isPizza';
+                        case 'Disponível (SIM/NÃO)': return 'available'; 
+                        case 'Imagem': return 'imageUrl'; 
+                        case 'É Montável? (SIM/NÃO)': return 'isCustomizable';
+                        default: return cleanedHeader;
+                    }
+                } else if (type === 'promocoes') {
+                    switch (cleanedHeader) {
+                        case 'ID Promocao': return 'id';
+                        case 'Nome da Promocao': return 'name';
+                        case 'Descrição': return 'description';
+                        case 'Preco Promocional': return 'promoPrice';
+                        case 'ID Item Aplicavel': return 'itemId';
+                        case 'Ativo (SIM/NAO)': return 'active';
+                        default: return cleanedHeader;
+                    }
+                } else if (type === 'deliveryFees') {
+                    switch (cleanedHeader) {
+                        case 'Bairros': return 'neighborhood';
+                        case 'Valor Frete': return 'deliveryFee';
+                        default: return cleanedHeader;
+                    }
+                } else if (type === 'ingredients') {
+                    switch (cleanedHeader) {
+                        case 'ID Intem': return 'id';
+                        case 'Ingredientes': return 'name';
+                        case 'Catelogira': return 'category';
+                        case 'Preço': return 'price';
+                        case 'Disponível': return 'available';
+                        case 'Limite': return 'limit';
+                        default: return cleanedHeader;
+                    }
+                } else if (type === 'contacts') {
+                    switch (cleanedHeader) {
+                        case 'Dados': return 'data';
+                        case 'Valor': return 'value';
+                        default: return cleanedHeader;
+                    }
                 }
+                return cleanedHeader.replace(/[^a-zA-Z0-9]+(.)?/g, (match, chr) => chr ? chr.toUpperCase() : '').replace(/^./, (match) => match.toLowerCase());
             });
             
             const parsedData = [];
@@ -1737,6 +1752,9 @@
                     } else if (item.selected_slices) {
                         const sizeLabel = `${item.selected_slices} FATIAS`.toUpperCase();
                         itemName = `<b>${sizeLabel}</b>: ${item.name}`;
+                    } else if (item.type === 'burger') {
+                        itemName = item.name;
+                        itemDescription = `Ingredientes: ${item.ingredients.map(ing => ing.name).join(', ')}`;
                     }
                     
                     const isLastItem = (index === order.length - 1);
