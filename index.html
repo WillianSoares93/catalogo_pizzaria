@@ -547,7 +547,7 @@
     <!-- Menu Section -->
     <section id="menu" class="py-8 px-4 max-w-6xl mx-auto">
         <div class="text-center mb-8">
-            <h2 class="text-4xl font-bold text-gray-800 mb-4">Nosso Cardápio- teste</h2>
+            <h2 class="text-4xl font-bold text-gray-800 mb-4">Nosso Cardápio</h2>
             <p class="text-gray-600 text-lg mx-auto">Escolha sua pizza favorita ou uma bebida refrescante!</p>
         </div>
 
@@ -890,7 +890,7 @@
         const PROMOCOES_CSV_URL_REF = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=600393470&single=true&output=csv'; 
         const DELIVERY_FEES_CSV_URL_REF = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=1695668250&single=true&output=csv';
         const INGREDIENTS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=1816106560&single=true&output=csv';
-
+        const CONTACTS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=2043568216&single=true&output=csv';
 
         // Variáveis globais
         let order = [];
@@ -1309,8 +1309,7 @@
                                     </div>
                                 `;
 							} else {
-							    // Lógica para Hambúrgueres e outros itens
-                                let buttonHtml = '';
+							    let buttonHtml = '';
                                 if (item.isCustomizable) {
                                     buttonHtml = `<button class="add-item-btn bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full text-sm font-medium transition duration-300"
                                                         data-item-id="${item.id}" data-image-url="${trimmedImageUrl}">
@@ -1896,7 +1895,7 @@
                 let itemDescription = item.description || '';
 
                 if (item.type === 'promotion') {
-                    itemName = item.name.replace('<i class="fas fa-tags text-red-600 mr-2"></i> ', ''); 
+                    itemName = `<i class="fas fa-tags text-red-600 mr-2"></i> ${item.name}`; 
                 } else if (item.selected_slices) {
                     itemName = `${item.selected_slices} FATIAS: ${item.name}`;
                 }
