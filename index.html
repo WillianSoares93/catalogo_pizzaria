@@ -577,7 +577,7 @@
     <!-- Menu Section -->
     <section id="menu" class="py-8 px-4 max-w-6xl mx-auto">
         <div class="text-center mb-8">
-            <h2 class="text-4xl font-bold text-gray-800 mb-4">Nosso Cardápio</h2>
+            <h2 class="text-4xl font-bold text-gray-800 mb-4">Nosso Cardápio- teste</h2>
             <p class="text-gray-600 text-lg mx-auto">Escolha sua pizza favorita ou uma bebida refrescante!</p>
         </div>
 
@@ -1012,8 +1012,6 @@
             { slices: 8, label: '8 Fatias', priceKey: 'basePrice' } 
         ];
 
-
-
         // Funções de controle de modais e sidebar
         function toggleOrderSidebar() {
             orderSidebar.classList.toggle('translate-x-full');
@@ -1285,13 +1283,13 @@
                         optionDiv.appendChild(input);
                         optionDiv.appendChild(label);
                         
+                        // Ouve o evento de clique em toda a div
                         optionDiv.addEventListener('click', () => {
-                            if (inputType === 'radio') {
-                                input.checked = true;
-                            } else {
-                                input.checked = !input.checked;
-                            }
-                            // Adiciona/remove a classe de seleção visual
+                            // Se o clique for na label ou em outra parte da div,
+                            // o input é acionado. Se for no próprio input, ele já lida com isso.
+                            input.checked = !input.checked;
+                            
+                            // Atualiza o estado da classe 'selected' visualmente
                             document.querySelectorAll(`input[name="${inputName}"]`).forEach(el => {
                                 el.closest('.ingredient-option').classList.remove('selected');
                             });
@@ -1309,17 +1307,6 @@
                                 }
                             }
                             
-                            updateBurgerPrice();
-                        });
-                        
-                        input.addEventListener('change', (e) => {
-                            // Este listener também é necessário para o comportamento padrão do input
-                            document.querySelectorAll(`input[name="${inputName}"]`).forEach(el => {
-                                el.closest('.ingredient-option').classList.remove('selected');
-                            });
-                            if (e.target.checked) {
-                                e.target.closest('.ingredient-option').classList.add('selected');
-                            }
                             updateBurgerPrice();
                         });
 
@@ -2213,7 +2200,8 @@
 
         function updatePromotionButtonVisibility() {
             const activePromotionsWithPrice = allPromotionsData.filter(promo => promo.active && promo.promoPrice !== null);
-            if (activePromotionsWithPrice.length > 0 && !orderSidebar.classList.contains('translate-x-0')) {
+            const isAnyModalOpen = document.querySelector('.modal[style*="display: flex"]');
+            if (activePromotionsWithPrice.length > 0 && !orderSidebar.classList.contains('translate-x-0') && !isAnyModalOpen) {
                 promotionButton.style.display = 'flex';
             } else {
                 promotionButton.style.display = 'none';
@@ -2222,13 +2210,16 @@
 
         closePromotionPopupBtn.addEventListener('click', function() {
             promotionPopup.style.display = 'none';
+            updatePromotionButtonVisibility();
         });
         closePromotionPopupBtnBottom.addEventListener('click', function() {
             promotionPopup.style.display = 'none';
+            updatePromotionButtonVisibility();
         });
         window.addEventListener('click', function(event) {
             if (event.target == promotionPopup) {
                 promotionPopup.style.display = 'none';
+                updatePromotionButtonVisibility();
             }
         });
 
@@ -2273,11 +2264,13 @@
                 suggestedDrinksList.innerHTML = '<p class="text-gray-500">Nenhuma bebida disponível para sugestão no momento.</p>';
             }
             drinkSuggestionModal.style.display = 'flex'; 
+            updatePromotionButtonVisibility();
             updateDrinkSuggestionButtons(); 
         }
 
         closeDrinkSuggestionModalBtn.addEventListener('click', function() {
             drinkSuggestionModal.style.display = 'none';
+            updatePromotionButtonVisibility();
         });
 
         proceedWithoutDrinksBtn.addEventListener('click', function() {
@@ -2308,6 +2301,7 @@
 
         closeConfirmNoDrinkModalBtn.addEventListener('click', function() {
             confirmNoDrinkModal.style.display = 'none';
+            updatePromotionButtonVisibility();
             drinkSuggestionModal.style.display = 'flex'; 
         });
 
@@ -2323,12 +2317,14 @@
 
         confirmNoDrinkNoBtn.addEventListener('click', function() { 
             confirmNoDrinkModal.style.display = 'none';
+            updatePromotionButtonVisibility();
             drinkSuggestionModal.style.display = 'flex'; 
         });
 
         window.addEventListener('click', function(event) {
             if (event.target == confirmNoDrinkModal) {
                 confirmNoDrinkModal.style.display = 'none';
+                updatePromotionButtonVisibility();
                 drinkSuggestionModal.style.display = 'flex'; 
             }
         });
@@ -2336,6 +2332,7 @@
         function openPaymentMethodModal(fromCheckout = false) { 
             isCheckoutInitiated = fromCheckout; 
             paymentMethodModal.style.display = 'flex';
+            updatePromotionButtonVisibility();
             
             const totalOrder = calculateOrderTotal();
             paymentModalTotal.textContent = `R$ ${totalOrder.toFixed(2).replace('.', ',')}`;
@@ -2571,7 +2568,7 @@
 
         function showAddressInputModal() {
             addressInputModal.style.display = 'flex';
-            promotionButton.style.display = 'none';
+            updatePromotionButtonVisibility();
 
             if (selectedAddress.bairro) {
                 neighborhoodSelect.value = selectedAddress.bairro;
