@@ -1017,7 +1017,7 @@
         const neighborhoodSelect = document.getElementById('neighborhoodSelect');
         const streetInput = document.getElementById('streetInput');
         const numberInput = document.getElementById('numberInput');
-        const noNumberCheckbox = document.getElementById('noNumberCheckbox'); // NOVO: Checkbox "Sem Número"
+        const noNumberCheckbox = document.getElementById('noNumberCheckbox');
         const referencePointInput = document.getElementById('referencePointInput');
         const confirmAddressBtn = document.getElementById('confirmAddressBtn');
         const addressSummarySection = document.getElementById('address-summary-section');
@@ -2164,7 +2164,7 @@
                 return;
             }
 
-            if (!selectedAddress.clientName || !selectedAddress.bairro || (!selectedAddress.numero && !noNumberCheckbox.checked)) {
+            if (!selectedAddress.clientName || !selectedAddress.bairro || (!selectedAddress.rua) || (!selectedAddress.numero && !noNumberCheckbox.checked)) {
                 showMessageModal('Por favor, preencha o nome do cliente, o bairro, a rua e o número ou marque "Sem Número" para continuar.');
                 return;
             }
@@ -2347,12 +2347,12 @@
             const hasDrinks = order.some(item => item.category === 'bebidas');
             if (hasDrinks) {
                 proceedWithoutDrinksBtn.textContent = 'Finalizar com Bebidas';
-                proceedWithoutDrinksBtn.classList.add('green-gradient');
                 proceedWithoutDrinksBtn.classList.remove('btn-order');
+                proceedWithoutDrinksBtn.classList.add('green-gradient');
             } else {
                 proceedWithoutDrinksBtn.textContent = 'Finalizar sem Bebidas';
-                proceedWithoutDrinksBtn.classList.add('btn-order'); 
                 proceedWithoutDrinksBtn.classList.remove('green-gradient');
+                proceedWithoutDrinksBtn.classList.add('btn-order'); 
             }
         }
 
