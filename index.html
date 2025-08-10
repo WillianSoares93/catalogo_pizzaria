@@ -577,7 +577,7 @@
     <!-- Menu Section -->
     <section id="menu" class="py-8 px-4 max-w-6xl mx-auto">
         <div class="text-center mb-8">
-            <h2 class="text-4xl font-bold text-gray-800 mb-4">Nosso Cardápio</h2>
+            <h2 class="text-4xl font-bold text-gray-800 mb-4">Nosso Cardápio- teste</h2>
             <p class="text-gray-600 text-lg mx-auto">Escolha sua pizza favorita ou uma bebida refrescante!</p>
         </div>
 
@@ -1246,9 +1246,10 @@
             for (const category in allBurgerIngredients) {
                 const ingredients = allBurgerIngredients[category];
                 if (ingredients.length > 0) {
-                    const isSingleChoice = ingredients[0]?.isSingleChoice;
-                    const limit = ingredients[0]?.limit || Infinity;
-                    const isRequired = ingredients[0]?.isRequired || false;
+                    const firstIngredient = ingredients[0];
+                    const isSingleChoice = firstIngredient.isSingleChoice;
+                    const limit = firstIngredient.limit || Infinity;
+                    const isRequired = firstIngredient.isRequired || false;
                     
                     const categoryDiv = document.createElement('div');
                     categoryDiv.className = 'ingredient-category';
@@ -1373,8 +1374,9 @@
 
             for (const category in allBurgerIngredients) {
                 const ingredients = allBurgerIngredients[category];
-                const isSingleChoice = ingredients[0]?.isSingleChoice;
-                const isRequired = ingredients[0]?.isRequired || false;
+                const firstIngredient = ingredients[0];
+                const isSingleChoice = firstIngredient?.isSingleChoice;
+                const isRequired = firstIngredient?.isRequired || false;
 
                 if (isRequired) {
                     const selectedInputs = document.querySelectorAll(`input[name="${isSingleChoice ? category : `multiple-${category}`}"]:checked`);
@@ -2071,7 +2073,8 @@
                 if (item.type === 'promotion') {
                     itemName = item.name.replace('<i class="fas fa-tags text-red-600 mr-2"></i> ', ''); 
                 } else if (item.selected_slices) {
-                    itemName = `${item.selected_slices} FATIAS: ${item.name}`;
+                    itemName = `${item.selected_slices} FATIAS`.toUpperCase();
+                    itemName = `<b>${sizeLabel}</b>: ${item.name}`;
                 } else if (item.type === 'custom_burger') {
                     itemName = `Hambúrguer Personalizado`;
                     itemDescription = item.ingredients.map(ing => `  - ${ing.name}`).join('\n');
@@ -2114,7 +2117,7 @@
 
             message += '\n\nObrigado!';
 
-            const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+            const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
             window.open(whatsappUrl, '_blank');
             
             clearOrder();
@@ -2765,6 +2768,22 @@
                 console.error('DEBUG: loadMenuAndRender: Erro fatal ao carregar o cardápio:', error);
                 showMessageModal('Não foi possível carregar o cardápio no momento. Por favor, tente novamente mais tarde.');
             }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => {
+                        console.log('DEBUG: Service Worker registado com sucesso. Scope:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('DEBUG: Falha no registo do Service Worker:', error);
+                        if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+                            console.warn('DEBUG: Erro de rede/CORS no Service Worker. Isso pode ser esperado para recursos de terceiros não-cacheáveis.');
+                        }
+                    });
+            }
+            loadMenuAndRender();
         });
         
         document.addEventListener("visibilitychange", () => {
