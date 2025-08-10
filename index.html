@@ -1,3 +1,4 @@
+teste
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -622,6 +623,13 @@
                     <span class="text-gray-600">Subtotal:</span>
                     <span id="subtotal" class="font-bold">R$ 0,00</span>
                 </div>
+
+                <!-- Seção de desconto -->
+                <div id="discount-section" class="flex justify-between items-center mb-2 hidden text-red-600">
+                    <span class="text-gray-600">Desconto: <span id="discount-percentage-display"></span></span>
+                    <span id="discount-value-display" class="font-bold">- R$ 0,00</span>
+                </div>
+                
                 <!-- Seção de taxa de entrega dinâmica -->
                 <div id="deliveryFeeSection" class="flex justify-between mb-2">
                     <span class="text-gray-600">Taxa de entrega:</span>
@@ -678,244 +686,8 @@
                 <!-- Opções de bairro serão carregadas via JS -->
             </div>
         </div>
-    </div>
-    
-    <!-- NOVO: Modal de Montagem de Hambúrguer -->
-    <div id="burger-builder-modal" class="modal">
-        <div class="modal-content burger-builder-modal">
-            <span class="close-button" id="close-burger-builder-modal">&times;</span>
-            <h3 class="text-xl font-bold text-gray-800 mb-4">Monte Seu Hambúrguer</h3>
-            
-            <div id="burger-ingredients-container" class="mb-4">
-                <!-- Seções de ingredientes serão carregadas aqui -->
-            </div>
-            
-            <div class="flex justify-between items-center bg-gray-100 p-4 rounded-lg mt-4">
-                <span class="text-lg font-bold">Total:</span>
-                <span id="burger-total-price" class="text-2xl font-bold text-red-600">R$ 0,00</span>
-            </div>
-            
-            <button id="add-custom-burger-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-full transition w-full">
-                Adicionar ao Pedido
-            </button>
-        </div>
-    </div>
-
-    <!-- Modal de Mensagem (para feedback do usuário) -->
-    <div id="message-modal" class="message-modal">
-        <div class="modal-content">
-            <span class="close-button" id="close-message-modal">&times;</span>
-            <p class="text-lg font-semibold text-gray-800 mb-4" id="message-modal-text"></p>
-            <button id="ok-message-modal" class="px-4 py-2 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition">OK</button>
-        </div>
-    </div>
-
-    <!-- Novo Modal de Promoção Flutuante -->
-    <div id="promotion-popup" class="promotion-popup">
-        <div class="modal-content">
-            <span class="close-button" id="close-promotion-popup">&times;</span>
-            <h3>Promoções Especiais!</h3>
-            <p>Confira as nossas ofertas exclusivas e não perca tempo!</p>
-            <div id="promotions-list">
-                <!-- Promoções serão carregadas aqui -->
-            </div>
-            <button id="close-promotion-popup-btn" class="px-6 py-3 mt-6 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition w-full">
-                Fechar Promoções
-            </button>
-        </div>
-    </div>
-
-    <!-- Novo Botão Flutuante de Promoção -->
-    <button id="promotion-button" class="hidden">
-        <i class="fas fa-tags text-xl"></i>
-        <span>Promoções!</span>
-    </button>
-
-    <!-- Floating Order Button -->
-    <div class="fixed bottom-6 right-6 z-40">
-        <button onclick="toggleOrderSidebar()" class="bg-red-600 hover:bg-red-700 text-white rounded-full p-5 shadow-lg relative transition duration-300 transform hover:scale-110" id="cart-button">
-            <i class="fas fa-shopping-cart text-2xl"></i>
-            <span id="cartCount" class="absolute -top-2 -right-2 bg-red-500 text-white text-sm font-bold rounded-full h-7 w-7 flex items-center justify-center hidden">0</span>
-        </button>
-    </div>
-
-    <!-- Modal de Sugestão de Bebidas -->
-    <div id="drink-suggestion-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-button" id="close-drink-suggestion-modal">&times;</span>
-            <h3 class="text-xl font-bold text-gray-800 mb-4">Que tal adicionar uma bebida?</h3>
-            <p class="text-gray-600 mb-6">Seu pedido não contém bebidas. Gostaria de adicionar alguma?</p>
-            <!-- Botões "Voltar ao Pedido" e "Finalizar sem Bebidas" / "Finalizar com Bebidas" -->
-            <button onclick="backToOrderSidebarFromDrinkSuggestion()" class="px-4 py-2 bg-gray-500 text-white rounded-lg font-bold hover:bg-gray-600 transition w-full mb-3 whitespace-nowrap text-sm">
-                Voltar ao Pedido
-            </button>
-            <button id="proceed-without-drinks" class="dynamic-checkout-button btn-order w-full py-3 text-white font-bold rounded-full mb-6 whitespace-nowrap text-sm">
-                Finalizar sem Bebidas
-            </button>
-            <div id="suggested-drinks-list" class="flex flex-col gap-3 mb-6">
-                <!-- Sugestões de bebidas serão inseridas aqui via JS -->
-            </div>
-        </div>
-    </div>
-
-    <!-- NOVO: Modal de Confirmação para Pedido sem Bebida (Mantido, mas não mais usado pelo 'Finalizar sem Bebidas') -->
-    <div id="confirm-no-drink-modal" class="message-modal">
-        <div class="modal-content">
-            <span class="close-button" id="close-confirm-no-drink-modal">&times;</span>
-            <p class="text-lg font-semibold text-gray-800 mb-4">Pedir sem uma bebida?</p>
-            <div class="flex justify-center space-x-4">
-                <button id="confirm-no-drink-yes" class="px-6 py-2 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition">Sim!</button>
-                <button id="confirm-no-drink-no-btn" class="px-6 py-2 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition">Não!</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- NOVO: Modal de Sugestão de Instalação do PWA -->
-    <div id="install-prompt-modal" class="message-modal">
-        <div class="modal-content">
-            <span class="close-button" id="close-install-prompt-modal">&times;</span>
-            <p class="text-lg font-semibold text-gray-800 mb-4">Instale o App Sâmia Cardápio para uma experiência completa!</p>
-            <p class="text-gray-600 mb-6">Adicione nosso aplicativo à sua tela inicial para acesso rápido e fácil.</p>
-            <button id="install-app-button" class="px-6 py-3 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition w-full">
-                Instalar Aplicativo
-            </button>
-        </div>
-    </div>
-
-    <!-- NOVO: Modal de Seleção de Forma de Pagamento -->
-    <div id="payment-method-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-button" id="close-payment-method-modal">&times;</span>
-            <h3 class="text-xl font-bold text-gray-800 mb-2">Escolha a Forma de Pagamento</h3>
-            <!-- NOVO: Exibição do total do pedido -->
-            <p class="text-gray-600 text-lg mb-4">Total Pedido: <span id="payment-modal-total" class="font-bold text-red-600">R$ 0,00</span></p>
-
-            <div id="payment-options-container" class="flex flex-col gap-3 mb-6">
-                <label class="payment-option" data-method="Dinheiro">
-                    <input type="radio" name="paymentMethod" value="Dinheiro" class="form-radio">
-                    <i class="fas fa-money-bill-wave icon"></i>
-                    <div class="text-content">
-                        <h4>Dinheiro</h4>
-                        <p></p> <!-- Descrição removida -->
-                    </div>
-                </label>
-                <label class="payment-option" data-method="Cartão de Crédito/Débito">
-                    <input type="radio" name="paymentMethod" value="Cartão de Crédito/Débito" class="form-radio">
-                    <i class="fas fa-credit-card icon"></i>
-                    <div class="text-content">
-                        <h4>Cartão de Crédito/Débito</h4>
-                        <p></p> <!-- Descrição removida -->
-                    </div>
-                </label>
-                <label class="payment-option" data-method="Pix">
-                    <input type="radio" name="paymentMethod" value="Pix" class="form-radio">
-                    <i class="fas fa-qrcode icon"></i>
-                    <div class="text-content">
-                        <h4>Pix</h4>
-                        <p></p> <!-- Descrição removida -->
-                    </div>
-                </label>
-            </div>
-
-            <!-- Novo campo para troco -->
-            <div id="troco-input-container" class="hidden mt-4 mb-6 p-4 border border-gray-300 rounded-lg bg-gray-50">
-                <label for="trocoPara" class="block text-gray-700 text-sm font-bold mb-2">
-                    Troco para (R$):
-                </label>
-                <input type="number" id="trocoPara" step="0.01" min="0" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mb-2">
-                <p class="text-gray-600 text-sm">
-                    Troco total: <span id="trocoTotalDisplay" class="font-bold text-red-600">R$ 0,00</span>
-                </p>
-            </div>
-
-            <button id="confirm-payment-method-btn" class="px-6 py-3 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition w-full">
-                Confirmar Pagamento
-            </button>
-        </div>
-    </div>
-
-    <!-- NOVO: Modal de Input de Endereço -->
-    <div id="address-input-modal" class="address-modal">
-        <div class="address-modal-content">
-            <span class="close-button" id="close-address-modal">&times;</span>
-            <h3 class="text-xl font-bold text-gray-800 mb-4">Informe seus Dados</h3>
-             <div class="mb-4">
-                <label for="clientNameInput" class="block text-gray-700 text-sm font-bold mb-2">
-                    Nome do Cliente:
-                </label>
-                <input type="text" id="clientNameInput" placeholder="Seu nome" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-            </div>
-            <div class="mb-4">
-                <label for="neighborhoodSelect" class="block text-gray-700 text-sm font-bold mb-2">
-                    Bairro:
-                </label>
-                <select id="neighborhoodSelect" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                    <option value="">Selecione um bairro</option>
-                    <!-- Opções de bairro serão carregadas via JS -->
-                </select>
-            </div>
-            <div class="mb-4">
-                <label for="streetInput" class="block text-gray-700 text-sm font-bold mb-2">
-                    Rua:
-                </label>
-                <input type="text" id="streetInput" placeholder="Nome da Rua" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-            </div>
-            <!-- NOVO: Campo Número com checkbox "Sem Número" -->
-            <div class="mb-4">
-                <div class="flex items-center justify-between mb-2">
-                    <label for="numberInput" class="block text-gray-700 text-sm font-bold">
-                        Número:
-                    </label>
-                    <div class="flex items-center">
-                        <input type="checkbox" id="noNumberCheckbox" class="form-checkbox text-red-600">
-                        <label for="noNumberCheckbox" class="ml-2 text-gray-700 text-sm">Sem Número</label>
-                    </div>
-                </div>
-                <input type="number" inputmode="numeric" id="numberInput" placeholder="Número" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-            </div>
-            <div class="mb-6">
-                <label for="referencePointInput" class="block text-gray-700 text-sm font-bold mb-2">
-                    Ponto de Referência (Opcional):
-                </label>
-                <input type="text" id="referencePointInput" placeholder="Ex: Próximo à praça" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-            </div>
-            <button id="confirmAddressBtn" class="btn-confirm-green w-full py-2 px-4 rounded-full text-white font-bold transition duration-300">
-                Confirmar Dados
-            </button>
-        </div>
-    </div>
-
-    <!-- Footer -->
-    <footer class="bg-gray-800 text-white py-8 px-4">
-        <div class="max-w-6xl mx-auto">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
-                <div>
-                    <h3 class="text-xl font-bold mb-4">Sâmia</h3>
-                    <p class="text-gray-400">As melhores pizzas artesanais da cidade, feitas com ingredientes frescos e muito carinho.</p>
-                </div>
-                <div>
-                    <h3 class="text-xl font-bold mb-4">Horário de Funcionamento</h3>
-                    <p class="text-gray-400">Segunda a Sábado: 18:00 - 23:00</p>
-                    <p class="text-gray-400">Domingo: 17:00 - 22:00</p>
-                </div>
-                <div>
-                    <h3 class="text-xl font-bold mb-4">Contato</h3>
-                    <p class="text-gray-400"><i class="fas fa-phone mr-2"></i> (85) 98765-4321</p>
-                    <p class="text-gray-400"><i class="fas fa-envelope mr-2"></i> contato@suapizzaria.com</p>
-                    <div class="flex justify-center md:justify-start space-x-4 mt-2">
-                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-instagram text-xl"></i></a>
-                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-facebook text-xl"></i></a>
-                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-whatsapp text-xl"></i></a>
-                    </div>
-                </div>
-            </div>
-            <div class="border-t border-gray-700 mt-8 pt-6 text-center text-gray-400">
-                <p>&copy; 2023 Sâmia. Todos os direitos reservados.</p>
-            </div>
-        </div>
-    </footer>
-
-    <script>
+    </selec>
+```javascript
         // Variáveis globais
         let order = [];
         let allMenuData = [];
@@ -938,7 +710,7 @@
             deliveryFee: 0.00
         };
 
-        const defaultImage = 'https://www.bakelitsul.com.br/Assets/img/sem-produto-detalhe.png';
+        const defaultImage = '[https://www.bakelitsul.com.br/Assets/img/sem-produto-detalhe.png](https://www.bakelitsul.com.br/Assets/img/sem-produto-detalhe.png)';
         const whatsappNumber = '5587996070638'; 
 
         // Referências para os elementos DOM
@@ -1019,11 +791,12 @@
         const editAddressBtn = document.getElementById('editAddressBtn');
         const informAddressBtn = document.getElementById('informAddressBtn');
         const editDeliveryAddressBtn = document.getElementById('editDeliveryAddressBtn');
-
+        
         // Referências para os novos elementos de desconto
         const discountSection = document.getElementById('discount-section');
-        const discountDisplay = document.getElementById('discount-display');
+        const discountPercentageDisplay = document.getElementById('discount-percentage-display');
         const discountValueDisplay = document.getElementById('discount-value-display');
+
 
         let currentPizzaData = {}; 
         let firstHalfPizza = null; 
@@ -1132,7 +905,6 @@
         window.addEventListener('click', (event) => {
             if (event.target == burgerBuilderModal) {
                 burgerBuilderModal.style.display = 'none';
-                updatePromotionButtonVisibility();
             }
         });
 
@@ -1942,7 +1714,6 @@
         function updateOrderDisplay() {
             const orderItemsContainer = document.getElementById('orderItems');
             let subtotal = 0;
-            let finalDiscountAmount = 0;
 
             const nonDiscountItems = order.filter(item => item.type !== 'discount');
             nonDiscountItems.forEach((item) => {
@@ -1950,18 +1721,20 @@
             });
             
             // Lógica de desconto percentual
-            const discountItemIndex = order.findIndex(item => item.type === 'discount');
-            if (discountItemIndex > -1) {
-                const discountItem = order[discountItemIndex];
-                finalDiscountAmount = subtotal * (discountItem.discountPercentage / 100);
+            let finalDiscountAmount = 0;
+            if (discountPromotion) {
+                finalDiscountAmount = subtotal * (discountPromotion.promoPrice / 100);
+                discountPercentageDisplay.textContent = `${discountPromotion.promoPrice}%`;
+                discountValueDisplay.textContent = `- R$ ${finalDiscountAmount.toFixed(2).replace('.', ',')}`;
             }
 
             if (order.length === 0) {
                 emptyOrderMessage.classList.remove('hidden');
                 orderItemsContainer.innerHTML = '';
                 orderItemsContainer.appendChild(emptyOrderMessage);
-                document.getElementById('subtotal').textContent = 'R$ 0,00';
+                subtotalEl.textContent = 'R$ 0,00';
                 selectedPaymentMethod = null;
+                discountSection.classList.add('hidden');
             } else {
                 emptyOrderMessage.classList.add('hidden');
                 
@@ -2009,13 +1782,12 @@
                 subtotalEl.textContent = 'R$ ' + subtotal.toFixed(2).replace('.', ',');
 
                 // Adiciona a seção de desconto se houver um desconto
-                if (finalDiscountAmount > 0) {
-                    orderItemsContainer.insertAdjacentHTML('beforeend', `
-                        <div id="discount-section" class="flex justify-between items-center py-3 border-b border-gray-100 text-red-600">
-                            <span class="font-bold">Desconto (${discountPromotion.promoPrice}%)</span>
-                            <span id="discount-value-display" class="font-bold">- R$ ${finalDiscountAmount.toFixed(2).replace('.', ',')}</span>
-                        </div>
-                    `);
+                if (discountPromotion && subtotal > 0) {
+                    discountSection.classList.remove('hidden');
+                    discountPercentageDisplay.textContent = `${discountPromotion.promoPrice}%`;
+                    discountValueDisplay.textContent = `- R$ ${finalDiscountAmount.toFixed(2).replace('.', ',')}`;
+                } else {
+                    discountSection.classList.add('hidden');
                 }
             }
             
@@ -2823,7 +2595,7 @@
                 allPromotionsData = parseCsvData(promocoesCsvText, 'promocoes');
                 deliveryFeesData = parseCsvData(deliveryFeesCsvText, 'deliveryFees');
                 
-                // Encontrar e aplicar a promoção de desconto se ela existir e estiver ativa
+                // Encontrar e armazenar a promoção de desconto se ela existir e estiver ativa
                 discountPromotion = allPromotionsData.find(promo => promo.name === 'Desconto no Pedido' && promo.active);
                 if (discountPromotion) {
                     console.log(`DEBUG: Promoção de desconto de ${discountPromotion.promoPrice}% encontrada e ativa.`);
