@@ -1011,7 +1011,7 @@
             { slices: 6, label: '6 Fatias', priceKey: 'price6Slices' },
             { slices: 8, label: '8 Fatias', priceKey: 'basePrice' } 
         ];
-
+        
         // Funções de controle de modais e sidebar
         function toggleOrderSidebar() {
             orderSidebar.classList.toggle('translate-x-full');
@@ -1291,15 +1291,13 @@
                         
                         // Ouve o evento de clique em toda a div
                         optionDiv.addEventListener('click', (e) => {
-                            // Se o clique for na div, forçamos o clique no input
-                            if (e.target !== input) {
+                            if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'LABEL') {
                                 input.checked = !input.checked;
+                                input.dispatchEvent(new Event('change', { bubbles: true }));
                             }
-                            // A lógica de change é a mesma, então disparamos o evento manualmente
-                            input.dispatchEvent(new Event('change', { bubbles: true }));
                         });
                         
-                        // Lógica de `change` para os inputs
+                        // Ouve o evento de `change` para os inputs
                         input.addEventListener('change', (e) => {
                             const currentInput = e.target;
                             const currentCategory = currentInput.name.replace('multiple-', '');
@@ -2767,22 +2765,6 @@
                 console.error('DEBUG: loadMenuAndRender: Erro fatal ao carregar o cardápio:', error);
                 showMessageModal('Não foi possível carregar o cardápio no momento. Por favor, tente novamente mais tarde.');
             }
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('/service-worker.js')
-                    .then(registration => {
-                        console.log('DEBUG: Service Worker registado com sucesso. Scope:', registration.scope);
-                    })
-                    .catch(error => {
-                        console.log('DEBUG: Falha no registo do Service Worker:', error);
-                        if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-                            console.warn('DEBUG: Erro de rede/CORS no Service Worker. Isso pode ser esperado para recursos de terceiros não-cacheáveis.');
-                        }
-                    });
-            }
-            loadMenuAndRender();
         });
         
         document.addEventListener("visibilitychange", () => {
