@@ -588,7 +588,7 @@
     <!-- Menu Section -->
     <section id="menu" class="py-8 px-4 max-w-6xl mx-auto">
         <div class="text-center mb-8">
-            <h2 class="text-4xl font-bold text-gray-800 mb-4">Nosso Cardápio</h2>
+            <h2 class="text-4xl font-bold text-gray-800 mb-4">Nosso Cardápio- teste</h2>
             <p class="text-gray-600 text-lg mx-auto">Escolha sua pizza favorita ou uma bebida refrescante!</p>
         </div>
 
@@ -2348,12 +2348,12 @@
             const proceedBtn = document.getElementById('proceed-without-drinks');
             if (hasDrinks) {
                 proceedBtn.textContent = 'Finalizar com Bebidas';
-                proceedBtn.classList.remove('btn-order');
-                proceedBtn.classList.add('green-gradient');
-            } else {
-                proceedBtn.textContent = 'Finalizar sem Bebidas';
                 proceedBtn.classList.remove('green-gradient');
                 proceedBtn.classList.add('btn-order'); 
+            } else {
+                proceedBtn.textContent = 'Finalizar sem Bebidas';
+                proceedBtn.classList.remove('btn-order');
+                proceedBtn.classList.add('green-gradient');
             }
         }
 
