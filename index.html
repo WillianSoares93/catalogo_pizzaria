@@ -1,3 +1,4 @@
+teste
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -2233,23 +2234,20 @@
 
             if (activePromotions.length > 0) {
                 activePromotions.forEach(promo => {
-                    if (promo.name === 'Desconto no Pedido') {
-                        return;
-                    }
                     const promoDiv = document.createElement('div');
                     promoDiv.className = 'promotion-item';
                     
-                    const applicableItem = allMenuData.find(item => item.id === promo.itemId);
-                    const promoImageUrl = applicableItem && applicableItem.isPizza ? applicableItem.imageUrl : null;
+                    const promoImageUrl = promo.name === 'Desconto no Pedido' ? null : allMenuData.find(item => item.id === promo.itemId)?.imageUrl;
+                    const isDiscountPromo = promo.name === 'Desconto no Pedido';
 
                     promoDiv.innerHTML = `
                         <h4>${promo.name}</h4>
                         <p>${promo.description}</p>
-                        <span class="price">R$ ${promo.promoPrice.toFixed(2).replace('.', ',')}</span>
-                        <button class="add-promo-to-order-btn px-3 py-1 bg-green-600 text-white rounded-full text-sm hover:bg-green-700 transition mt-2"
-                                data-promo-id="${promo.id}" data-image-url="${promoImageUrl || ''}">
-                            Adicionar ao Pedido
-                        </button>
+                        <span class="price">${isDiscountPromo ? `${promo.promoPrice}% de desconto` : `R$ ${promo.promoPrice.toFixed(2).replace('.', ',')}`}</span>
+                        ${isDiscountPromo
+                            ? `<button disabled class="px-3 py-1 bg-green-600 text-white rounded-full text-sm mt-2 opacity-50 cursor-not-allowed">Já Aplicado</button>`
+                            : `<button class="add-promo-to-order-btn px-3 py-1 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition mt-2" data-promo-id="${promo.id}" data-image-url="${promoImageUrl || ''}">Adicionar ao Pedido</button>`
+                        }
                     `;
                     promotionsListEl.appendChild(promoDiv);
                 });
@@ -2289,7 +2287,7 @@
         }
 
         function updatePromotionButtonVisibility() {
-            const activePromotionsWithPrice = allPromotionsData.filter(promo => promo.active && promo.promoPrice !== null && promo.name !== 'Desconto no Pedido');
+            const activePromotionsWithPrice = allPromotionsData.filter(promo => promo.active && promo.promoPrice !== null);
             const isAnyModalOpen = document.querySelector('.modal[style*="display: flex"]');
             if (activePromotionsWithPrice.length > 0 && !orderSidebar.classList.contains('translate-x-0') && !isAnyModalOpen) {
                 promotionButton.style.display = 'flex';
