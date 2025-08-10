@@ -33,8 +33,8 @@
         
         /* Estilos para os botões de pedido */
         .btn-order {
-            /* Mantido o gradiente laranja para vermelho para um toque vibrante */
-            background: linear-gradient(135deg, #f59e0b, #ef4444); 
+            /* Gradiente de vermelho para um toque vibrante */
+            background: linear-gradient(135deg, #ef4444, #b91c1c);
             transition: all 0.3s ease;
         }
         .btn-order:hover {
@@ -444,7 +444,7 @@
             box-shadow: 0 5px 15px rgba(34, 197, 94, 0.4);
         }
         
-        /* NOVO: Estilo para o botão de confirmar endereço com gradiente verde */
+        /* Estilo para o botão de confirmar endereço com gradiente verde */
         .btn-confirm-green {
             background: linear-gradient(135deg, #22c55e, #10b981);
             transition: all 0.3s ease;
@@ -588,7 +588,7 @@
     <!-- Menu Section -->
     <section id="menu" class="py-8 px-4 max-w-6xl mx-auto">
         <div class="text-center mb-8">
-            <h2 class="text-4xl font-bold text-gray-800 mb-4">Nosso Cardápio- teste</h2>
+            <h2 class="text-4xl font-bold text-gray-800 mb-4">Nosso Cardápio</h2>
             <p class="text-gray-600 text-lg mx-auto">Escolha sua pizza favorita ou uma bebida refrescante!</p>
         </div>
 
@@ -2348,12 +2348,12 @@
             const proceedBtn = document.getElementById('proceed-without-drinks');
             if (hasDrinks) {
                 proceedBtn.textContent = 'Finalizar com Bebidas';
-                proceedBtn.classList.add('btn-order');
-                proceedBtn.classList.remove('green-gradient');
+                proceedBtn.classList.remove('btn-order');
+                proceedBtn.classList.add('green-gradient');
             } else {
                 proceedBtn.textContent = 'Finalizar sem Bebidas';
-                proceedBtn.classList.add('btn-order'); 
                 proceedBtn.classList.remove('green-gradient');
+                proceedBtn.classList.add('btn-order'); 
             }
         }
 
