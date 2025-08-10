@@ -2165,7 +2165,7 @@
             }
 
             if (!selectedAddress.clientName || !selectedAddress.bairro || (!selectedAddress.rua) || (!selectedAddress.numero && !noNumberCheckbox.checked)) {
-                showMessageModal('Por favor, preencha o nome do cliente, o bairro, a rua e o número ou marque "Sem Número" para continuar.');
+                address-input-modal();
                 return;
             }
 
