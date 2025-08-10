@@ -443,6 +443,15 @@
             transform: scale(1.02);
             box-shadow: 0 5px 15px rgba(34, 197, 94, 0.4);
         }
+        
+        .dynamic-checkout-button.red-gradient {
+            background: linear-gradient(135deg, #f59e0b, #ef4444); 
+        }
+        .dynamic-checkout-button.red-gradient:hover {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            transform: scale(1.02);
+            box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
+        }
 
         /* Estilos para o modal de endereço */
         .address-modal {
@@ -747,7 +756,7 @@
             <button onclick="backToOrderSidebarFromDrinkSuggestion()" class="px-4 py-2 bg-gray-500 text-white rounded-lg font-bold hover:bg-gray-600 transition w-full mb-3 whitespace-nowrap text-sm">
                 Voltar ao Pedido
             </button>
-            <button id="proceed-without-drinks" class="dynamic-checkout-button btn-order w-full py-3 text-white font-bold rounded-full mb-6 whitespace-nowrap text-sm">
+            <button id="proceed-without-drinks" class="dynamic-checkout-button btn-add-more w-full py-3 text-white font-bold rounded-full mb-6 whitespace-nowrap text-sm">
                 Finalizar sem Bebidas
             </button>
             <div id="suggested-drinks-list" class="flex flex-col gap-3 mb-6">
@@ -780,63 +789,17 @@
         </div>
     </div>
 
-    <!-- NOVO: Modal de Seleção de Forma de Pagamento -->
-    <div id="payment-method-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-button" id="close-payment-method-modal">&times;</span>
-            <h3 class="text-xl font-bold text-gray-800 mb-2">Escolha a Forma de Pagamento</h3>
-            <!-- NOVO: Exibição do total do pedido -->
-            <p class="text-gray-600 text-lg mb-4">Total Pedido: <span id="payment-modal-total" class="font-bold text-red-600">R$ 0,00</span></p>
-
-            <div id="payment-options-container" class="flex flex-col gap-3 mb-6">
-                <label class="payment-option" data-method="Dinheiro">
-                    <input type="radio" name="paymentMethod" value="Dinheiro" class="form-radio">
-                    <i class="fas fa-money-bill-wave icon"></i>
-                    <div class="text-content">
-                        <h4>Dinheiro</h4>
-                        <p></p> <!-- Descrição removida -->
-                    </div>
-                </label>
-                <label class="payment-option" data-method="Cartão de Crédito/Débito">
-                    <input type="radio" name="paymentMethod" value="Cartão de Crédito/Débito" class="form-radio">
-                    <i class="fas fa-credit-card icon"></i>
-                    <div class="text-content">
-                        <h4>Cartão de Crédito/Débito</h4>
-                        <p></p> <!-- Descrição removida -->
-                    </div>
-                </label>
-                <label class="payment-option" data-method="Pix">
-                    <input type="radio" name="paymentMethod" value="Pix" class="form-radio">
-                    <i class="fas fa-qrcode icon"></i>
-                    <div class="text-content">
-                        <h4>Pix</h4>
-                        <p></p> <!-- Descrição removida -->
-                    </div>
-                </label>
-            </div>
-
-            <!-- Novo campo para troco -->
-            <div id="troco-input-container" class="hidden mt-4 mb-6 p-4 border border-gray-300 rounded-lg bg-gray-50">
-                <label for="trocoPara" class="block text-gray-700 text-sm font-bold mb-2">
-                    Troco para (R$):
-                </label>
-                <input type="number" id="trocoPara" step="0.01" min="0" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mb-2">
-                <p class="text-gray-600 text-sm">
-                    Troco total: <span id="trocoTotalDisplay" class="font-bold text-red-600">R$ 0,00</span>
-                </p>
-            </div>
-
-            <button id="confirm-payment-method-btn" class="px-6 py-3 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition w-full">
-                Confirmar Pagamento
-            </button>
-        </div>
-    </div>
-
     <!-- NOVO: Modal de Input de Endereço -->
     <div id="address-input-modal" class="address-modal">
         <div class="address-modal-content">
             <span class="close-button" id="close-address-modal">&times;</span>
             <h3 class="text-xl font-bold text-gray-800 mb-4">Informe seu Endereço</h3>
+            <div class="mb-4">
+                <label for="clientNameInput" class="block text-gray-700 text-sm font-bold mb-2">
+                    Nome:
+                </label>
+                <input type="text" id="clientNameInput" placeholder="Nome Completo" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            </div>
             <div class="mb-4">
                 <label for="neighborhoodSelect" class="block text-gray-700 text-sm font-bold mb-2">
                     Bairro:
@@ -864,7 +827,7 @@
                 </label>
                 <input type="text" id="referencePointInput" placeholder="Ex: Próximo à praça" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
             </div>
-            <button id="confirmAddressBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-full w-full transition duration-300">
+            <button id="confirmAddressBtn" class="dynamic-checkout-button green-gradient w-full py-3 text-white font-bold rounded-full transition">
                 Confirmar Endereço
             </button>
         </div>
@@ -914,6 +877,7 @@
         let isCheckoutInitiated = false; 
         
         let selectedAddress = {
+            name: null,
             bairro: null,
             rua: null,
             numero: null,
@@ -987,6 +951,7 @@
         // Referências para elementos do modal de endereço
         const addressInputModal = document.getElementById('address-input-modal');
         const closeAddressModalBtn = document.getElementById('close-address-modal');
+        const clientNameInput = document.getElementById('clientNameInput');
         const neighborhoodSelect = document.getElementById('neighborhoodSelect');
         const streetInput = document.getElementById('streetInput');
         const numberInput = document.getElementById('numberInput');
@@ -1302,9 +1267,10 @@
                         input.addEventListener('change', (e) => {
                             const currentInput = e.target;
                             const currentCategory = currentInput.name.replace('multiple-', '');
-                            const isCurrentSingleChoice = allBurgerIngredients[currentCategory][0]?.isSingleChoice;
-                            const limit = allBurgerIngredients[currentCategory][0]?.limit || Infinity;
-                            
+                            const firstIngredientInCategory = allBurgerIngredients[currentCategory][0];
+                            const isCurrentSingleChoice = firstIngredientInCategory?.isSingleChoice;
+                            const limit = firstIngredientInCategory?.limit || Infinity;
+
                             // Atualiza a classe 'selected' visualmente
                             if (isCurrentSingleChoice) {
                                 document.querySelectorAll(`input[name="${currentCategory}"]`).forEach(el => {
@@ -2093,8 +2059,12 @@
             message += `\nTaxa de entrega (${selectedAddress.bairro || 'Não informado'}): R$ ${selectedAddress.deliveryFee.toFixed(2).replace('.', ',')}`;
             message += `\nTotal: R$ ${total.toFixed(2).replace('.', ',')}`;
             
+            if (selectedAddress.name) {
+                message += `\n\nNome: ${selectedAddress.name}`;
+            }
+
             if (selectedAddress.bairro && selectedAddress.rua && selectedAddress.numero) {
-                message += `\n\nEndereço de Entrega:\n`;
+                message += `\nEndereço de Entrega:\n`;
                 message += `Bairro: ${selectedAddress.bairro}\n`;
                 message += `Rua: ${selectedAddress.rua}, Nº ${selectedAddress.numero}\n`;
                 if (selectedAddress.referencia) {
@@ -2134,7 +2104,7 @@
                 return;
             }
 
-            if (!selectedAddress.bairro || !selectedAddress.rua || !selectedAddress.numero) {
+            if (!selectedAddress.bairro || !selectedAddress.rua || !selectedAddress.numero || !selectedAddress.name) {
                 showAddressInputModal();
                 return;
             }
@@ -2306,7 +2276,7 @@
             const hasDrinks = order.some(item => item.category === 'bebidas');
 
             if (!selectedPaymentMethod) {
-                isCheckoutInitiated = true;
+                isCheckoutInitiated = true; 
                 openPaymentMethodModal(true); 
             } else {
                 proceedToWhatsappCheckout();
@@ -2317,12 +2287,12 @@
             const hasDrinks = order.some(item => item.category === 'bebidas');
             if (hasDrinks) {
                 proceedWithoutDrinksBtn.textContent = 'Finalizar com Bebidas';
-                proceedWithoutDrinksBtn.classList.add('green-gradient');
-                proceedWithoutDrinksBtn.classList.remove('btn-order');
+                proceedWithoutDrinksBtn.classList.add('btn-order');
+                proceedWithoutDrinksBtn.classList.remove('btn-add-more');
             } else {
                 proceedWithoutDrinksBtn.textContent = 'Finalizar sem Bebidas';
-                proceedWithoutDrinksBtn.classList.add('btn-order'); 
-                proceedWithoutDrinksBtn.classList.remove('green-gradient');
+                proceedWithoutDrinksBtn.classList.add('btn-add-more'); 
+                proceedWithoutDrinksBtn.classList.remove('btn-order');
             }
         }
 
@@ -2598,6 +2568,11 @@
             addressInputModal.style.display = 'flex';
             updatePromotionButtonVisibility();
 
+            if (selectedAddress.name) {
+                clientNameInput.value = selectedAddress.name;
+            } else {
+                clientNameInput.value = '';
+            }
             if (selectedAddress.bairro) {
                 neighborhoodSelect.value = selectedAddress.bairro;
             } else {
@@ -2636,13 +2611,14 @@
         }
 
         confirmAddressBtn.addEventListener('click', function() {
+            const clientName = clientNameInput.value.trim();
             const bairro = neighborhoodSelect.value;
             const rua = streetInput.value.trim();
             const numero = numberInput.value.trim();
             const referencia = referencePointInput.value.trim();
 
-            if (!bairro || !rua || !numero) {
-                showMessageModal('Por favor, preencha o bairro, a rua e o número para continuar.');
+            if (!clientName || !bairro || !rua || !numero) {
+                showMessageModal('Por favor, preencha o nome, bairro, a rua e o número para continuar.');
                 return;
             }
 
@@ -2653,6 +2629,7 @@
             }
 
             selectedAddress = {
+                name: clientName,
                 bairro: bairro,
                 rua: rua,
                 numero: numero,
@@ -2670,9 +2647,9 @@
         });
 
         function showAddressSummary() {
-            if (selectedAddress.bairro) {
+            if (selectedAddress.name && selectedAddress.bairro) {
                 addressSummarySection.classList.remove('hidden');
-                addressDisplay.textContent = `${selectedAddress.rua}, Nº ${selectedAddress.numero}`;
+                addressDisplay.textContent = `Cliente: ${selectedAddress.name}\n${selectedAddress.rua}, Nº ${selectedAddress.numero}`;
                 neighborhoodDisplay.textContent = `Bairro: ${selectedAddress.bairro}`;
                 referenceDisplay.textContent = selectedAddress.referencia ? `Ponto de Referência: ${selectedAddress.referencia}` : '';
             } else {
