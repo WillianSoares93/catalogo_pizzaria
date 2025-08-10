@@ -1,3 +1,4 @@
+teste
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -817,9 +818,15 @@
                 <label class="payment-option" data-method="Pix">
                     <input type="radio" name="paymentMethod" value="Pix" class="form-radio">
                     <i class="fas fa-qrcode icon"></i>
-                    <div class="text-content">
-                        <h4>Pix</h4>
-                        <p id="pix-key-display" class="text-gray-600 text-sm hidden"></p>
+                    <div class="text-content flex flex-col items-start w-full">
+                        <h4 class="flex-grow">Pix</h4>
+                        <div id="pix-key-container" class="hidden mt-2 p-2 bg-gray-100 rounded-md text-sm w-full flex items-center justify-between">
+                            <span id="pix-key-display" class="font-mono text-gray-700 text-sm truncate"></span>
+                            <button id="copy-pix-btn" class="ml-2 text-gray-500 hover:text-gray-700" title="Copiar Chave Pix">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                            <span id="copy-feedback" class="text-green-600 text-xs ml-2 hidden">Copiado!</span>
+                        </div>
                     </div>
                 </label>
             </div>
@@ -1008,6 +1015,11 @@
         const trocoParaInput = document.getElementById('trocoPara'); 
         const trocoTotalDisplay = document.getElementById('trocoTotalDisplay'); 
         const paymentModalTotal = document.getElementById('payment-modal-total'); 
+        const pixKeyContainer = document.getElementById('pix-key-container');
+        const pixKeyDisplay = document.getElementById('pix-key-display');
+        const copyPixBtn = document.getElementById('copy-pix-btn');
+        const copyFeedback = document.getElementById('copy-feedback');
+
 
         // Referências para elementos do modal de endereço
         const addressInputModal = document.getElementById('address-input-modal');
@@ -1975,13 +1987,12 @@
                 order.forEach((item, index) => {
                     let itemName = item.name;
                     let itemDescription = '';
-                    let sizeLabel = ''; 
                     let priceHtml = `<span class="font-bold mr-4">R$ ${item.price.toFixed(2).replace('.', ',')}</span>`;
 
                     if (item.type === 'promotion') {
                         itemName = `<i class="fas fa-tags text-red-600 mr-2"></i> ${item.name}`;
                     } else if (item.selected_slices) {
-                        sizeLabel = `${item.selected_slices} FATIAS`.toUpperCase();
+                        let sizeLabel = `${item.selected_slices} FATIAS`.toUpperCase();
                         itemName = `<b>${sizeLabel}</b>: ${item.name}`;
                     } else if (item.type === 'custom_burger') {
                         itemName = `<i class="fas fa-hamburger text-red-600 mr-2"></i> ${item.name}`;
@@ -2014,9 +2025,8 @@
                     `;
                 });
                 orderItemsContainer.innerHTML = itemsHTML;
-                subtotalEl.textContent = 'R$ ' + subtotal.toFixed(2).replace('.', ',');
-
-                // Adiciona a seção de desconto se houver um desconto
+                subtotalEl.textContent = 'R$ ' + subtotal.toFixed(2).replace('.', ',')
+                
                 if (discountPromotion && subtotal > 0) {
                     discountSection.classList.remove('hidden');
                     discountPercentageDisplay.textContent = `${discountPromotion.promoPrice}%`;
@@ -2112,7 +2122,7 @@
         }
         
         function proceedToWhatsappCheckout() {
-            const whatsappNumber = contactInfo['whatsapp'] || '5587996070638'; 
+            const whatsappNumber = contactInfo['whatsapp'] ? contactInfo['whatsapp'].replace(/\D/g, '') : '5587996070638'; 
             let message = 'Olá! Gostaria de fazer o seguinte pedido:\n\n';
             let subtotal = 0;
 
@@ -2171,6 +2181,7 @@
                     message += `\nTroco: R$ ${selectedPaymentMethod.trocoTotal.toFixed(2).replace('.', ',')}`;
                 } else if (selectedPaymentMethod === 'Pix' && contactInfo['chave-pix']) {
                      message += `\nForma de Pagamento: Pix`;
+                     message += `\nChave Pix: ${contactInfo['chave-pix']}`;
                 } else {
                     message += `\nForma de Pagamento: ${selectedPaymentMethod}`;
                 }
@@ -2430,6 +2441,7 @@
             trocoInputContainer.classList.add('hidden');
             trocoParaInput.value = ''; 
             trocoTotalDisplay.textContent = 'R$ 0,00'; 
+            pixKeyContainer.classList.add('hidden');
 
             if (selectedPaymentMethod) {
                 const methodValue = typeof selectedPaymentMethod === 'object' ? selectedPaymentMethod.method : selectedPaymentMethod;
@@ -2447,11 +2459,11 @@
                             trocoTotalDisplay.textContent = `R$ ${trocoCalculado.toFixed(2).replace('.', ',')}`;
                         }
                     }
-                    if (methodValue === 'Pix' && contactInfo['chave-pix']) {
-                        document.getElementById('pix-key-display').textContent = `Chave Pix: ${contactInfo['chave-pix']}`;
-                        document.getElementById('pix-key-display').classList.remove('hidden');
+                    if (methodValue === 'Pix' && contactInfo.chavepix) {
+                        pixKeyDisplay.textContent = contactInfo.chavepix;
+                        pixKeyContainer.classList.remove('hidden');
                     } else {
-                        document.getElementById('pix-key-display').classList.add('hidden');
+                        pixKeyContainer.classList.add('hidden');
                     }
                 }
             } else {
@@ -2459,7 +2471,6 @@
                     radio.checked = false;
                     radio.closest('.payment-option').classList.remove('selected');
                 });
-                document.getElementById('pix-key-display').classList.add('hidden');
             }
         }
 
@@ -2495,11 +2506,11 @@
                     trocoTotalDisplay.textContent = 'R$ 0,00'; 
                 }
 
-                if (radio && radio.value === 'Pix' && contactInfo['chave-pix']) {
-                    document.getElementById('pix-key-display').textContent = `Chave Pix: ${contactInfo['chave-pix']}`;
-                    document.getElementById('pix-key-display').classList.remove('hidden');
+                if (radio && radio.value === 'Pix' && contactInfo.chavepix) {
+                    pixKeyDisplay.textContent = contactInfo.chavepix;
+                    pixKeyContainer.classList.remove('hidden');
                 } else {
-                    document.getElementById('pix-key-display').classList.add('hidden');
+                    pixKeyContainer.classList.add('hidden');
                 }
             }
         });
@@ -2519,6 +2530,24 @@
                 trocoTotalDisplay.classList.add('text-red-600'); 
             }
         });
+        
+        function copyPixKey() {
+            const pixKeyText = pixKeyDisplay.textContent.replace('Chave Pix: ', '');
+            navigator.clipboard.writeText(pixKeyText)
+                .then(() => {
+                    const feedbackEl = document.getElementById('copy-feedback');
+                    feedbackEl.classList.remove('hidden');
+                    setTimeout(() => {
+                        feedbackEl.classList.add('hidden');
+                    }, 2000);
+                })
+                .catch(err => {
+                    console.error('Failed to copy text: ', err);
+                });
+        }
+        
+        copyPixBtn.addEventListener('click', copyPixKey);
+
 
         function calculateOrderTotal() {
             let currentSubtotal = 0;
@@ -2833,7 +2862,8 @@
             socialLinksEl.innerHTML = '';
             
             const contactData = contacts.reduce((acc, current) => {
-                acc[current.data.toLowerCase().replace(/[^a-z0-9]/g, '')] = current.value;
+                const key = current.data.toLowerCase().replace(/[^a-z0-9]/g, '');
+                acc[key] = current.value;
                 return acc;
             }, {});
 
@@ -2860,27 +2890,20 @@
         async function loadMenuAndRender() {
             try {
                 // Fetch de todos os dados em paralelo
-                const response = await fetch('/api/menu'); 
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('DEBUG: loadMenuAndRender: Erro HTTP ao buscar dados da API:', response.status, errorText);
-                    throw new Error(`Erro ao buscar dados da API: ${response.statusText || errorText}`);
-                }
-                const data = await response.json(); 
+                const [menuResponse, contactResponse] = await Promise.all([
+                    fetch('/api/menu'),
+                    fetch(CONTACT_CSV_URL)
+                ]);
                 
-                const cardapioCsvText = data.cardapio;
-                const promocoesCsvText = data.promocoes;
-                const deliveryFeesCsvText = data.deliveryFees;
-                const ingredientesHamburguerCsvText = data.ingredientesHamburguer;
-                const contactDataCsvText = data.contact;
+                const data = await menuResponse.json(); 
+                const contactData = await contactResponse.text();
                 
                 // Parse dos dados
-                allMenuData = parseCsvData(cardapioCsvText, 'cardapio');
-                allPromotionsData = parseCsvData(promocoesCsvText, 'promocoes');
-                deliveryFeesData = parseCsvData(deliveryFeesCsvText, 'deliveryFees');
+                allMenuData = parseCsvData(data.cardapio, 'cardapio');
+                allPromotionsData = parseCsvData(data.promocoes, 'promocoes');
+                deliveryFeesData = parseCsvData(data.deliveryFees, 'deliveryFees');
                 
-                const rawBurgerIngredients = parseCsvData(ingredientesHamburguerCsvText, 'ingredientesHamburguer');
+                const rawBurgerIngredients = parseCsvData(data.ingredientesHamburguer, 'ingredientesHamburguer');
                 allBurgerIngredients = rawBurgerIngredients.reduce((acc, current) => {
                     if (!acc[current.category]) {
                         acc[current.category] = [];
@@ -2889,7 +2912,7 @@
                     return acc;
                 }, {});
 
-                const parsedContactInfo = parseCsvData(contactDataCsvText, 'contact');
+                const parsedContactInfo = parseCsvData(contactData, 'contact');
                 contactInfo = parsedContactInfo.reduce((acc, curr) => {
                     if (curr.data && curr.value) {
                         acc[curr.data.toLowerCase().replace(/[^a-z0-9]/g, '')] = curr.value;
