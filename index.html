@@ -1,4 +1,3 @@
-teste
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1228,7 +1227,7 @@ teste
                     case 'Valor': return 'value';
                     default: 
                         console.warn(`DEBUG: Header CSV desconhecido encontrado para ${type}: "${cleanedHeader}"`);
-                        return cleanedHeader.replace(/[^a-zA-Z0-9]+(.)?/g, (match, chr) => chr ? chr.toUpperCase() : '').replace(/^./, (match) => match.toLowerCase());
+                        return cleanedHeader.toLowerCase().replace(/\s/g, '').replace(/[^a-z0-9]/g, '');
                 }
             });
             
@@ -1253,7 +1252,7 @@ teste
                             item[headerKey] = isNaN(parsedValue) ? Infinity : parsedValue;
                         }
                         else if (['isPizza', 'available', 'active', 'isCustomizable', 'isSingleChoice', 'isRequired'].includes(headerKey)) {
-                            item[headerKey] = value.toUpperCase() === 'SIM';
+                            item[headerKey] = value.toUpperCase() === 'SIM' || value.toUpperCase() === 'SIM\r' || value.toUpperCase() === 'SIM\n';
                         } else {
                             item[headerKey] = value;
                         }
@@ -1554,7 +1553,7 @@ teste
                                 if (trimmedImageUrl.toLowerCase() === 'sem imagem') {
                                     imageElement = `<div class="no-image-placeholder">Sem Imagem</div>`;
                                 } else if (trimmedImageUrl.length > 0) {
-                                    imageElement = `<img src="${trimmedImageUrl}" alt="${item.name}" class="w-full h-40 object-cover" onerror="this.onerror=null;this.src='';">`;
+                                    imageElement = `<img src="${trimmedImageUrl}" alt="Imagem de ${item.name}" class="w-full h-40 object-cover" onerror="this.onerror=null;this.src='';">`;
                                 } else {
                                     imageElement = '';
                                 }
@@ -1780,7 +1779,7 @@ teste
                 isFirstHalfPromotional = false; 
                 toggleAddItemButtons(true); 
                 toggleCategoryButtons(true); 
-                showTemporaryFeedback('Pizza meio a meia adicionada ao pedido!', 'bg-green-500'); 
+                showTemporaryFeedback('Pizza meio a meio adicionada ao pedido!', 'bg-green-500'); 
                 
             } else if (item.isPizza) {
                 currentPizzaData = { ...item }; 
@@ -2861,26 +2860,27 @@ teste
         async function loadMenuAndRender() {
             try {
                 // Fetch de todos os dados em paralelo
-                const [menuResponse, promosResponse, feesResponse, burgerResponse, contactResponse] = await Promise.all([
-                    fetch('/api/menu'),
-                    fetch('/api/promos'),
-                    fetch('/api/fees'),
-                    fetch('/api/burger-ingredients'),
-                    fetch(CONTACT_CSV_URL) // Nova requisição para a planilha de contatos
-                ]);
+                const response = await fetch('/api/menu'); 
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('DEBUG: loadMenuAndRender: Erro HTTP ao buscar dados da API:', response.status, errorText);
+                    throw new Error(`Erro ao buscar dados da API: ${response.statusText || errorText}`);
+                }
+                const data = await response.json(); 
                 
-                const menuData = await menuResponse.text();
-                const promosData = await promosResponse.text();
-                const feesData = await feesResponse.text();
-                const burgerData = await burgerResponse.text();
-                const contactData = await contactResponse.text(); // Extrai os dados da planilha de contatos
+                const cardapioCsvText = data.cardapio;
+                const promocoesCsvText = data.promocoes;
+                const deliveryFeesCsvText = data.deliveryFees;
+                const ingredientesHamburguerCsvText = data.ingredientesHamburguer;
+                const contactDataCsvText = data.contact;
                 
                 // Parse dos dados
-                allMenuData = parseCsvData(menuData, 'cardapio');
-                allPromotionsData = parseCsvData(promosData, 'promocoes');
-                deliveryFeesData = parseCsvData(feesData, 'deliveryFees');
+                allMenuData = parseCsvData(cardapioCsvText, 'cardapio');
+                allPromotionsData = parseCsvData(promocoesCsvText, 'promocoes');
+                deliveryFeesData = parseCsvData(deliveryFeesCsvText, 'deliveryFees');
                 
-                const rawBurgerIngredients = parseCsvData(burgerData, 'ingredientesHamburguer');
+                const rawBurgerIngredients = parseCsvData(ingredientesHamburguerCsvText, 'ingredientesHamburguer');
                 allBurgerIngredients = rawBurgerIngredients.reduce((acc, current) => {
                     if (!acc[current.category]) {
                         acc[current.category] = [];
@@ -2889,7 +2889,7 @@ teste
                     return acc;
                 }, {});
 
-                const parsedContactInfo = parseCsvData(contactData, 'contact');
+                const parsedContactInfo = parseCsvData(contactDataCsvText, 'contact');
                 contactInfo = parsedContactInfo.reduce((acc, curr) => {
                     if (curr.data && curr.value) {
                         acc[curr.data.toLowerCase().replace(/[^a-z0-9]/g, '')] = curr.value;
