@@ -1181,8 +1181,8 @@
                     case 'Bairros': return 'neighborhood';
                     case 'Valor Frete': return 'deliveryFee';
                     // NOVO: Headers para Ingredientes de Hambúrguer
-                    case 'ID Intem': return 'id';
-                    case 'Ingredientes': return 'name';
+                    case 'ID Item': return 'id'; // Corrigido de 'ID Intem' para 'ID Item'
+                    case 'Ingredientes': return 'name'; // Corrigido de 'Ingredientes' para 'name'
                     case 'Preço': return 'price';
                     case 'Categoria': return 'category';
                     case 'Seleção Única': return 'isSingleChoice';
@@ -1212,7 +1212,7 @@
                             item[headerKey] = isNaN(parsedValue) ? 0 : parsedValue;
                         } else if (headerKey === 'limit') {
                             const parsedValue = parseInt(value, 10);
-                            item[headerKey] = isNaN(parsedValue) ? Infinity : parsedValue; // Usa Infinity se não for um número para não limitar
+                            item[headerKey] = isNaN(parsedValue) ? Infinity : parsedValue;
                         }
                         else if (['isPizza', 'available', 'active', 'isCustomizable', 'isSingleChoice'].includes(headerKey)) {
                             item[headerKey] = value.toUpperCase() === 'SIM';
@@ -1240,7 +1240,7 @@
             burgerIngredientsContainer.innerHTML = '';
             burgerBuilderModal.dataset.basePrice = baseBurgerItem.basePrice;
             
-            const categoryLimits = {}; // Armazena os limites por categoria
+            const categoryLimits = {};
             
             for (const category in allBurgerIngredients) {
                 const ingredients = allBurgerIngredients[category];
@@ -1348,7 +1348,6 @@
                             total += ingredient.price;
                         }
                     } else {
-                        // Se a categoria é de seleção única e nada foi selecionado
                         showMessageModal(`Por favor, escolha uma opção na categoria "${capitalizeFirstLetter(category)}".`);
                         allRequiredCategoriesFilled = false;
                         break;
