@@ -547,7 +547,7 @@
     <!-- Menu Section -->
     <section id="menu" class="py-8 px-4 max-w-6xl mx-auto">
         <div class="text-center mb-8">
-            <h2 class="text-4xl font-bold text-gray-800 mb-4">Nosso Cardápio- teste</h2>
+            <h2 class="text-4xl font-bold text-gray-800 mb-4">Nosso Cardápio</h2>
             <p class="text-gray-600 text-lg mx-auto">Escolha sua pizza favorita ou uma bebida refrescante!</p>
         </div>
 
@@ -1148,6 +1148,7 @@
                     case 'É Pizza? (SIM/NÃO)': return 'isPizza';
                     case 'Disponível (SIM/NÃO)': return 'available'; 
                     case 'Imagem': return 'imageUrl'; 
+                    case 'É Montável? (SIM/NÃO)': return 'isCustomizable';
                     case 'ID Promocao': return 'id';
                     case 'Nome da Promocao': return 'name';
                     case 'Descrição': return 'description';
@@ -1178,7 +1179,7 @@
                         if (['price', 'basePrice', 'price6Slices', 'price4Slices', 'promoPrice', 'deliveryFee'].includes(headerKey)) {
                             const parsedValue = parseFloat(String(value).replace(',', '.'));
                             item[headerKey] = isNaN(parsedValue) ? 0 : parsedValue;
-                        } else if (['isPizza', 'available', 'active'].includes(headerKey)) {
+                        } else if (['isPizza', 'available', 'active', 'isCustomizable'].includes(headerKey)) {
                             item[headerKey] = value.toUpperCase() === 'SIM';
                         } else {
                             item[headerKey] = value;
@@ -1478,7 +1479,65 @@
 
             const itemImageUrl = item.isPizza ? item.imageUrl : null;
             
-            if (item.isPizza) {
+            if (item.isCustomizable) {
+                promotionButton.style.display = 'none';
+                handleBurgerBuild(item);
+                return;
+            }
+
+            if (isSelectingSecondHalf) {
+                console.log('DEBUG: isSelectingSecondHalf é TRUE. Tentando adicionar segunda metade.');
+                if (!item.isPizza) {
+                    showMessageModal('Por favor, escolha uma pizza para a segunda metade.');
+                    return;
+                }
+
+                if (isFirstHalfPromotional && item.category.toLowerCase() !== 'promocionais') {
+                    showMessageModal('Para pizzas promocionais, a segunda metade deve ser também de uma pizza promocional.', () => {
+                        document.getElementById('promocionais-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        setActiveCategoryButton('promocionais');
+                    });
+                    return;
+                } else if (!isFirstHalfPromotional && item.category.toLowerCase() === 'promocionais') {
+                    showMessageModal('Você começou a montar uma pizza meio a meio com um sabor não promocional. A segunda metade não pode ser de uma pizza promocional.');
+                    return;
+                }
+
+                const pendingHalfIndex = order.findIndex(orderItem => orderItem.id === 'pending-half-pizza');
+                if (pendingHalfIndex > -1) {
+                    order.splice(pendingHalfIndex, 1);
+                    updateOrderDisplay(); 
+                    console.log('DEBUG: Meia pizza pendente removida para combinação.');
+                }
+
+                const cleanFirstName = firstHalfPizza.name;
+                const combinedName = `Meia ${cleanFirstName} & Meia ${item.name}`;
+                
+                const priceFirstHalfFullSize = firstHalfPizza.original_full_price; 
+                const priceSecondHalfFullSize = item[firstHalfPizza.priceKeyForSlices]; 
+
+                const combinedPrice = ((priceFirstHalfFullSize || 0) / 2) + ((priceSecondHalfFullSize || 0) / 2);
+                const combinedDescription = `${firstHalfPizza.description.replace('Primeira metade: ', '')} e ${item.description}`;
+
+                addToOrder({
+                    type: 'split',
+                    name: combinedName,
+                    price: combinedPrice,
+                    description: combinedDescription,
+                    category: 'pizzas', 
+                    selected_slices: firstHalfPizza.selected_slices
+                }, clickedButton, itemImageUrl); 
+
+                firstHalfPizza = null;
+                isSelectingSecondHalf = false;
+                isSelectingHalfPizza = false; 
+                isFirstHalfPromotional = false; 
+                toggleAddItemButtons(true); 
+                toggleCategoryButtons(true); 
+                showTemporaryFeedback('Pizza meio a meio adicionada ao pedido!', 'bg-green-500'); 
+                console.log('DEBUG: Pizza meio a meio adicionada. Estado de meia pizza resetado.');
+                
+            } else if (item.isPizza) {
                 console.log('DEBUG: Item é pizza. Abrindo modal de seleção de tamanho.');
                 currentPizzaData = { ...item }; 
                 modalPizzaName.textContent = item.name;
@@ -2608,8 +2667,8 @@
                 updateCartCount(); 
                 updateOrderDisplay(); 
                 updateCheckoutButtonText(); 
-                showAddressSummary();
                 populateFooterContacts(allContactsData);
+                showAddressSummary();
                 
                 toggleAddItemButtons(true);
                 toggleCategoryButtons(true);
