@@ -547,7 +547,7 @@
     <!-- Menu Section -->
     <section id="menu" class="py-8 px-4 max-w-6xl mx-auto">
         <div class="text-center mb-8">
-            <h2 class="text-4xl font-bold text-gray-800 mb-4">Nosso Cardápio</h2>
+            <h2 class="text-4xl font-bold text-gray-800 mb-4">Nosso Cardápio- teste</h2>
             <p class="text-gray-600 text-lg mx-auto">Escolha sua pizza favorita ou uma bebida refrescante!</p>
         </div>
 
@@ -1092,6 +1092,12 @@
                 closePizzaOptionModal();
             }
         });
+        
+        function closeBurgerBuildModal() {
+             burgerBuildModal.style.display = 'none';
+            updatePromotionButtonVisibility();
+        }
+
 
         // Função para parsear dados CSV
         function parseCsvData(csvText, type) {
@@ -1157,6 +1163,14 @@
                     case 'Ativo (SIM/NAO)': return 'active';
                     case 'Bairros': return 'neighborhood';
                     case 'Valor Frete': return 'deliveryFee';
+                    case 'ID Intem': return 'id';
+                    case 'Ingredientes': return 'name';
+                    case 'Catelogira': return 'category';
+                    case 'Preço': return 'price';
+                    case 'Disponível': return 'available';
+                    case 'Limite': return 'limit';
+                    case 'Dados': return 'data';
+                    case 'Valor': return 'value';
                     default: 
                         console.warn(`DEBUG: Header CSV desconhecido encontrado para ${type}: "${cleanedHeader}"`);
                         return cleanedHeader.replace(/[^a-zA-Z0-9]+(.)?/g, (match, chr) => chr ? chr.toUpperCase() : '').replace(/^./, (match) => match.toLowerCase());
@@ -1181,6 +1195,8 @@
                             item[headerKey] = isNaN(parsedValue) ? 0 : parsedValue;
                         } else if (['isPizza', 'available', 'active', 'isCustomizable'].includes(headerKey)) {
                             item[headerKey] = value.toUpperCase() === 'SIM';
+                        } else if (headerKey === 'limit') {
+                             item[headerKey] = parseInt(value) || Infinity;
                         } else {
                             item[headerKey] = value;
                         }
@@ -1192,7 +1208,7 @@
                         allContactsData[item.data] = item.value;
                     }
                     
-                    if ((type === 'cardapio' && item.available) || (type === 'promocoes' && item.active) || type === 'deliveryFees' || type === 'contacts') {
+                    if ((type === 'cardapio' && item.available) || (type === 'promocoes' && item.active) || (type === 'ingredients' && item.available) || type === 'deliveryFees' || type === 'contacts') {
                         parsedData.push(item);
                     }
                 } else {
@@ -1296,7 +1312,6 @@
 							    // Lógica para Hambúrgueres e outros itens
                                 let buttonHtml = '';
                                 if (item.isCustomizable) {
-                                    // Botão "Montar" com a mesma cor dos outros botões
                                     buttonHtml = `<button class="add-item-btn bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full text-sm font-medium transition duration-300"
                                                         data-item-id="${item.id}" data-image-url="${trimmedImageUrl}">
                                                         Montar
@@ -2686,6 +2701,11 @@
         }
 
         // --- Lógica para o modal de montagem de Hambúrguer ---
+        function closeBurgerBuildModal() {
+            burgerBuildModal.style.display = 'none';
+            updatePromotionButtonVisibility();
+        }
+
         function handleBurgerBuild(burgerItem) {
             currentBurgerBuild.item = burgerItem;
             currentBurgerBuild.ingredients.clear();
