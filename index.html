@@ -586,7 +586,7 @@
     <!-- Menu Section -->
     <section id="menu" class="py-8 px-4 max-w-6xl mx-auto">
         <div class="text-center mb-8">
-            <h2 class="text-4xl font-bold text-gray-800 mb-4">Nosso Cardápio- teste</h2>
+            <h2 class="text-4xl font-bold text-gray-800 mb-4">Nosso Cardápio</h2>
             <p class="text-gray-600 text-lg mx-auto">Escolha sua pizza favorita ou uma bebida refrescante!</p>
         </div>
 
@@ -1259,18 +1259,19 @@
                         optionDiv.addEventListener('click', (e) => {
                             if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'LABEL') {
                                 input.checked = !input.checked;
-                                input.dispatchEvent(new Event('change', { bubbles: true }));
                             }
+                            // A lógica de change é a mesma, então disparamos o evento manualmente
+                            input.dispatchEvent(new Event('change', { bubbles: true }));
                         });
                         
                         // Ouve o evento de `change` para os inputs
                         input.addEventListener('change', (e) => {
                             const currentInput = e.target;
-                            const currentCategory = currentInput.name.replace('multiple-', '');
+                            const currentCategory = isSingleChoice ? currentInput.name : currentInput.name.replace('multiple-', '');
                             const firstIngredientInCategory = allBurgerIngredients[currentCategory][0];
                             const isCurrentSingleChoice = firstIngredientInCategory?.isSingleChoice;
                             const limit = firstIngredientInCategory?.limit || Infinity;
-
+                            
                             // Atualiza a classe 'selected' visualmente
                             if (isCurrentSingleChoice) {
                                 document.querySelectorAll(`input[name="${currentCategory}"]`).forEach(el => {
@@ -2028,7 +2029,6 @@
         }
         
         function proceedToWhatsappCheckout() {
-            const whatsappNumber = '5587996070638'; 
             let message = 'Olá! Gostaria de fazer o seguinte pedido:\n\n';
             let subtotal = 0;
 
@@ -2287,12 +2287,12 @@
             const hasDrinks = order.some(item => item.category === 'bebidas');
             if (hasDrinks) {
                 proceedWithoutDrinksBtn.textContent = 'Finalizar com Bebidas';
-                proceedWithoutDrinksBtn.classList.add('btn-order');
+                proceedWithoutDrinksBtn.classList.add('dynamic-checkout-button', 'red-gradient');
                 proceedWithoutDrinksBtn.classList.remove('btn-add-more');
             } else {
                 proceedWithoutDrinksBtn.textContent = 'Finalizar sem Bebidas';
-                proceedWithoutDrinksBtn.classList.add('btn-add-more'); 
-                proceedWithoutDrinksBtn.classList.remove('btn-order');
+                proceedWithoutDrinksBtn.classList.add('dynamic-checkout-button', 'btn-add-more'); 
+                proceedWithoutDrinksBtn.classList.remove('red-gradient');
             }
         }
 
