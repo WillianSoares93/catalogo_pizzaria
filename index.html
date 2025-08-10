@@ -870,11 +870,18 @@
                 </label>
                 <input type="text" id="streetInput" placeholder="Nome da Rua" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
             </div>
+            <!-- NOVO: Campo Número com checkbox "Sem Número" -->
             <div class="mb-4">
-                <label for="numberInput" class="block text-gray-700 text-sm font-bold mb-2">
-                    Número:
-                </label>
-                <input type="text" id="numberInput" placeholder="Número" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                <div class="flex items-center justify-between mb-2">
+                    <label for="numberInput" class="block text-gray-700 text-sm font-bold">
+                        Número:
+                    </label>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="noNumberCheckbox" class="form-checkbox text-red-600">
+                        <label for="noNumberCheckbox" class="ml-2 text-gray-700 text-sm">Sem Número</label>
+                    </div>
+                </div>
+                <input type="number" inputmode="numeric" id="numberInput" placeholder="Número" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
             </div>
             <div class="mb-6">
                 <label for="referencePointInput" class="block text-gray-700 text-sm font-bold mb-2">
@@ -932,7 +939,7 @@
         let isCheckoutInitiated = false; 
         
         let selectedAddress = {
-            clientName: null, // NOVO: Adicionado campo para o nome do cliente
+            clientName: null, 
             bairro: null,
             rua: null,
             numero: null,
@@ -1006,10 +1013,11 @@
         // Referências para elementos do modal de endereço
         const addressInputModal = document.getElementById('address-input-modal');
         const closeAddressModalBtn = document.getElementById('close-address-modal');
-        const clientNameInput = document.getElementById('clientNameInput'); // NOVO: Campo Nome do Cliente
+        const clientNameInput = document.getElementById('clientNameInput');
         const neighborhoodSelect = document.getElementById('neighborhoodSelect');
         const streetInput = document.getElementById('streetInput');
         const numberInput = document.getElementById('numberInput');
+        const noNumberCheckbox = document.getElementById('noNumberCheckbox'); // NOVO: Checkbox "Sem Número"
         const referencePointInput = document.getElementById('referencePointInput');
         const confirmAddressBtn = document.getElementById('confirmAddressBtn');
         const addressSummarySection = document.getElementById('address-summary-section');
@@ -2156,8 +2164,8 @@
                 return;
             }
 
-            if (!selectedAddress.clientName || !selectedAddress.bairro || !selectedAddress.rua || !selectedAddress.numero) {
-                showAddressInputModal();
+            if (!selectedAddress.clientName || !selectedAddress.bairro || (!selectedAddress.numero && !noNumberCheckbox.checked)) {
+                showMessageModal('Por favor, preencha o nome do cliente, o bairro, a rua e o número ou marque "Sem Número" para continuar.');
                 return;
             }
 
@@ -2629,6 +2637,8 @@
             }
             streetInput.value = selectedAddress.rua || '';
             numberInput.value = selectedAddress.numero || '';
+            noNumberCheckbox.checked = selectedAddress.numero === 'S/N';
+            numberInput.disabled = noNumberCheckbox.checked;
             referencePointInput.value = selectedAddress.referencia || '';
         }
 
@@ -2641,6 +2651,17 @@
         window.addEventListener('click', function(event) {
             if (event.target == addressInputModal) {
                 hideAddressInputModal();
+            }
+        });
+        
+        noNumberCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                numberInput.value = '';
+                numberInput.disabled = true;
+                numberInput.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                numberInput.disabled = false;
+                numberInput.classList.remove('opacity-50', 'cursor-not-allowed');
             }
         });
 
@@ -2660,15 +2681,25 @@
         }
 
         confirmAddressBtn.addEventListener('click', function() {
-            const clientName = clientNameInput.value.trim(); // Captura o nome do cliente
+            const clientName = clientNameInput.value.trim();
             const bairro = neighborhoodSelect.value;
             const rua = streetInput.value.trim();
-            const numero = numberInput.value.trim();
+            let numero = numberInput.value.trim();
             const referencia = referencePointInput.value.trim();
+            const isNoNumber = noNumberCheckbox.checked;
 
-            if (!clientName || !bairro || !rua || !numero) {
-                showMessageModal('Por favor, preencha o nome do cliente, o bairro, a rua e o número para continuar.');
+            if (!clientName || !bairro || !rua) {
+                showMessageModal('Por favor, preencha o nome do cliente, o bairro e a rua para continuar.');
                 return;
+            }
+            
+            if (!isNoNumber && !numero) {
+                showMessageModal('Por favor, preencha o número ou marque a opção "Sem Número".');
+                return;
+            }
+
+            if (isNoNumber) {
+                numero = 'S/N';
             }
 
             const selectedFee = deliveryFeesData.find(fee => fee.neighborhood === bairro);
@@ -2678,7 +2709,7 @@
             }
 
             selectedAddress = {
-                clientName: clientName, // Armazena o nome
+                clientName: clientName,
                 bairro: bairro,
                 rua: rua,
                 numero: numero,
@@ -2720,7 +2751,7 @@
         });
 
         function updateAddressDisplay() {
-            if (selectedAddress.bairro && selectedAddress.rua && selectedAddress.numero) {
+            if (selectedAddress.bairro && selectedAddress.rua) {
                 addressSummarySection.classList.remove('hidden');
                 clientNameDisplay.textContent = `Nome do Cliente: ${selectedAddress.clientName || 'Não informado'}`;
                 addressDisplay.textContent = `Rua: ${selectedAddress.rua}, Nº ${selectedAddress.numero}`;
