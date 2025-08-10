@@ -1,4 +1,3 @@
-teste
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -750,7 +749,7 @@ teste
             <button onclick="backToOrderSidebarFromDrinkSuggestion()" class="px-4 py-2 bg-gray-500 text-white rounded-lg font-bold hover:bg-gray-600 transition w-full mb-3 whitespace-nowrap text-sm">
                 Voltar ao Pedido
             </button>
-            <button id="proceed-without-drinks" class="btn-order w-full py-3 text-white font-bold rounded-full mb-6 whitespace-nowrap text-sm">
+            <button id="proceed-without-drinks" class="dynamic-checkout-button btn-order w-full py-3 text-white font-bold rounded-full mb-6 whitespace-nowrap text-sm">
                 Finalizar sem Bebidas
             </button>
             <div id="suggested-drinks-list" class="flex flex-col gap-3 mb-6">
@@ -928,6 +927,7 @@ teste
         let deferredPrompt; 
         let selectedPaymentMethod = null; 
         let isCheckoutInitiated = false; 
+        let discountPromotion = null; // Variável global para a promoção de desconto
         
         let selectedAddress = {
             clientName: null, 
@@ -1020,6 +1020,10 @@ teste
         const informAddressBtn = document.getElementById('informAddressBtn');
         const editDeliveryAddressBtn = document.getElementById('editDeliveryAddressBtn');
 
+        // Referências para os novos elementos de desconto
+        const discountSection = document.getElementById('discount-section');
+        const discountDisplay = document.getElementById('discount-display');
+        const discountValueDisplay = document.getElementById('discount-value-display');
 
         let currentPizzaData = {}; 
         let firstHalfPizza = null; 
@@ -1310,12 +1314,9 @@ teste
                         optionDiv.appendChild(input);
                         optionDiv.appendChild(label);
                         
-                        // CORREÇÃO DO BUG: Torna o retângulo inteiro clicável para selecionar o ingrediente.
-                        // Remove a verificação anterior e simplesmente alterna o estado
-                        // do input, garantindo que o clique na div inteira funcione.
+                        // Ouve o evento de clique em toda a div
                         optionDiv.addEventListener('click', () => {
                             input.checked = !input.checked;
-                            // Dispara o evento de 'change' para que a lógica de preço seja executada.
                             input.dispatchEvent(new Event('change', { bubbles: true }));
                         });
                         
@@ -1941,10 +1942,19 @@ teste
         function updateOrderDisplay() {
             const orderItemsContainer = document.getElementById('orderItems');
             let subtotal = 0;
+            let finalDiscountAmount = 0;
 
-            order.forEach((item) => {
+            const nonDiscountItems = order.filter(item => item.type !== 'discount');
+            nonDiscountItems.forEach((item) => {
                 subtotal += item.price;
             });
+            
+            // Lógica de desconto percentual
+            const discountItemIndex = order.findIndex(item => item.type === 'discount');
+            if (discountItemIndex > -1) {
+                const discountItem = order[discountItemIndex];
+                finalDiscountAmount = subtotal * (discountItem.discountPercentage / 100);
+            }
 
             if (order.length === 0) {
                 emptyOrderMessage.classList.remove('hidden');
@@ -1973,6 +1983,8 @@ teste
                             </ul>
                         `;
                         itemDescription = ingredientsListHtml;
+                    } else if (item.type === 'discount') {
+                        return; // Não exibe o item de desconto na lista de itens
                     }
                     
                     const isLastItem = (index === order.length - 1);
@@ -1995,6 +2007,16 @@ teste
                 });
                 orderItemsContainer.innerHTML = itemsHTML;
                 subtotalEl.textContent = 'R$ ' + subtotal.toFixed(2).replace('.', ',');
+
+                // Adiciona a seção de desconto se houver um desconto
+                if (finalDiscountAmount > 0) {
+                    orderItemsContainer.insertAdjacentHTML('beforeend', `
+                        <div id="discount-section" class="flex justify-between items-center py-3 border-b border-gray-100 text-red-600">
+                            <span class="font-bold">Desconto (${discountPromotion.promoPrice}%)</span>
+                            <span id="discount-value-display" class="font-bold">- R$ ${finalDiscountAmount.toFixed(2).replace('.', ',')}</span>
+                        </div>
+                    `);
+                }
             }
             
             if (selectedAddress.bairro) {
@@ -2009,7 +2031,7 @@ teste
                 editDeliveryAddressBtn.classList.add('hidden');
             }
             
-            const total = subtotal + selectedAddress.deliveryFee;
+            const total = subtotal - finalDiscountAmount + selectedAddress.deliveryFee;
             totalEl.textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
 
             if (selectedPaymentMethod) {
@@ -2087,7 +2109,8 @@ teste
             let message = 'Olá! Gostaria de fazer o seguinte pedido:\n\n';
             let subtotal = 0;
 
-            order.forEach(item => {
+            const nonDiscountItems = order.filter(item => item.type !== 'discount');
+            nonDiscountItems.forEach(item => {
                 let itemName = item.name;
                 let itemDescription = '';
 
@@ -2107,8 +2130,14 @@ teste
                 }
                 subtotal += item.price;
             });
+            
+            let finalDiscountAmount = 0;
+            if (discountPromotion) {
+                finalDiscountAmount = subtotal * (discountPromotion.promoPrice / 100);
+                message += `\nDesconto (${discountPromotion.promoPrice}%): -R$ ${finalDiscountAmount.toFixed(2).replace('.', ',')}`;
+            }
 
-            const total = subtotal + selectedAddress.deliveryFee;
+            const total = subtotal - finalDiscountAmount + selectedAddress.deliveryFee;
 
             message += `\nSubtotal: R$ ${subtotal.toFixed(2).replace('.', ',')}`;
             message += `\nTaxa de entrega (${selectedAddress.bairro || 'Não informado'}): R$ ${selectedAddress.deliveryFee.toFixed(2).replace('.', ',')}`;
@@ -2156,9 +2185,8 @@ teste
                 return;
             }
 
-            // MODIFICAÇÃO: Em vez de mostrar um modal de mensagem, abre o modal de endereço.
             if (!selectedAddress.clientName || !selectedAddress.bairro || (!selectedAddress.numero && !noNumberCheckbox.checked)) {
-                isCheckoutInitiated = true; // Define a flag para continuar o checkout após preencher o endereço
+                isCheckoutInitiated = true;
                 showAddressInputModal();
                 return;
             }
@@ -2198,6 +2226,9 @@ teste
 
             if (activePromotions.length > 0) {
                 activePromotions.forEach(promo => {
+                    if (promo.name === 'Desconto no Pedido') {
+                        return;
+                    }
                     const promoDiv = document.createElement('div');
                     promoDiv.className = 'promotion-item';
                     
@@ -2251,7 +2282,7 @@ teste
         }
 
         function updatePromotionButtonVisibility() {
-            const activePromotionsWithPrice = allPromotionsData.filter(promo => promo.active && promo.promoPrice !== null);
+            const activePromotionsWithPrice = allPromotionsData.filter(promo => promo.active && promo.promoPrice !== null && promo.name !== 'Desconto no Pedido');
             const isAnyModalOpen = document.querySelector('.modal[style*="display: flex"]');
             if (activePromotionsWithPrice.length > 0 && !orderSidebar.classList.contains('translate-x-0') && !isAnyModalOpen) {
                 promotionButton.style.display = 'flex';
@@ -2341,15 +2372,11 @@ teste
             const hasDrinks = order.some(item => item.category === 'bebidas');
             if (hasDrinks) {
                 proceedWithoutDrinksBtn.textContent = 'Finalizar com Bebidas';
-                // Remove a classe de gradiente do estado "sem bebida"
                 proceedWithoutDrinksBtn.classList.remove('btn-order');
-                // Adiciona a classe de cor sólida vermelha do Tailwind
                 proceedWithoutDrinksBtn.classList.add('bg-red-600', 'hover:bg-red-700', 'transition', 'duration-300');
             } else {
                 proceedWithoutDrinksBtn.textContent = 'Finalizar sem Bebidas';
-                // Remove a classe de cor sólida do estado "com bebida"
                 proceedWithoutDrinksBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
-                // Adiciona a classe de gradiente original do estado "sem bebida"
                 proceedWithoutDrinksBtn.classList.add('btn-order'); 
             }
         }
@@ -2475,9 +2502,18 @@ teste
         function calculateOrderTotal() {
             let currentSubtotal = 0;
             order.forEach(item => {
-                currentSubtotal += item.price;
+                if (item.type !== 'discount') {
+                    currentSubtotal += item.price;
+                }
             });
-            return currentSubtotal + selectedAddress.deliveryFee;
+
+            // Aplica o desconto se existir e for válido
+            let finalDiscountAmount = 0;
+            if (discountPromotion) {
+                finalDiscountAmount = currentSubtotal * (discountPromotion.promoPrice / 100);
+            }
+
+            return currentSubtotal - finalDiscountAmount + selectedAddress.deliveryFee;
         }
 
         confirmPaymentMethodBtn.addEventListener('click', () => {
@@ -2787,6 +2823,12 @@ teste
                 allPromotionsData = parseCsvData(promocoesCsvText, 'promocoes');
                 deliveryFeesData = parseCsvData(deliveryFeesCsvText, 'deliveryFees');
                 
+                // Encontrar e aplicar a promoção de desconto se ela existir e estiver ativa
+                discountPromotion = allPromotionsData.find(promo => promo.name === 'Desconto no Pedido' && promo.active);
+                if (discountPromotion) {
+                    console.log(`DEBUG: Promoção de desconto de ${discountPromotion.promoPrice}% encontrada e ativa.`);
+                }
+
                 const rawBurgerIngredients = parseCsvData(ingredientesHamburguerCsvText, 'ingredientesHamburguer');
                 allBurgerIngredients = rawBurgerIngredients.reduce((acc, current) => {
                     if (!acc[current.category]) {
