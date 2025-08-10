@@ -4,10 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sâmia - Cardápio Online</title>
+    <!-- Inclui a biblioteca Tailwind CSS para estilização rápida e responsiva -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inclui a biblioteca Font Awesome para ícones -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Favicon: Define o logótipo como ícone da aba do navegador -->
     <link rel="icon" href="https://raw.githubusercontent.com/WillianSoares93/catalogo_pizzaria/refs/heads/main/logo.png" type="image/png">
     
+    <!-- Adicionado para PWA: Link para o arquivo de manifesto -->
     <link rel="manifest" href="/manifest.json">
 
     <style>
@@ -510,7 +514,7 @@
             border-color: #fca5a5; /* red-300 */
         }
         .burger-option.selected {
-            background-color: #ef4444; /* red-500 */
+            background: linear-gradient(135deg, #f59e0b, #ef4444);
             color: white;
             border-color: #b91c1c; /* red-700 */
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -843,14 +847,12 @@
     </footer>
 
     <script>
-        // URLs das planilhas Google Sheets publicadas como CSV
         const CARDAPIO_CSV_URL_REF = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=664943668&single=true&output=csv';
         const PROMOCOES_CSV_URL_REF = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=600393470&single=true&output=csv'; 
         const DELIVERY_FEES_CSV_URL_REF = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=1695668250&single=true&output=csv';
         const INGREDIENTS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=1816106560&single=true&output=csv';
         const CONTACTS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=2043568216&single=true&output=csv';
 
-        // Variáveis globais
         let order = [];
         let allMenuData = [];
         let allPromotionsData = [];
@@ -874,7 +876,6 @@
         };
         let isAddressInputVisible = false;
 
-        // Referências para os elementos DOM
         const orderSidebar = document.getElementById('orderSidebar');
         const cartCount = document.getElementById('cartCount');
         const emptyOrderMessage = document.getElementById('orderItems').querySelector('#emptyOrderMessage');
@@ -2605,10 +2606,6 @@
             footerEmail.innerHTML = `<i class="fas fa-envelope mr-2"></i> ${emailText}`;
         }
 
-        // =======================================================================================
-        // CÓDIGO ANTERIOR ÀS ALTERAÇÕES QUE CAUSARAM O ERRO
-        // =======================================================================================
-
         async function loadMenuAndRender() {
             try {
                 console.log('DEBUG: loadMenuAndRender: Iniciando busca da API...');
@@ -2667,8 +2664,6 @@
                 showMessageModal('Não foi possível carregar o cardápio no momento. Por favor, tente novamente mais tarde.');
             }
         }
-
-        // --- Lógica para o modal de montagem de Hambúrguer ---
         function closeBurgerBuildModal() {
             burgerBuildModal.style.display = 'none';
             updatePromotionButtonVisibility();
