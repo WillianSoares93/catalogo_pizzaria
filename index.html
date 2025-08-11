@@ -1,14 +1,17 @@
-teste
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sâmia - Cardápio Online</title>
+    <!-- Inclui a biblioteca Tailwind CSS para estilização rápida e responsiva -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inclui a biblioteca Font Awesome para ícones -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Favicon: Define o logótipo como ícone da aba do navegador -->
     <link rel="icon" href="https://raw.githubusercontent.com/WillianSoares93/catalogo_pizzaria/refs/heads/main/logo.png" type="image/png">
     
+    <!-- Adicionado para PWA: Link para o arquivo de manifesto -->
     <link rel="manifest" href="/manifest.json">
 
     <style>
@@ -810,7 +813,7 @@ teste
     </div>
 
     <div id="address-input-modal" class="address-modal">
-        <div class="address-modal-content">
+        <div class="modal-content">
             <span class="close-button" id="close-address-modal">&times;</span>
             <h3 class="text-xl font-bold text-gray-800 mb-4">Informe seus Dados</h3>
              <div class="mb-4">
@@ -1740,7 +1743,7 @@ teste
                 isFirstHalfPromotional = false; 
                 toggleAddItemButtons(true); 
                 toggleCategoryButtons(true); 
-                showTemporaryFeedback('Pizza meio a meia adicionada ao pedido!', 'bg-green-500'); 
+                showTemporaryFeedback('Pizza meio a meio adicionada ao pedido!', 'bg-green-500'); 
                 
             } else if (item.isPizza) {
                 currentPizzaData = { ...item }; 
@@ -2456,7 +2459,8 @@ teste
                 }
 
                 if (radio && radio.value === 'Pix' && contactInfo.chavepix) {
-                    pixKeyDisplay.textContent = contactInfo.chavepix;
+                    const totalAmount = calculateOrderTotal()
+                    pixKeyDisplay.textContent = generatePixCopiaEColaPayload(totalAmount, contactInfo.chavepix, contactInfo.nome, contactInfo.cidade);
                     pixKeyContainer.classList.remove('hidden');
                 } else {
                     pixKeyContainer.classList.add('hidden');
@@ -2481,18 +2485,20 @@ teste
         });
         
         function copyPixKey() {
-            const pixKeyText = pixKeyDisplay.textContent.replace('Chave Pix: ', '');
-            navigator.clipboard.writeText(pixKeyText)
-                .then(() => {
-                    const feedbackEl = document.getElementById('copy-feedback');
-                    feedbackEl.classList.remove('hidden');
-                    setTimeout(() => {
-                        feedbackEl.classList.add('hidden');
-                    }, 2000);
-                })
-                .catch(err => {
-                    console.error('Failed to copy text: ', err);
-                });
+            const pixKeyText = pixKeyDisplay.textContent;
+            // Cria um elemento de texto temporário para copiar o conteúdo
+            const tempInput = document.createElement('textarea');
+            tempInput.value = pixKeyText;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            
+            const feedbackEl = document.getElementById('copy-feedback');
+            feedbackEl.classList.remove('hidden');
+            setTimeout(() => {
+                feedbackEl.classList.add('hidden');
+            }, 2000);
         }
         
         copyPixBtn.addEventListener('click', copyPixKey);
