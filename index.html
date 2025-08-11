@@ -1,4 +1,3 @@
-teste
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1239,6 +1238,10 @@ teste
                     case 'Valor': return 'value';
                     default: 
                         console.warn(`DEBUG: Header CSV desconhecido encontrado para ${type}: "${cleanedHeader}"`);
+                        // Ajusta o mapeamento para lidar com o cabeçalho "É Montável? (SIM/NAO)"
+                        if (cleanedHeader.includes('É Montável')) {
+                            return 'isCustomizable';
+                        }
                         return cleanedHeader.toLowerCase().replace(/\s/g, '').replace(/[^a-z0-9]/g, '');
                 }
             });
@@ -1629,19 +1632,7 @@ teste
                     } else if (isSelectingHalfPizza && !isFirstHalfPromotional) { 
                         if (targetCategory.toLowerCase() === 'promocionais') {
                             event.preventDefault(); 
-                            showMessageModal('Você começou a montar uma pizza meio a meio com um sabor não promocional. A segunda metade não pode ser de uma pizza promocional.', () => {
-                                if (firstHalfPizza && firstHalfPizza.category) {
-                                    const originalCategorySection = document.getElementById(`${firstHalfPizza.category.toLowerCase()}-section`);
-                                    if (originalCategorySection) {
-                                        originalCategorySection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                        setActiveCategoryButton(firstHalfPizza.category.toLowerCase());
-                                    } else {
-                                        document.getElementById('menu').scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                    }
-                                } else {
-                                    document.getElementById('menu').scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                }
-                            });
+                            showMessageModal('Você começou a montar uma pizza meio a meio com um sabor não promocional. A segunda metade não pode ser de uma pizza promocional.');
                             return; 
                         }
                     }
@@ -2533,17 +2524,12 @@ teste
         
         function copyPixKey() {
             const pixKeyText = pixKeyDisplay.textContent.replace('Chave Pix: ', '');
-            navigator.clipboard.writeText(pixKeyText)
-                .then(() => {
-                    const feedbackEl = document.getElementById('copy-feedback');
-                    feedbackEl.classList.remove('hidden');
-                    setTimeout(() => {
-                        feedbackEl.classList.add('hidden');
-                    }, 2000);
-                })
-                .catch(err => {
-                    console.error('Failed to copy text: ', err);
-                });
+            document.execCommand('copy');
+            const feedbackEl = document.getElementById('copy-feedback');
+            feedbackEl.classList.remove('hidden');
+            setTimeout(() => {
+                feedbackEl.classList.add('hidden');
+            }, 2000);
         }
         
         copyPixBtn.addEventListener('click', copyPixKey);
