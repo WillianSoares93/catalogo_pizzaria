@@ -1,4 +1,3 @@
-teste
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1198,7 +1197,7 @@ teste
                     case 'Dados': return 'data';
                     case 'Valor': return 'value';
                     default: 
-                        // Ignora o log para o cabeçalho malformado "É Montável? (SIM/NÃO)"
+                        // Ignora o log para o cabeçalho malformado "É Montável? (SIM/NAO)"
                         if (cleanedHeader.includes('É Montável')) {
                             return 'isCustomizable';
                         }
@@ -1744,7 +1743,7 @@ teste
                 isFirstHalfPromotional = false; 
                 toggleAddItemButtons(true); 
                 toggleCategoryButtons(true); 
-                showTemporaryFeedback('Pizza meio a meio adicionada ao pedido!', 'bg-green-500'); 
+                showTemporaryFeedback('Pizza meio a meia adicionada ao pedido!', 'bg-green-500'); 
                 
             } else if (item.isPizza) {
                 currentPizzaData = { ...item }; 
@@ -2845,47 +2844,28 @@ teste
 
         function generatePixCopiaEColaPayload(amount, pixKey, merchantName = "Sâmia", merchantCity = "Petrolina", txid = "pedido" + Date.now()) {
             const payloadVersion = "01";
-            const pixKeyType = pixKey.includes('@') ? "mailto" : "tel"; // Assumindo email para '@'
+            const pixKeyType = "1" // 1 = Chave Pix
             const merchantCategoryCode = "0000"; 
             const transactionCurrency = "986"; 
+            const formattedAmount = amount.toFixed(2).replace('.', '');
+            
+            const pixData = `0014BR.GOV.BCB.PIX01${String(pixKey.length).padStart(2, '0')}${pixKey}`;
+            const merchantNameData = `59${String(merchantName.length).padStart(2, '0')}${merchantName}`;
+            const merchantCityData = `60${String(merchantCity.length).padStart(2, '0')}${merchantCity}`;
+            const amountData = `54${String(formattedAmount.length).padStart(2, '0')}${formattedAmount}`;
 
-            const data = [
-                { id: "00", value: payloadVersion },
-                { id: "26", value: [
-                    { id: "00", value: "BR.GOV.BCB.PIX" },
-                    { id: "01", value: pixKey },
-                    // Removido o campo 02 que é o URL do QR Code Dinâmico
-                ] },
-                { id: "52", value: merchantCategoryCode },
-                { id: "53", value: transactionCurrency },
-                { id: "54", value: amount.toFixed(2).replace('.', '') }, // Valor do pedido
-                { id: "58", value: "BR" },
-                { id: "59", value: merchantName },
-                { id: "60", value: merchantCity },
-                { id: "62", value: [{ id: "05", value: txid }] },
-            ];
-
-            const stringify = (obj) => {
-                if (Array.isArray(obj)) {
-                    let result = "";
-                    for (const item of obj) {
-                        const value = typeof item.value === 'object' ? stringify(item.value) : String(item.value);
-                        result += `${item.id}${String(value.length).padStart(2, '0')}${value}`;
-                    }
-                    return result;
-                } else if (typeof obj === "object") {
-                    let result = "";
-                    for (const id in obj) {
-                        const value = typeof obj[id] === 'object' ? stringify(obj[id]) : String(obj[id]);
-                        result += `${id}${String(value.length).padStart(2, '0')}${value}`;
-                    }
-                    return result;
-                }
-            };
-
-            const dataString = stringify(data);
+            const payload = `00${String(payloadVersion.length).padStart(2, '0')}${payloadVersion}` +
+                            `26${String(pixData.length).padStart(2, '0')}${pixData}` +
+                            `52${String(merchantCategoryCode.length).padStart(2, '0')}${merchantCategoryCode}` +
+                            `53${String(transactionCurrency.length).padStart(2, '0')}${transactionCurrency}` +
+                            amountData +
+                            `58${String("BR".length).padStart(2, '0')}BR` +
+                            merchantNameData +
+                            merchantCityData +
+                            `62070503***` + // TXID
+                            `6304`;
+            
             const crc16 = (data) => {
-                // Implementação simples de CRC16 CCITT
                 let crc = 0xFFFF;
                 for (let i = 0; i < data.length; i++) {
                     crc ^= data.charCodeAt(i) << 8;
@@ -2895,11 +2875,10 @@ teste
                 }
                 return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
             };
-
-            const payload = dataString + '6304';
-            const finalPayload = payload + crc16(payload);
-
-            return finalPayload;
+            
+            const checksum = crc16(payload);
+            
+            return payload + checksum;
         }
         
         async function loadMenuAndRender() {
