@@ -1,3 +1,4 @@
+teste
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -864,7 +865,7 @@
         <div class="max-w-6xl mx-auto">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
                 <div>
-                    <h3 class="text-xl font-bold mb-4">Sâmia</h3>
+                    <h3 class="xl font-bold mb-4">Sâmia</h3>
                     <p class="text-gray-400">As melhores pizzas artesanais da cidade, feitas com ingredientes frescos e muito carinho.</p>
                 </div>
                 <div>
@@ -1175,6 +1176,7 @@
                     case 'Preço 4 fatias': return 'price4Slices';
                     case 'Categoria': return 'category';
                     case 'É Pizza? (SIM/NÃO)': return 'isPizza';
+                    // CORRIGIDO: Tratamento para o cabeçalho malformado
                     case 'É Montável? (SIM/NAO)': return 'isCustomizable';
                     case 'Disponível (SIM/NÃO)': return 'available'; 
                     case 'Imagem': return 'imageUrl'; 
@@ -1197,7 +1199,7 @@
                     case 'Dados': return 'data';
                     case 'Valor': return 'value';
                     default: 
-                        // Ignora o log para o cabeçalho malformado "É Montável? (SIM/NAO)"
+                        // Ignora o log para o cabeçalho malformado "É Montável? (SIM/NÃO)"
                         if (cleanedHeader.includes('É Montável')) {
                             return 'isCustomizable';
                         }
@@ -2844,27 +2846,46 @@
 
         function generatePixCopiaEColaPayload(amount, pixKey, merchantName = "Sâmia", merchantCity = "Petrolina", txid = "pedido" + Date.now()) {
             const payloadVersion = "01";
-            const pixKeyType = "1" // 1 = Chave Pix
             const merchantCategoryCode = "0000"; 
             const transactionCurrency = "986"; 
-            const formattedAmount = amount.toFixed(2).replace('.', '');
-            
-            const pixData = `0014BR.GOV.BCB.PIX01${String(pixKey.length).padStart(2, '0')}${pixKey}`;
-            const merchantNameData = `59${String(merchantName.length).padStart(2, '0')}${merchantName}`;
-            const merchantCityData = `60${String(merchantCity.length).padStart(2, '0')}${merchantCity}`;
-            const amountData = `54${String(formattedAmount.length).padStart(2, '0')}${formattedAmount}`;
 
-            const payload = `00${String(payloadVersion.length).padStart(2, '0')}${payloadVersion}` +
-                            `26${String(pixData.length).padStart(2, '0')}${pixData}` +
-                            `52${String(merchantCategoryCode.length).padStart(2, '0')}${merchantCategoryCode}` +
-                            `53${String(transactionCurrency.length).padStart(2, '0')}${transactionCurrency}` +
-                            amountData +
-                            `58${String("BR".length).padStart(2, '0')}BR` +
-                            merchantNameData +
-                            merchantCityData +
-                            `62070503***` + // TXID
-                            `6304`;
+            // Formata o valor para o padrão Pix (ex: 123.45 -> 123.45)
+            const formattedAmount = parseFloat(amount).toFixed(2);
             
+            const fields = {
+                '00': '01',
+                '26': {
+                    '00': 'BR.GOV.BCB.PIX',
+                    '01': pixKey
+                },
+                '52': '0000',
+                '53': '986',
+                '54': formattedAmount,
+                '58': 'BR',
+                '59': merchantName,
+                '60': merchantCity,
+                '62': {
+                    '05': txid.slice(0, 25) // Trunca o txid para no máximo 25 caracteres
+                }
+            };
+            
+            const formatField = (id, value) => {
+                const val = typeof value === 'object' ? formatFields(value) : value;
+                return `${id}${String(val.length).padStart(2, '0')}${val}`;
+            };
+
+            const formatFields = (data) => {
+                let result = '';
+                for (const id in data) {
+                    if (data.hasOwnProperty(id)) {
+                        result += formatField(id, data[id]);
+                    }
+                }
+                return result;
+            };
+
+            const payloadString = formatFields(fields);
+
             const crc16 = (data) => {
                 let crc = 0xFFFF;
                 for (let i = 0; i < data.length; i++) {
@@ -2876,9 +2897,9 @@
                 return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
             };
             
-            const checksum = crc16(payload);
+            const checksum = crc16(payloadString + '6304');
             
-            return payload + checksum;
+            return payloadString + '6304' + checksum;
         }
         
         async function loadMenuAndRender() {
