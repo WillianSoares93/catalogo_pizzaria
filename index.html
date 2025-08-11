@@ -1,3 +1,4 @@
+teste
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1175,8 +1176,7 @@
                     case 'Preço 4 fatias': return 'price4Slices';
                     case 'Categoria': return 'category';
                     case 'É Pizza? (SIM/NÃO)': return 'isPizza';
-                    // CORRIGIDO: Tratamento para o cabeçalho malformado
-                    case 'É Montável? (SIM/NÃO)': return 'isCustomizable';
+                    case 'É Montável? (SIM/NAO)': return 'isCustomizable';
                     case 'Disponível (SIM/NÃO)': return 'available'; 
                     case 'Imagem': return 'imageUrl'; 
                     case 'ID Promocao': return 'id';
@@ -1198,8 +1198,10 @@
                     case 'Dados': return 'data';
                     case 'Valor': return 'value';
                     default: 
-                        // console.warn(`DEBUG: Header CSV desconhecido encontrado para ${type}: "${cleanedHeader}"`);
-                        // AVISO: O log de cabeçalho desconhecido foi removido daqui para evitar poluir o console.
+                        // Ignora o log para o cabeçalho malformado "É Montável? (SIM/NÃO)"
+                        if (cleanedHeader.includes('É Montável')) {
+                            return 'isCustomizable';
+                        }
                         return cleanedHeader.toLowerCase().replace(/\s/g, '').replace(/[^a-z0-9]/g, '');
                 }
             });
@@ -1224,7 +1226,6 @@
                             const parsedValue = parseInt(value, 10);
                             item[headerKey] = isNaN(parsedValue) ? Infinity : parsedValue;
                         }
-                        // CORRIGIDO: Tratamento de valores para "SIM" e "NÃO" de forma mais robusta
                         else if (['isPizza', 'available', 'active', 'isCustomizable', 'isSingleChoice', 'isRequired'].includes(headerKey)) {
                             item[headerKey] = value.toUpperCase() === 'SIM' || value.toUpperCase() === 'SIM\r';
                         } else {
@@ -1529,7 +1530,7 @@
                                 if (trimmedImageUrl.toLowerCase() === 'sem imagem') {
                                     imageElement = `<div class="no-image-placeholder">Sem Imagem</div>`;
                                 } else if (trimmedImageUrl.length > 0) {
-                                    imageElement = `<img src="${trimmedImageUrl}" alt="${item.name}" class="w-full h-40 object-cover" onerror="this.onerror=null;this.src='';">`;
+                                    imageElement = `<img src="${trimmedImageUrl}" alt="Imagem de ${item.name}" class="w-full h-40 object-cover" onerror="this.onerror=null;this.src='';">`;
                                 } else {
                                     imageElement = '';
                                 }
@@ -2412,7 +2413,7 @@
                         }
                     }
                     if (methodValue === 'Pix' && contactInfo.chavepix) {
-                        pixKeyDisplay.textContent = contactInfo.chavepix;
+                        pixKeyDisplay.textContent = generatePixCopiaEColaPayload(totalOrder, contactInfo.chavepix, "Sâmia Pizzaria", "Petrolina");
                         pixKeyContainer.classList.remove('hidden');
                     } else {
                         pixKeyContainer.classList.add('hidden');
@@ -2868,14 +2869,14 @@
                 if (Array.isArray(obj)) {
                     let result = "";
                     for (const item of obj) {
-                        const value = String(item.value);
+                        const value = typeof item.value === 'object' ? stringify(item.value) : String(item.value);
                         result += `${item.id}${String(value.length).padStart(2, '0')}${value}`;
                     }
                     return result;
                 } else if (typeof obj === "object") {
                     let result = "";
                     for (const id in obj) {
-                        const value = String(obj[id]);
+                        const value = typeof obj[id] === 'object' ? stringify(obj[id]) : String(obj[id]);
                         result += `${id}${String(value.length).padStart(2, '0')}${value}`;
                     }
                     return result;
