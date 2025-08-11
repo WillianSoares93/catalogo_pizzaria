@@ -1,3 +1,4 @@
+teste
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1529,7 +1530,7 @@
                                 if (trimmedImageUrl.toLowerCase() === 'sem imagem') {
                                     imageElement = `<div class="no-image-placeholder">Sem Imagem</div>`;
                                 } else if (trimmedImageUrl.length > 0) {
-                                    imageElement = `<img src="${trimmedImageUrl}" alt="Imagem de ${item.name}" class="w-full h-40 object-cover" onerror="this.onerror=null;this.src='';">`;
+                                    imageElement = `<img src="${trimmedImageUrl}" alt="${item.name}" class="w-full h-40 object-cover" onerror="this.onerror=null;this.src='';">`;
                                 } else {
                                     imageElement = '';
                                 }
@@ -2842,39 +2843,41 @@
             return contactData;
         }
 
-        function generatePixCopiaEColaPayload(amount, pixKey, merchantName = "Sâmia", merchantCity = "Petrolina") {
+        function generatePixCopiaEColaPayload(amount, pixKey, merchantName = "Sâmia Pizzaria", merchantCity = "Petrolina") {
             const payloadVersion = "01";
             const merchantCategoryCode = "0000"; 
             const transactionCurrency = "986"; 
             
-            const pixKeyLength = pixKey.length;
-            const pixKeyField = `01${String(pixKeyLength).padStart(2, '0')}${pixKey}`;
-
-            const merchantNameLength = merchantName.length;
-            const merchantNameField = `59${String(merchantNameLength).padStart(2, '0')}${merchantName}`;
-
-            const merchantCityLength = merchantCity.length;
-            const merchantCityField = `60${String(merchantCityLength).padStart(2, '0')}${merchantCity}`;
+            // Formatando o valor com duas casas decimais e ponto
+            const formattedAmount = parseFloat(amount).toFixed(2);
             
+            // Gerando um TXID único para cada transação
             const txid = "pedido" + Date.now();
-            const txidLength = txid.length;
-            const txidField = `05${String(txidLength).padStart(2, '0')}${txid}`;
 
-            const formattedAmount = amount.toFixed(2);
-            const amountLength = formattedAmount.length;
-            const amountField = `54${String(amountLength).padStart(2, '0')}${formattedAmount}`;
+            const formatField = (id, value) => {
+                const val = value.toString();
+                return `${id}${String(val.length).padStart(2, '0')}${val}`;
+            };
 
-            let payload = `00${String(payloadVersion.length).padStart(2, '0')}${payloadVersion}`;
-            payload += `26${String(pixKeyField.length).padStart(2, '0')}${pixKeyField}`;
-            payload += `52${String(merchantCategoryCode.length).padStart(2, '0')}${merchantCategoryCode}`;
-            payload += `53${String(transactionCurrency.length).padStart(2, '0')}${transactionCurrency}`;
-            payload += amountField;
-            payload += `58${String("BR".length).padStart(2, '0')}BR`;
-            payload += merchantNameField;
-            payload += merchantCityField;
-            payload += `62${String(txidField.length).padStart(2, '0')}${txidField}`;
-            payload += '6304';
+            const data = {
+                '00': payloadVersion,
+                '26': formatField('00', 'BR.GOV.BCB.PIX') + formatField('01', pixKey),
+                '52': merchantCategoryCode,
+                '53': transactionCurrency,
+                '54': formattedAmount,
+                '58': 'BR',
+                '59': merchantName,
+                '60': merchantCity,
+                '62': formatField('05', txid)
+            };
+            
+            let payloadString = '';
+            for (const key in data) {
+                const value = data[key];
+                payloadString += formatField(key, value);
+            }
 
+            // Função de cálculo CRC16
             const crc16 = (data) => {
                 let crc = 0xFFFF;
                 for (let i = 0; i < data.length; i++) {
@@ -2886,9 +2889,9 @@
                 return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
             };
             
-            const checksum = crc16(payload);
+            const checksum = crc16(payloadString + '6304');
             
-            return payload + checksum;
+            return payloadString + '6304' + checksum;
         }
         
         async function loadMenuAndRender() {
