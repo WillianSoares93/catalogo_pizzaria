@@ -1790,7 +1790,7 @@
                 isFirstHalfPromotional = false; 
                 toggleAddItemButtons(true); 
                 toggleCategoryButtons(true); 
-                showTemporaryFeedback('Pizza meio a meia adicionada ao pedido!', 'bg-green-500'); 
+                showTemporaryFeedback('Pizza meio a meio adicionada ao pedido!', 'bg-green-500'); 
                 
             } else if (item.isPizza) {
                 currentPizzaData = { ...item }; 
@@ -2890,13 +2890,14 @@
         async function loadMenuAndRender() {
             try {
                 // Fetch de todos os dados em paralelo
-                const [menuResponse, contactResponse] = await Promise.all([
-                    fetch('/api/menu'),
-                    fetch(CONTACT_CSV_URL)
-                ]);
-                
-                const data = await menuResponse.json(); 
-                const contactData = await contactResponse.text();
+                const response = await fetch('/api/menu'); 
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('DEBUG: loadMenuAndRender: Erro HTTP ao buscar dados da API:', response.status, errorText);
+                    throw new Error(`Erro ao buscar dados da API: ${response.statusText || errorText}`);
+                }
+                const data = await response.json(); 
                 
                 // Parse dos dados
                 allMenuData = parseCsvData(data.cardapio, 'cardapio');
@@ -2912,7 +2913,7 @@
                     return acc;
                 }, {});
 
-                const parsedContactInfo = parseCsvData(contactData, 'contact');
+                const parsedContactInfo = parseCsvData(data.contact, 'contact');
                 contactInfo = parsedContactInfo.reduce((acc, curr) => {
                     if (curr.data && curr.value) {
                         acc[curr.data.toLowerCase().replace(/[^a-z0-9]/g, '')] = curr.value;
