@@ -1,17 +1,14 @@
+teste
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sâmia - Cardápio Online</title>
-    <!-- Inclui a biblioteca Tailwind CSS para estilização rápida e responsiva -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Inclui a biblioteca Font Awesome para ícones -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Favicon: Define o logótipo como ícone da aba do navegador -->
     <link rel="icon" href="https://raw.githubusercontent.com/WillianSoares93/catalogo_pizzaria/refs/heads/main/logo.png" type="image/png">
     
-    <!-- Adicionado para PWA: Link para o arquivo de manifesto -->
     <link rel="manifest" href="/manifest.json">
 
     <style>
@@ -561,10 +558,8 @@
     </style>
 </head>
 <body>
-    <!-- Header -->
     <header class="header-bg text-white py-16 px-4 text-center">
         <div class="max-w-4xl mx-auto">
-            <!-- Logotipo da Sâmia -->
             <img src="https://raw.githubusercontent.com/WillianSoares93/catalogo_pizzaria/refs/heads/main/logo.png" alt="Logotipo Sâmia" class="h-64 mx-auto mb-4 object-contain">
             <p class="text-2xl mb-8">Pizzaria Artesanal</p>
             <div class="flex justify-center space-x-4">
@@ -575,34 +570,27 @@
         </div>
     </header>
 
-    <!-- Menu Section -->
     <section id="menu" class="py-8 px-4 max-w-6xl mx-auto">
         <div class="text-center mb-8">
             <h2 class="text-4xl font-bold text-gray-800 mb-4">Nosso Cardápio- teste</h2>
             <p class="text-gray-600 text-lg mx-auto">Escolha sua pizza favorita ou uma bebida refrescante!</p>
         </div>
 
-        <!-- Mensagem "Arrasta para o lado" para mobile -->
         <div class="text-gray-500 text-sm text-center mb-4 lg:hidden">
             <i class="fas fa-hand-point-right mr-1"></i> Arraste para o lado para ver outras opções
         </div>
 
-        <!-- Sticky Category Buttons Container -->
         <div class="category-bar-mobile-sticky lg:static lg:p-0">
-            <!-- Os botões de categoria serão gerados dinamicamente aqui pelo JS -->
             <div id="category-buttons-container" class="flex space-x-2 mb-6 overflow-x-auto pb-2 
                         lg:flex-row lg:space-x-2 lg:mb-6 lg:overflow-visible lg:pb-0">
             </div>
         </div>
         
-        <!-- Lista de Itens do Cardápio -->
         <div id="pizza-list">
-            <!-- As seções de categoria e seus itens serão geradas dinamicamente aqui pelo JS -->
             <div id="dynamic-pizza-sections"></div>
         </div>
     </section>
 
-    <!-- Order Summary Sidebar -->
     <div id="orderSidebar" class="fixed top-0 right-0 h-full w-full bg-white shadow-xl z-50 transform translate-x-full transition-transform duration-300 overflow-y-auto">
         <div class="p-6">
             <div class="flex justify-between items-center mb-6">
@@ -613,7 +601,6 @@
             </div>
             
             <div id="orderItems" class="mb-6">
-                <!-- Itens do pedido serão adicionados dinamicamente -->
                 <p class="text-gray-500 text-center py-8" id="emptyOrderMessage">Seu pedido está vazio</p>
             </div>
             
@@ -623,13 +610,11 @@
                     <span id="subtotal" class="font-bold">R$ 0,00</span>
                 </div>
 
-                <!-- Seção de desconto -->
                 <div id="discount-section" class="flex justify-between items-center mb-2 hidden text-red-600">
                     <span class="text-gray-600">Desconto: <span id="discount-percentage-display"></span></span>
                     <span id="discount-value-display" class="font-bold">- R$ 0,00</span>
                 </div>
                 
-                <!-- Seção de taxa de entrega dinâmica -->
                 <div id="deliveryFeeSection" class="flex justify-between mb-2">
                     <span class="text-gray-600">Taxa de entrega:</span>
                     <div id="deliveryFeeContainer" class="flex items-center">
@@ -649,7 +634,6 @@
                 </div>
             </div>
 
-            <!-- Seção de Resumo do Endereço -->
             <div id="address-summary-section" class="border border-gray-200 rounded-lg p-4 mb-6 bg-gray-50 hidden">
                 <h4 class="font-bold text-gray-800 mb-2">Detalhes da Entrega:</h4>
                 <p id="client-name-display" class="text-gray-700 text-sm"></p>
@@ -661,41 +645,34 @@
                 </button>
             </div>
 
-            <!-- Botão "Adicionar mais" -->
             <button onclick="backToMenu()" class="btn-add-more w-full py-3 text-white font-bold rounded-full mb-4">
                 Adicionar mais
             </button>
 
-            <!-- Botão de Finalizar Pedido (texto mudará dinamicamente) -->
             <button id="checkoutButton" onclick="handleCheckoutFlow()" class="btn-order w-full py-3 text-white font-bold rounded-full mb-4">
                 Finalizar Pedido
             </button>
             
-            <!-- O botão "Limpar Pedido" foi removido conforme sua solicitação -->
-        </div>
+            </div>
     </div>
 
-    <!-- Modal de Seleção de Pizza (Inteira/Meia) -->
     <div id="pizza-option-modal" class="modal">
         <div class="modal-content">
             <span class="close-button" id="close-pizza-option-modal">&times;</span>
             <h3 class="text-xl font-bold text-gray-800 mb-4" id="modal-pizza-name"></h3>
             <p class="text-gray-600 mb-6" id="modal-pizza-description"></p>
             <div id="pizza-size-options" class="grid grid-cols-1 sm:grid-cols-3 gap-2 justify-items-center">
-                <!-- Opções de bairro serão carregadas via JS -->
-            </div>
+                </div>
         </div>
     </div>
     
-    <!-- NOVO: Modal de Montagem de Hambúrguer -->
     <div id="burger-builder-modal" class="modal">
         <div class="modal-content burger-builder-modal">
             <span class="close-button" id="close-burger-builder-modal">&times;</span>
             <h3 class="text-xl font-bold text-gray-800 mb-4">Monte Seu Hambúrguer</h3>
             
             <div id="burger-ingredients-container" class="mb-4">
-                <!-- Seções de ingredientes serão carregadas aqui -->
-            </div>
+                </div>
             
             <div class="flex justify-between items-center bg-gray-100 p-4 rounded-lg mt-4">
                 <span class="text-lg font-bold">Total:</span>
@@ -708,7 +685,6 @@
         </div>
     </div>
 
-    <!-- Modal de Mensagem (para feedback do usuário) -->
     <div id="message-modal" class="message-modal">
         <div class="modal-content">
             <span class="close-button" id="close-message-modal">&times;</span>
@@ -717,28 +693,24 @@
         </div>
     </div>
 
-    <!-- Novo Modal de Promoção Flutuante -->
     <div id="promotion-popup" class="promotion-popup">
         <div class="modal-content">
             <span class="close-button" id="close-promotion-popup">&times;</span>
             <h3>Promoções Especiais!</h3>
             <p>Confira as nossas ofertas exclusivas e não perca tempo!</p>
             <div id="promotions-list">
-                <!-- Promoções serão carregadas aqui -->
-            </div>
+                </div>
             <button id="close-promotion-popup-btn" class="px-6 py-3 mt-6 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition w-full">
                 Fechar Promoções
             </button>
         </div>
     </div>
 
-    <!-- Novo Botão Flutuante de Promoção -->
     <button id="promotion-button" class="hidden">
         <i class="fas fa-tags text-xl"></i>
         <span>Promoções!</span>
     </button>
 
-    <!-- Floating Order Button -->
     <div class="fixed bottom-6 right-6 z-40">
         <button onclick="toggleOrderSidebar()" class="bg-red-600 hover:bg-red-700 text-white rounded-full p-5 shadow-lg relative transition duration-300 transform hover:scale-110" id="cart-button">
             <i class="fas fa-shopping-cart text-2xl"></i>
@@ -746,13 +718,11 @@
         </button>
     </div>
 
-    <!-- Modal de Sugestão de Bebidas -->
     <div id="drink-suggestion-modal" class="modal">
         <div class="modal-content">
             <span class="close-button" id="close-drink-suggestion-modal">&times;</span>
             <h3 class="text-xl font-bold text-gray-800 mb-4">Que tal adicionar uma bebida?</h3>
             <p class="text-gray-600 mb-6">Seu pedido não contém bebidas. Gostaria de adicionar alguma?</p>
-            <!-- Botões "Voltar ao Pedido" e "Finalizar sem Bebidas" / "Finalizar com Bebidas" -->
             <button onclick="backToOrderSidebarFromDrinkSuggestion()" class="px-4 py-2 bg-gray-500 text-white rounded-lg font-bold hover:bg-gray-600 transition w-full mb-3 whitespace-nowrap text-sm">
                 Voltar ao Pedido
             </button>
@@ -760,12 +730,10 @@
                 Finalizar sem Bebidas
             </button>
             <div id="suggested-drinks-list" class="flex flex-col gap-3 mb-6">
-                <!-- Sugestões de bebidas serão inseridas aqui via JS -->
-            </div>
+                </div>
         </div>
     </div>
 
-    <!-- NOVO: Modal de Confirmação para Pedido sem Bebida (Mantido, mas não mais usado pelo 'Finalizar sem Bebidas') -->
     <div id="confirm-no-drink-modal" class="message-modal">
         <div class="modal-content">
             <span class="close-button" id="close-confirm-no-drink-modal">&times;</span>
@@ -777,7 +745,6 @@
         </div>
     </div>
 
-    <!-- NOVO: Modal de Sugestão de Instalação do PWA -->
     <div id="install-prompt-modal" class="message-modal">
         <div class="modal-content">
             <span class="close-button" id="close-install-prompt-modal">&times;</span>
@@ -789,12 +756,10 @@
         </div>
     </div>
 
-    <!-- NOVO: Modal de Seleção de Forma de Pagamento -->
     <div id="payment-method-modal" class="modal">
         <div class="modal-content">
             <span class="close-button" id="close-payment-method-modal">&times;</span>
             <h3 class="text-xl font-bold text-gray-800 mb-2">Escolha a Forma de Pagamento</h3>
-            <!-- NOVO: Exibição do total do pedido -->
             <p class="text-gray-600 text-lg mb-4">Total Pedido: <span id="payment-modal-total" class="font-bold text-red-600">R$ 0,00</span></p>
 
             <div id="payment-options-container" class="flex flex-col gap-3 mb-6">
@@ -803,16 +768,14 @@
                     <i class="fas fa-money-bill-wave icon"></i>
                     <div class="text-content">
                         <h4>Dinheiro</h4>
-                        <p></p> <!-- Descrição removida -->
-                    </div>
+                        <p></p> </div>
                 </label>
                 <label class="payment-option" data-method="Cartão de Crédito/Débito">
                     <input type="radio" name="paymentMethod" value="Cartão de Crédito/Débito" class="form-radio">
                     <i class="fas fa-credit-card icon"></i>
                     <div class="text-content">
                         <h4>Cartão de Crédito/Débito</h4>
-                        <p></p> <!-- Descrição removida -->
-                    </div>
+                        <p></p> </div>
                 </label>
                 <label class="payment-option" data-method="Pix">
                     <input type="radio" name="paymentMethod" value="Pix" class="form-radio">
@@ -830,7 +793,6 @@
                 </label>
             </div>
 
-            <!-- Novo campo para troco -->
             <div id="troco-input-container" class="hidden mt-4 mb-6 p-4 border border-gray-300 rounded-lg bg-gray-50">
                 <label for="trocoPara" class="block text-gray-700 text-sm font-bold mb-2">
                     Troco para (R$):
@@ -847,7 +809,6 @@
         </div>
     </div>
 
-    <!-- NOVO: Modal de Input de Endereço -->
     <div id="address-input-modal" class="address-modal">
         <div class="address-modal-content">
             <span class="close-button" id="close-address-modal">&times;</span>
@@ -864,8 +825,7 @@
                 </label>
                 <select id="neighborhoodSelect" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
                     <option value="">Selecione um bairro</option>
-                    <!-- Opções de bairro serão carregadas via JS -->
-                </select>
+                    </select>
             </div>
             <div class="mb-4">
                 <label for="streetInput" class="block text-gray-700 text-sm font-bold mb-2">
@@ -873,7 +833,6 @@
                 </label>
                 <input type="text" id="streetInput" placeholder="Nome da Rua" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
             </div>
-            <!-- NOVO: Campo Número com checkbox "Sem Número" -->
             <div class="mb-4">
                 <div class="flex items-center justify-between mb-2">
                     <label for="numberInput" class="block text-gray-700 text-sm font-bold">
@@ -898,7 +857,6 @@
         </div>
     </div>
 
-    <!-- Footer -->
     <footer class="bg-gray-800 text-white py-8 px-4">
         <div class="max-w-6xl mx-auto">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
@@ -916,8 +874,7 @@
                     <p class="text-gray-400"><i class="fas fa-phone mr-2"></i> <span id="footer-phone"></span></p>
                     <p class="text-gray-400"><i class="fas fa-envelope mr-2"></i> <span id="footer-email"></span></p>
                     <div class="flex justify-center md:justify-start space-x-4 mt-2" id="social-links-container">
-                        <!-- Links serão preenchidos via JS -->
-                    </div>
+                        </div>
                 </div>
             </div>
             <div class="border-t border-gray-700 mt-8 pt-6 text-center text-gray-400">
@@ -1215,7 +1172,8 @@
                     case 'Preço 4 fatias': return 'price4Slices';
                     case 'Categoria': return 'category';
                     case 'É Pizza? (SIM/NÃO)': return 'isPizza';
-                    case 'É Montável? (SIM/NAO)': return 'isCustomizable';
+                    // CORRIGIDO: Tratamento para o cabeçalho malformado
+                    case 'É Montável? (SIM/NÃO)': return 'isCustomizable';
                     case 'Disponível (SIM/NÃO)': return 'available'; 
                     case 'Imagem': return 'imageUrl'; 
                     case 'ID Promocao': return 'id';
@@ -1237,11 +1195,8 @@
                     case 'Dados': return 'data';
                     case 'Valor': return 'value';
                     default: 
-                        console.warn(`DEBUG: Header CSV desconhecido encontrado para ${type}: "${cleanedHeader}"`);
-                        // Ajusta o mapeamento para lidar com o cabeçalho "É Montável? (SIM/NAO)"
-                        if (cleanedHeader.includes('É Montável')) {
-                            return 'isCustomizable';
-                        }
+                        // console.warn(`DEBUG: Header CSV desconhecido encontrado para ${type}: "${cleanedHeader}"`);
+                        // AVISO: O log de cabeçalho desconhecido foi removido daqui para evitar poluir o console.
                         return cleanedHeader.toLowerCase().replace(/\s/g, '').replace(/[^a-z0-9]/g, '');
                 }
             });
@@ -1266,8 +1221,9 @@
                             const parsedValue = parseInt(value, 10);
                             item[headerKey] = isNaN(parsedValue) ? Infinity : parsedValue;
                         }
+                        // CORRIGIDO: Tratamento de valores para "SIM" e "NÃO" de forma mais robusta
                         else if (['isPizza', 'available', 'active', 'isCustomizable', 'isSingleChoice', 'isRequired'].includes(headerKey)) {
-                            item[headerKey] = value.toUpperCase() === 'SIM' || value.toUpperCase() === 'SIM\r' || value.toUpperCase() === 'SIM\n';
+                            item[headerKey] = value.toUpperCase() === 'SIM' || value.toUpperCase() === 'SIM\r';
                         } else {
                             item[headerKey] = value;
                         }
@@ -1340,9 +1296,11 @@
                         optionDiv.appendChild(label);
                         
                         // Ouve o evento de clique em toda a div
-                        optionDiv.addEventListener('click', () => {
-                            input.checked = !input.checked;
-                            input.dispatchEvent(new Event('change', { bubbles: true }));
+                        optionDiv.addEventListener('click', (e) => {
+                            if (e.target.tagName !== 'INPUT') { // Não interfere se o clique for diretamente no checkbox/radio
+                                input.checked = !input.checked;
+                                input.dispatchEvent(new Event('change', { bubbles: true }));
+                            }
                         });
                         
                         // Ouve o evento de `change` para os inputs
@@ -1568,7 +1526,7 @@
                                 if (trimmedImageUrl.toLowerCase() === 'sem imagem') {
                                     imageElement = `<div class="no-image-placeholder">Sem Imagem</div>`;
                                 } else if (trimmedImageUrl.length > 0) {
-                                    imageElement = `<img src="${trimmedImageUrl}" alt="Imagem de ${item.name}" class="w-full h-40 object-cover" onerror="this.onerror=null;this.src='';">`;
+                                    imageElement = `<img src="${trimmedImageUrl}" alt="${item.name}" class="w-full h-40 object-cover" onerror="this.onerror=null;this.src='';">`;
                                 } else {
                                     imageElement = '';
                                 }
@@ -1782,7 +1740,7 @@
                 isFirstHalfPromotional = false; 
                 toggleAddItemButtons(true); 
                 toggleCategoryButtons(true); 
-                showTemporaryFeedback('Pizza meio a meio adicionada ao pedido!', 'bg-green-500'); 
+                showTemporaryFeedback('Pizza meio a meia adicionada ao pedido!', 'bg-green-500'); 
                 
             } else if (item.isPizza) {
                 currentPizzaData = { ...item }; 
@@ -2524,12 +2482,17 @@
         
         function copyPixKey() {
             const pixKeyText = pixKeyDisplay.textContent.replace('Chave Pix: ', '');
-            document.execCommand('copy');
-            const feedbackEl = document.getElementById('copy-feedback');
-            feedbackEl.classList.remove('hidden');
-            setTimeout(() => {
-                feedbackEl.classList.add('hidden');
-            }, 2000);
+            navigator.clipboard.writeText(pixKeyText)
+                .then(() => {
+                    const feedbackEl = document.getElementById('copy-feedback');
+                    feedbackEl.classList.remove('hidden');
+                    setTimeout(() => {
+                        feedbackEl.classList.add('hidden');
+                    }, 2000);
+                })
+                .catch(err => {
+                    console.error('Failed to copy text: ', err);
+                });
         }
         
         copyPixBtn.addEventListener('click', copyPixKey);
@@ -2873,6 +2836,65 @@
             return contactData;
         }
 
+        function generatePixCopiaEColaPayload(amount, pixKey, merchantName = "Sâmia", merchantCity = "Petrolina", txid = "pedido" + Date.now()) {
+            const payloadVersion = "01";
+            const pixKeyType = pixKey.includes('@') ? "mailto" : "tel"; // Assumindo email para '@'
+            const merchantCategoryCode = "0000"; 
+            const transactionCurrency = "986"; 
+
+            const data = [
+                { id: "00", value: payloadVersion },
+                { id: "26", value: [
+                    { id: "00", value: "BR.GOV.BCB.PIX" },
+                    { id: "01", value: pixKey },
+                    // Removido o campo 02 que é o URL do QR Code Dinâmico
+                ] },
+                { id: "52", value: merchantCategoryCode },
+                { id: "53", value: transactionCurrency },
+                { id: "54", value: amount.toFixed(2).replace('.', '') }, // Valor do pedido
+                { id: "58", value: "BR" },
+                { id: "59", value: merchantName },
+                { id: "60", value: merchantCity },
+                { id: "62", value: [{ id: "05", value: txid }] },
+            ];
+
+            const stringify = (obj) => {
+                if (Array.isArray(obj)) {
+                    let result = "";
+                    for (const item of obj) {
+                        const value = String(item.value);
+                        result += `${item.id}${String(value.length).padStart(2, '0')}${value}`;
+                    }
+                    return result;
+                } else if (typeof obj === "object") {
+                    let result = "";
+                    for (const id in obj) {
+                        const value = String(obj[id]);
+                        result += `${id}${String(value.length).padStart(2, '0')}${value}`;
+                    }
+                    return result;
+                }
+            };
+
+            const dataString = stringify(data);
+            const crc16 = (data) => {
+                // Implementação simples de CRC16 CCITT
+                let crc = 0xFFFF;
+                for (let i = 0; i < data.length; i++) {
+                    crc ^= data.charCodeAt(i) << 8;
+                    for (let j = 0; j < 8; j++) {
+                        crc = (crc & 0x8000) ? (crc << 1) ^ 0x1021 : crc << 1;
+                    }
+                }
+                return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
+            };
+
+            const payload = dataString + '6304';
+            const finalPayload = payload + crc16(payload);
+
+            return finalPayload;
+        }
+        
         async function loadMenuAndRender() {
             try {
                 // Fetch de todos os dados em paralelo
