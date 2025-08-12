@@ -273,7 +273,7 @@
         }
         .pizza-size-option:hover {
             border-color: #dc2626; /* red-600 */
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); /* Sombra mais intensa no hover */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15); /* Sombra mais intensa no hover */
             transform: translateY(-4px); /* Efeito de elevação maior */
         }
         .pizza-size-option img {
@@ -1746,6 +1746,10 @@
                 toggleCategoryButtons(true); 
                 showTemporaryFeedback('Pizza meio a meia adicionada ao pedido!', 'bg-green-500'); 
                 
+            } else if (item.isCustomizable) {
+                burgerBuilderModal.dataset.basePrice = item.basePrice;
+                openBurgerBuilderModal(item);
+                return;
             } else if (item.isPizza) {
                 currentPizzaData = { ...item }; 
                 modalPizzaName.textContent = item.name;
