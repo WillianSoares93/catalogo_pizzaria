@@ -1,4 +1,3 @@
-teste
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1768,7 +1767,7 @@ teste
                     optionDiv.className = 'pizza-size-option';
                     optionDiv.innerHTML = `
                         <span class="font-bold text-base text-gray-800">${size.label}</span>
-                        <span class="text-red-600 font-bold text-lg">R$ ${sizePrice.toFixed(2).replace('.', ',')}</span>
+                        <span class="font-bold text-red-600 text-lg">R$ ${sizePrice.toFixed(2).replace('.', ',')}</span>
                         <div class="flex flex-col gap-2 mt-2 w-full">
                             <button class="add-full-size-pizza-btn px-4 py-2 bg-red-600 text-white rounded-md text-sm hover:bg-red-700 transition"
                                     data-slices="${size.slices}" data-price-key="${size.priceKey}">
@@ -2854,18 +2853,35 @@ teste
 
             const formatAmount = parseFloat(amount).toFixed(2);
             
-            let pixCode = formatField('00', 'BR.GOV.BCB.PIX') + formatField('01', pixKey);
-            let payload = formatField('00', '01') +
-                formatField('26', pixCode) +
-                formatField('52', merchantCategoryCode) +
-                formatField('53', transactionCurrency) +
-                formatField('54', formatAmount) +
-                formatField('58', 'BR') +
-                formatField('59', merchantName) +
-                formatField('60', merchantCity) +
-                formatField('62', formatField('05', 'pedido' + Date.now()));
+            const pixCode = formatField('00', 'BR.GOV.BCB.PIX') + formatField('01', pixKey);
+            const pixCodeLength = pixCode.length;
+            const pixCodeField = formatField('26', pixCode);
 
-            const checksum = (data) => {
+            const merchantNameLength = merchantName.length;
+            const merchantNameField = formatField('59', merchantName);
+
+            const merchantCityLength = merchantCity.length;
+            const merchantCityField = formatField('60', merchantCity);
+
+            const amountLength = formatAmount.length;
+            const amountField = formatField('54', formatAmount);
+            
+            const txid = "pedido" + Date.now();
+            const txidField = formatField('05', txid);
+            const additionalDataField = formatField('62', txidField);
+
+            let payload = formatField('00', '01');
+            payload += pixCodeField;
+            payload += formatField('52', merchantCategoryCode);
+            payload += formatField('53', transactionCurrency);
+            payload += amountField;
+            payload += formatField('58', 'BR');
+            payload += merchantNameField;
+            payload += merchantCityField;
+            payload += additionalDataField;
+            payload += '6304';
+
+            const crc16 = (data) => {
                 let crc = 0xFFFF;
                 for (let i = 0; i < data.length; i++) {
                     crc ^= data.charCodeAt(i) << 8;
@@ -2876,7 +2892,9 @@ teste
                 return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
             };
 
-            return payload + '6304' + checksum(payload + '6304');
+            const checksumValue = crc16(payload);
+            
+            return payload + checksumValue;
         }
         
         async function loadMenuAndRender() {
