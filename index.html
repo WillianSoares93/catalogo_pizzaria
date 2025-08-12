@@ -13,6 +13,8 @@
     
     <!-- Adicionado para PWA: Link para o arquivo de manifesto -->
     <link rel="manifest" href="/manifest.json">
+    <!-- Biblioteca para gerar QR Code -->
+    <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
@@ -2393,6 +2395,11 @@
             trocoParaInput.value = ''; 
             trocoTotalDisplay.textContent = 'R$ 0,00'; 
             pixKeyContainer.classList.add('hidden');
+            const pixCanvas = document.getElementById('pix-qrcode-canvas');
+            if (pixCanvas) {
+                pixCanvas.remove();
+            }
+
 
             if (selectedPaymentMethod) {
                 const methodValue = typeof selectedPaymentMethod === 'object' ? selectedPaymentMethod.method : selectedPaymentMethod;
@@ -2411,8 +2418,26 @@
                         }
                     }
                     if (methodValue === 'Pix' && contactInfo.chavepix) {
-                        pixKeyDisplay.textContent = generatePixCopiaEColaPayload(totalOrder, contactInfo.chavepix, contactInfo.nome, contactInfo.cidade);
+                        const totalAmount = calculateOrderTotal()
+                        const payload = generatePixCopiaEColaPayload(totalAmount, contactInfo.chavepix, contactInfo.nome, contactInfo.cidade);
+                        pixKeyDisplay.textContent = payload;
                         pixKeyContainer.classList.remove('hidden');
+                        
+                        // Gera o QR Code
+                        const qrcodeContainer = document.getElementById('pix-key-container');
+                        const newCanvas = document.createElement('canvas');
+                        newCanvas.id = 'pix-qrcode-canvas';
+                        newCanvas.className = 'mt-4 mx-auto block';
+                        qrcodeContainer.parentElement.appendChild(newCanvas);
+                        new QRCode(newCanvas, {
+                            text: payload,
+                            width: 128,
+                            height: 128,
+                            colorDark : "#000000",
+                            colorLight : "#ffffff",
+                            correctLevel : QRCode.CorrectLevel.H
+                        });
+
                     } else {
                         pixKeyContainer.classList.add('hidden');
                     }
@@ -2427,6 +2452,10 @@
 
         function closePaymentMethodModal() {
             paymentMethodModal.style.display = 'none';
+            const pixCanvas = document.getElementById('pix-qrcode-canvas');
+            if (pixCanvas) {
+                pixCanvas.remove();
+            }
         }
 
         closePaymentMethodModalBtn.addEventListener('click', closePaymentMethodModal);
@@ -2434,6 +2463,11 @@
         paymentOptionsContainer.addEventListener('click', (event) => {
             const label = event.target.closest('.payment-option');
             if (label) {
+                const pixCanvas = document.getElementById('pix-qrcode-canvas');
+                if (pixCanvas) {
+                    pixCanvas.remove();
+                }
+
                 document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('selected'));
                 label.classList.add('selected');
                 const radio = label.querySelector('input[type="radio"]');
@@ -2459,8 +2493,25 @@
 
                 if (radio && radio.value === 'Pix' && contactInfo.chavepix) {
                     const totalAmount = calculateOrderTotal()
-                    pixKeyDisplay.textContent = generatePixCopiaEColaPayload(totalAmount, contactInfo.chavepix, contactInfo.nome, contactInfo.cidade);
+                    const payload = generatePixCopiaEColaPayload(totalAmount, contactInfo.chavepix, contactInfo.nome, contactInfo.cidade);
+                    pixKeyDisplay.textContent = payload;
                     pixKeyContainer.classList.remove('hidden');
+
+                     // Gera o QR Code
+                     const qrcodeContainer = document.getElementById('pix-key-container');
+                     const newCanvas = document.createElement('canvas');
+                     newCanvas.id = 'pix-qrcode-canvas';
+                     newCanvas.className = 'mt-4 mx-auto block';
+                     qrcodeContainer.parentElement.appendChild(newCanvas);
+                     new QRCode(newCanvas, {
+                         text: payload,
+                         width: 128,
+                         height: 128,
+                         colorDark : "#000000",
+                         colorLight : "#ffffff",
+                         correctLevel : QRCode.CorrectLevel.H
+                     });
+
                 } else {
                     pixKeyContainer.classList.add('hidden');
                 }
@@ -2485,21 +2536,40 @@
         
         function copyPixKey() {
             const pixKeyText = pixKeyDisplay.textContent;
-            // Cria um elemento de texto temporário para copiar o conteúdo
+            
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(pixKeyText)
+                .then(() => {
+                    const feedbackEl = document.getElementById('copy-feedback');
+                    feedbackEl.classList.remove('hidden');
+                    setTimeout(() => {
+                        feedbackEl.classList.add('hidden');
+                    }, 2000);
+                })
+                .catch(err => {
+                    console.error('Failed to copy text: ', err);
+                    fallbackCopyTextToClipboard(pixKeyText);
+                });
+            } else {
+                fallbackCopyTextToClipboard(pixKeyText);
+            }
+        }
+        
+        function fallbackCopyTextToClipboard(text) {
             const tempInput = document.createElement('textarea');
-            tempInput.value = pixKeyText;
+            tempInput.value = text;
             document.body.appendChild(tempInput);
             tempInput.select();
             document.execCommand('copy');
             document.body.removeChild(tempInput);
-            
+
             const feedbackEl = document.getElementById('copy-feedback');
             feedbackEl.classList.remove('hidden');
             setTimeout(() => {
                 feedbackEl.classList.add('hidden');
             }, 2000);
         }
-        
+
         copyPixBtn.addEventListener('click', copyPixKey);
 
 
