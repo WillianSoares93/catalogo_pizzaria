@@ -1,3 +1,4 @@
+teste
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -2842,7 +2843,7 @@
         }
 
         // Função do seu código
-        function gerarPayload(chave, valor, nome, cidade, txid) {
+        function gerarPayload(chave, valor, nome = "Sâmia", cidade = "exu", txid) {
             function formatValue(id, value) {
                 const cleanedValue = String(value);
                 return id + String(cleanedValue.length).padStart(2, '0') + cleanedValue;
