@@ -1203,8 +1203,7 @@
                             
                             optionDiv.addEventListener('click', (e) => {
                                 if (e.target.tagName !== 'INPUT') {
-                                    input.checked = !input.checked;
-                                    input.dispatchEvent(new Event('change', { bubbles: true }));
+                                    input.click();
                                 }
                             });
                             
