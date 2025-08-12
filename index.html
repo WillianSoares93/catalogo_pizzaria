@@ -1,4 +1,3 @@
-teste
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -2842,46 +2841,63 @@ teste
             return contactData;
         }
 
-        function generatePixCopiaEColaPayload(chave, valor, nome, cidade, txid) {
-    function formatValue(id, value) {
-        return id + String(value.length).padStart(2, '0') + value;
-    }
+        // Função do seu código
+        function gerarPayload(chave, valor, nome, cidade, txid) {
+            function formatValue(id, value) {
+                const cleanedValue = String(value);
+                return id + String(cleanedValue.length).padStart(2, '0') + cleanedValue;
+            }
 
-    const gui = formatValue("00", "BR.GOV.BCB.PIX");
-    const key = formatValue("01", chave);
-    const info = gui + key;
+            const gui = formatValue("00", "BR.GOV.BCB.PIX");
+            const key = formatValue("01", chave);
+            const info = gui + key;
 
-    const merchantAccountInfo = formatValue("26", info);
-    const txidField = formatValue("05", txid);
-    const additionalDataField = formatValue("62", txidField);
-
-    const payloadSemCRC =
-        formatValue("00", "01") +
-        formatValue("01", "12") +
-        merchantAccountInfo +
-        formatValue("52", "0000") +
-        formatValue("53", "986") +
-        formatValue("54", valor) +
-        formatValue("58", "BR") +
-        formatValue("59", nome) +
-        formatValue("60", cidade) +
-        additionalDataField +
-        "6304";
-
-            const crc16 = (data) => {
-                let crc = 0xFFFF;
-                for (let i = 0; i < data.length; i++) {
-                    crc ^= data.charCodeAt(i) << 8;
-                    for (let j = 0; j < 8; j++) {
-                        crc = (crc & 0x8000) ? (crc << 1) ^ 0x1021 : crc << 1;
-                    }
-                }
-                return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
-            };
-
-            const checksumValue = crc16(payload);
+            const merchantAccountInfo = formatValue("26", info);
+            const txidField = formatValue("05", txid);
+            const additionalDataField = formatValue("62", txidField);
             
-            return payload + checksumValue;
+            // Formatando o valor para ter 2 casas decimais e ponto
+            const formattedValor = parseFloat(valor).toFixed(2);
+
+            const payloadSemCRC =
+                formatValue("00", "01") +
+                merchantAccountInfo +
+                formatValue("52", "0000") +
+                formatValue("53", "986") +
+                formatValue("54", formattedValor) +
+                formatValue("58", "BR") +
+                formatValue("59", nome) +
+                formatValue("60", cidade) +
+                additionalDataField +
+                "6304";
+            
+            return payloadSemCRC + crc16(payloadSemCRC);
+        }
+
+        function crc16(str) {
+            let crc = 0xFFFF;
+            for (let i = 0; i < str.length; i++) {
+                crc ^= str.charCodeAt(i) << 8;
+                for (let j = 0; j < 8; j++) {
+                    if (crc & 0x8000) {
+                        crc = (crc << 1) ^ 0x1021;
+                    } else {
+                        crc <<= 1;
+                    }
+                    crc &= 0xFFFF;
+                }
+            }
+            return crc.toString(16).toUpperCase().padStart(4, '0');
+        }
+
+        function generatePixCopiaEColaPayload(amount, pixKey, merchantName, merchantCity) {
+            if (!pixKey || !amount || isNaN(amount) || amount <= 0) {
+                console.error("DEBUG: Chave Pix, valor ou informações de contato estão faltando.");
+                return "Erro: Chave Pix inválida ou valor ausente.";
+            }
+
+            const txid = "pedido" + Date.now();
+            return gerarPayload(pixKey, amount, merchantName, merchantCity, txid);
         }
         
         async function loadMenuAndRender() {
