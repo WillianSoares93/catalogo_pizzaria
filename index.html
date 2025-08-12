@@ -1,4 +1,3 @@
-teste
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -766,7 +765,7 @@ teste
                             </button>
                             <span id="copy-feedback" class="text-green-600 text-xs ml-2 hidden">Copiado!</span>
                         </div>
-                        <div id="qrcode" class="mt-4 mx-auto"></div>
+                        <div id="qrcode-container" class="mt-4 mx-auto"></div>
                     </div>
                 </label>
             </div>
@@ -988,6 +987,7 @@ teste
         let currentPizzaData = {}; 
         let firstHalfPizza = null; 
         let isSelectingSecondHalf = false; 
+        let qrCodeInstance = null; // Instância global para o QR Code
 
         // Define tamanhos e seus multiplicadores de preço em relação ao preço de 8 fatias
         const sizes = [
@@ -2372,6 +2372,7 @@ teste
             trocoParaInput.value = ''; 
             trocoTotalDisplay.textContent = 'R$ 0,00'; 
             pixKeyContainer.classList.add('hidden');
+            
             const qrcodeContainer = document.getElementById('qrcode-container');
             qrcodeContainer.innerHTML = '';
 
@@ -2423,7 +2424,9 @@ teste
         function closePaymentMethodModal() {
             paymentMethodModal.style.display = 'none';
             const qrcodeContainer = document.getElementById('qrcode-container');
-            qrcodeContainer.innerHTML = '';
+            if (qrcodeContainer) {
+                qrcodeContainer.innerHTML = '';
+            }
         }
 
         closePaymentMethodModalBtn.addEventListener('click', closePaymentMethodModal);
@@ -2433,7 +2436,7 @@ teste
             if (label) {
                 const qrcodeContainer = document.getElementById('qrcode-container');
                 qrcodeContainer.innerHTML = '';
-
+                
                 document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('selected'));
                 label.classList.add('selected');
                 const radio = label.querySelector('input[type="radio"]');
@@ -2464,18 +2467,17 @@ teste
                     pixKeyContainer.classList.remove('hidden');
 
                      // Gera o QR Code
-                     const newCanvas = document.createElement('div');
-                     newCanvas.id = 'pix-qrcode-canvas';
-                     newCanvas.className = 'mt-4 mx-auto block';
-                     qrcodeContainer.appendChild(newCanvas);
-                     new QRCode(newCanvas, {
-                         text: payload,
-                         width: 128,
-                         height: 128,
-                         colorDark : "#000000",
-                         colorLight : "#ffffff",
-                         correctLevel : QRCode.CorrectLevel.H
-                     });
+                     if (qrcodeContainer) {
+                        new QRCode(qrcodeContainer, {
+                            text: payload,
+                            width: 128,
+                            height: 128,
+                            colorDark : "#000000",
+                            colorLight : "#ffffff",
+                            correctLevel : QRCode.CorrectLevel.H
+                        });
+                     }
+
 
                 } else {
                     pixKeyContainer.classList.add('hidden');
