@@ -2841,45 +2841,31 @@
             return contactData;
         }
 
-        function generatePixCopiaEColaPayload(amount, pixKey, merchantName = "Sâmia Pizzaria", merchantCity = "Petrolina") {
-            const payloadVersion = "01";
-            const merchantCategoryCode = "0000";
-            const transactionCurrency = "986"; 
+        function generatePixCopiaEColaPayload(chave, valor, nome, cidade, txid) {
+    function formatValue(id, value) {
+        return id + String(value.length).padStart(2, '0') + value;
+    }
 
-            const formatField = (id, value) => {
-                const val = value.toString();
-                return `${id}${String(val.length).padStart(2, '0')}${val}`;
-            };
+    const gui = formatValue("00", "BR.GOV.BCB.PIX");
+    const key = formatValue("01", chave);
+    const info = gui + key;
 
-            const formatAmount = parseFloat(amount).toFixed(2);
-            
-            const pixCode = formatField('00', 'BR.GOV.BCB.PIX') + formatField('01', pixKey);
-            const pixCodeLength = pixCode.length;
-            const pixCodeField = formatField('26', pixCode);
+    const merchantAccountInfo = formatValue("26", info);
+    const txidField = formatValue("05", txid);
+    const additionalDataField = formatValue("62", txidField);
 
-            const merchantNameLength = merchantName.length;
-            const merchantNameField = formatField('59', merchantName);
-
-            const merchantCityLength = merchantCity.length;
-            const merchantCityField = formatField('60', merchantCity);
-
-            const amountLength = formatAmount.length;
-            const amountField = formatField('54', formatAmount);
-            
-            const txid = "pedido" + Date.now();
-            const txidField = formatField('05', txid);
-            const additionalDataField = formatField('62', txidField);
-
-            let payload = formatField('00', '01');
-            payload += pixCodeField;
-            payload += formatField('52', merchantCategoryCode);
-            payload += formatField('53', transactionCurrency);
-            payload += amountField;
-            payload += formatField('58', 'BR');
-            payload += merchantNameField;
-            payload += merchantCityField;
-            payload += additionalDataField;
-            payload += '6304';
+    const payloadSemCRC =
+        formatValue("00", "01") +
+        formatValue("01", "12") +
+        merchantAccountInfo +
+        formatValue("52", "0000") +
+        formatValue("53", "986") +
+        formatValue("54", valor) +
+        formatValue("58", "BR") +
+        formatValue("59", nome) +
+        formatValue("60", cidade) +
+        additionalDataField +
+        "6304";
 
             const crc16 = (data) => {
                 let crc = 0xFFFF;
