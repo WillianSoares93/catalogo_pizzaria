@@ -1,3 +1,4 @@
+teste
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1197,7 +1198,6 @@
                     case 'Dados': return 'data';
                     case 'Valor': return 'value';
                     default: 
-                        // Ignora o log para o cabeçalho malformado "É Montável? (SIM/NÃO)"
                         if (cleanedHeader.includes('É Montável')) {
                             return 'isCustomizable';
                         }
@@ -2412,7 +2412,7 @@
                         }
                     }
                     if (methodValue === 'Pix' && contactInfo.chavepix) {
-                        pixKeyDisplay.textContent = generatePixCopiaEColaPayload(totalOrder, contactInfo.chavepix, "Sâmia Pizzaria", "Petrolina");
+                        pixKeyDisplay.textContent = generatePixCopiaEColaPayload(totalOrder, contactInfo.chavepix, contactInfo.nome, contactInfo.cidade);
                         pixKeyContainer.classList.remove('hidden');
                     } else {
                         pixKeyContainer.classList.add('hidden');
@@ -2844,40 +2844,28 @@
 
         function generatePixCopiaEColaPayload(amount, pixKey, merchantName = "Sâmia Pizzaria", merchantCity = "Petrolina") {
             const payloadVersion = "01";
-            const merchantCategoryCode = "0000"; 
+            const merchantCategoryCode = "0000";
             const transactionCurrency = "986"; 
-            
-            // Formatando o valor com duas casas decimais e ponto
-            const formattedAmount = parseFloat(amount).toFixed(2);
-            
-            // Gerando um TXID único para cada transação
-            const txid = "pedido" + Date.now();
 
             const formatField = (id, value) => {
                 const val = value.toString();
                 return `${id}${String(val.length).padStart(2, '0')}${val}`;
             };
 
-            const data = {
-                '00': payloadVersion,
-                '26': formatField('00', 'BR.GOV.BCB.PIX') + formatField('01', pixKey),
-                '52': merchantCategoryCode,
-                '53': transactionCurrency,
-                '54': formattedAmount,
-                '58': 'BR',
-                '59': merchantName,
-                '60': merchantCity,
-                '62': formatField('05', txid)
-            };
+            const formatAmount = parseFloat(amount).toFixed(2);
             
-            let payloadString = '';
-            for (const key in data) {
-                const value = data[key];
-                payloadString += formatField(key, value);
-            }
+            let pixCode = formatField('00', 'BR.GOV.BCB.PIX') + formatField('01', pixKey);
+            let payload = formatField('00', '01') +
+                formatField('26', pixCode) +
+                formatField('52', merchantCategoryCode) +
+                formatField('53', transactionCurrency) +
+                formatField('54', formatAmount) +
+                formatField('58', 'BR') +
+                formatField('59', merchantName) +
+                formatField('60', merchantCity) +
+                formatField('62', formatField('05', 'pedido' + Date.now()));
 
-            // Função de cálculo CRC16
-            const crc16 = (data) => {
+            const checksum = (data) => {
                 let crc = 0xFFFF;
                 for (let i = 0; i < data.length; i++) {
                     crc ^= data.charCodeAt(i) << 8;
@@ -2887,10 +2875,8 @@
                 }
                 return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
             };
-            
-            const checksum = crc16(payloadString + '6304');
-            
-            return payloadString + '6304' + checksum;
+
+            return payload + '6304' + checksum(payload + '6304');
         }
         
         async function loadMenuAndRender() {
