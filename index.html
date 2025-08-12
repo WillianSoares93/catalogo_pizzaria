@@ -607,7 +607,7 @@
     </section>
 
     <!-- Botão flutuante do carrinho -->
-    <button id="cart-button" onclick="toggleOrderSidebar()" class="fixed bottom-4 right-4 bg-red-600 text-white w-16 h-16 rounded-full flex items-center justify-center shadow-lg z-40">
+    <button id="cart-button" class="fixed bottom-4 right-4 bg-red-600 text-white w-16 h-16 rounded-full flex items-center justify-center shadow-lg z-40">
         <i class="fas fa-shopping-cart text-2xl"></i>
         <span id="cartCount" class="absolute -top-1 -right-1 bg-yellow-400 text-red-700 text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center border-2 border-white hidden">0</span>
     </button>
@@ -616,7 +616,7 @@
         <div class="p-6">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-xl font-bold text-gray-800">Seu Pedido</h3>
-                <button onclick="closeOrderSidebar()" class="text-gray-500 hover:text-gray-700">
+                <button id="close-sidebar-btn" class="text-gray-500 hover:text-gray-700">
                     <i class="fas fa-times text-xl"></i>
                 </button>
             </div>
@@ -666,11 +666,11 @@
                 </button>
             </div>
 
-            <button onclick="backToMenu()" class="btn-add-more w-full py-3 text-white font-bold rounded-full mb-4">
+            <button id="back-to-menu-btn" class="btn-add-more w-full py-3 text-white font-bold rounded-full mb-4">
                 Adicionar mais
             </button>
 
-            <button id="checkoutButton" onclick="handleCheckoutFlow()" class="btn-order w-full py-3 text-white font-bold rounded-full mb-4">
+            <button id="checkoutButton" class="btn-order w-full py-3 text-white font-bold rounded-full mb-4">
                 Finalizar Pedido
             </button>
             
@@ -944,6 +944,8 @@
             const deliveryFeeDisplay = document.getElementById('deliveryFeeDisplay');
             const totalEl = document.getElementById('total');
             const checkoutButton = document.getElementById('checkoutButton');
+            const closeSidebarBtn = document.getElementById('close-sidebar-btn');
+            const backToMenuBtn = document.getElementById('back-to-menu-btn');
 
             // Referências para o modal de seleção de pizza
             const pizzaOptionModal = document.getElementById('pizza-option-modal');
@@ -2168,7 +2170,6 @@
 
             function updateCheckoutButtonText() {
                 checkoutButton.textContent = 'Finalizar Pedido';
-                checkoutButton.onclick = handleCheckoutFlow;
             }
 
             function backToMenu() {
@@ -2781,6 +2782,12 @@
             }
 
             // --- Adicionando todos os Event Listeners aqui dentro ---
+            
+            // Listeners principais que usavam onclick
+            cartButton.addEventListener('click', toggleOrderSidebar);
+            closeSidebarBtn.addEventListener('click', closeOrderSidebar);
+            backToMenuBtn.addEventListener('click', backToMenu);
+            checkoutButton.addEventListener('click', handleCheckoutFlow);
 
             closePizzaOptionModalBtn.addEventListener('click', function() {
                 pizzaOptionModal.style.display = 'none';
