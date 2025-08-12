@@ -1,3 +1,4 @@
+test1
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -355,7 +356,7 @@
         .btn-confirm-green:hover {
             background: linear-gradient(135deg, #10b981, #059669);
             transform: scale(1.02);
-            box-shadow: 0 5px 15px rgba(34, 197, 94, 0.4);
+            box-shadow: 0 2px 4px rgba(34, 197, 94, 0.4);
         }
 
         /* CSS para a animação do item voando para o carrinho */
@@ -432,6 +433,9 @@
             margin-right: 12px;
             color: #4b5563; /* gray-600 */
         }
+        .payment-option.selected .icon {
+            color: #dc2626; /* red-600 */
+        }
         .payment-option .text-content {
             flex-grow: 1;
         }
@@ -443,7 +447,17 @@
             font-size: 0.875rem;
             color: #6b7280; /* gray-500 */
         }
-
+        .pix-code-container {
+            word-break: break-all;
+            white-space: normal;
+        }
+        .qrcode-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-top: 1rem;
+        }
+        
         /* Estilos para o modal de endereço */
         .address-modal {
             display: none; /* Oculto por padrão */
@@ -2335,7 +2349,7 @@
             const hasDrinks = order.some(item => item.category === 'bebidas');
 
             if (!selectedPaymentMethod) {
-                isCheckoutInitiated = true;
+                isCheckoutInitiated = true; 
                 openPaymentMethodModal(true); 
             } else {
                 proceedToWhatsappCheckout();
@@ -2365,7 +2379,7 @@
         confirmNoDrinkYesBtn.addEventListener('click', function() {
             confirmNoDrinkModal.style.display = 'none';
             if (selectedPaymentMethod) {
-                proceedToWhatsappCheckout();
+                proceedToWhatsappCheckout(); 
             } else {
                 isCheckoutInitiated = true; 
                 openPaymentMethodModal(true); 
@@ -2422,7 +2436,7 @@
                     }
                     if (methodValue === 'Pix' && contactInfo.chavepix) {
                         const totalAmount = calculateOrderTotal()
-                        const payload = gerarPayload(contactInfo.chavepix, totalAmount, contactInfo.cnpj, contactInfo.cidade, "pedido" + Date.now());
+                        const payload = gerarPayload(contactInfo.chavepix, totalAmount, contactInfo.nome, contactInfo.cidade, "pedido" + Date.now());
                         pixKeyDisplay.textContent = payload;
                         pixKeyContainer.classList.remove('hidden');
                         
@@ -2491,7 +2505,7 @@
 
                 if (radio && radio.value === 'Pix' && contactInfo.chavepix) {
                     const totalAmount = calculateOrderTotal()
-                    const payload = gerarPayload(contactInfo.chavepix, totalAmount, contactInfo.cnpj, contactInfo.cidade, "pedido" + Date.now());
+                    const payload = gerarPayload(contactInfo.chavepix, totalAmount, contactInfo.nome, contactInfo.cidade, "pedido" + Date.now());
                     pixKeyDisplay.textContent = payload;
                     pixKeyContainer.classList.remove('hidden');
 
@@ -2962,7 +2976,7 @@
                 console.error("DEBUG: Chave Pix, valor ou informações de contato estão faltando.");
                 return "Erro: Chave Pix inválida ou valor ausente.";
             }
-
+            
             const txid = "pedido" + Date.now();
             return gerarPayload(pixKey, amount, merchantName, merchantCity, txid);
         }
