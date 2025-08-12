@@ -2601,8 +2601,7 @@
                     if (rect.top <= stickyHeaderHeight + 5 && rect.bottom > stickyHeaderHeight) {
                         const distance = Math.abs(rect.top - stickyHeaderHeight);
                         if (distance < minDistance) {
-                            minDistance = distance;
-                            newActiveCategory = category;
+                            minActiveCategory = category;
                         }
                     }
                 });
