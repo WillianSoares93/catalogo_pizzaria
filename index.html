@@ -1,3 +1,4 @@
+teste
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1188,7 +1189,6 @@
                             
                             const label = document.createElement('label');
                             label.className = 'ingredient-option';
-                            label.htmlFor = `${inputName}-${ingredient.id}`;
                             
                             const input = document.createElement('input');
                             input.type = inputType;
@@ -1201,9 +1201,9 @@
                             const textSpan = document.createElement('span');
                             textSpan.className = "flex-grow";
                             textSpan.textContent = ingredient.name;
-
+                            
                             const priceSpan = document.createElement('span');
-                            priceSpan.className = "price";
+                            priceSpan.className = "price ml-2 whitespace-nowrap text-right";
                             priceSpan.textContent = priceDisplay;
 
                             label.appendChild(input);
