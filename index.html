@@ -1186,8 +1186,9 @@
                             const inputName = isSingleChoice ? category : `multiple-${category}`;
                             const priceDisplay = ingredient.price > 0 ? `+ R$ ${ingredient.price.toFixed(2).replace('.', ',')}` : '';
                             
-                            const optionDiv = document.createElement('div');
-                            optionDiv.className = 'ingredient-option';
+                            const label = document.createElement('label');
+                            label.className = 'ingredient-option';
+                            label.htmlFor = `${inputName}-${ingredient.id}`;
                             
                             const input = document.createElement('input');
                             input.type = inputType;
@@ -1197,21 +1198,21 @@
                             input.dataset.price = ingredient.price;
                             input.classList.add('form-radio');
 
-                            const label = document.createElement('label');
-                            label.htmlFor = input.id;
-                            label.innerHTML = `${ingredient.name} <span class="price">${priceDisplay}</span>`;
+                            const textSpan = document.createElement('span');
+                            textSpan.className = "flex-grow";
+                            textSpan.textContent = ingredient.name;
 
-                            optionDiv.appendChild(input);
-                            optionDiv.appendChild(label);
-                            
-                            optionDiv.addEventListener('click', (e) => {
-                                if (e.target !== input) {
-                                    input.click();
-                                }
-                            });
+                            const priceSpan = document.createElement('span');
+                            priceSpan.className = "price";
+                            priceSpan.textContent = priceDisplay;
+
+                            label.appendChild(input);
+                            label.appendChild(textSpan);
+                            label.appendChild(priceSpan);
                             
                             input.addEventListener('change', (e) => {
                                 const currentInput = e.target;
+                                const currentLabel = currentInput.closest('.ingredient-option');
                                 const currentCategory = currentInput.name.replace('multiple-', '');
                                 const isCurrentSingleChoice = allBurgerIngredients[currentCategory][0]?.isSingleChoice;
                                 const limit = allBurgerIngredients[currentCategory][0]?.limit || Infinity;
@@ -1222,9 +1223,9 @@
                                     });
                                 }
                                 if (currentInput.checked) {
-                                    currentInput.closest('.ingredient-option').classList.add('selected');
+                                    currentLabel.classList.add('selected');
                                 } else {
-                                    currentInput.closest('.ingredient-option').classList.remove('selected');
+                                    currentLabel.classList.remove('selected');
                                 }
                                 
                                 if (!isSingleChoice && limit !== Infinity) {
@@ -1239,7 +1240,7 @@
                                 updateBurgerPrice();
                             });
 
-                            categoryDiv.appendChild(optionDiv);
+                            categoryDiv.appendChild(label);
                         });
                         burgerIngredientsContainer.appendChild(categoryDiv);
                     }
