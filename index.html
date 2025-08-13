@@ -1,4 +1,3 @@
-teste
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -205,7 +204,7 @@ teste
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
             cursor: pointer;
             z-index: 1500;
-            transition: background-color 0.3s ease;
+            transition: all 0.3s ease;
             animation: pulse 1.5s infinite;
             align-items: center;
             gap: 8px;
@@ -3007,9 +3006,18 @@ teste
                 }, 3000); 
             });
             
-            document.addEventListener("visibilitychange", () => {
-                if (document.visibilityState === "visible") {
-                    loadMenuAndRender();
+            window.addEventListener('scroll', () => {
+                const isAtBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 10;
+                
+                if (isAtBottom) {
+                    cartButton.style.opacity = '0';
+                    cartButton.style.pointerEvents = 'none';
+                    promotionButton.style.opacity = '0';
+                    promotionButton.style.pointerEvents = 'none';
+                } else {
+                    cartButton.style.opacity = '1';
+                    cartButton.style.pointerEvents = 'auto';
+                    updatePromotionButtonVisibility();
                 }
             });
 
