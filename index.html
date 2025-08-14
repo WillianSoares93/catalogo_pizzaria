@@ -1,4 +1,3 @@
-teste
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1351,8 +1350,12 @@ teste
                         sectionEl = document.createElement('div');
                         sectionEl.id = sectionId;
                         sectionEl.className = 'pizza-category-section mb-8';
+                        
+                        const isPizzaCategory = itemsByCategory[category] && itemsByCategory[category].some(item => item.isPizza);
+                        const title = isPizzaCategory ? `Pizzas ${capitalizeFirstLetter(category)}` : capitalizeFirstLetter(category);
+
                         sectionEl.innerHTML = `
-                            <h3 class="text-xl font-bold text-white p-2 rounded-md bg-red-600 mb-6">${capitalizeFirstLetter(category)}</h3>
+                            <h3 class="text-xl font-bold text-white p-2 rounded-md bg-red-600 mb-6">${title}</h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="${category}-items"></div>
                         `;
                         dynamicSectionsContainer.appendChild(sectionEl);
@@ -1472,7 +1475,11 @@ teste
                 categories.forEach((category, index) => {
                     const button = document.createElement('button');
                     button.className = 'category-btn px-4 py-2 rounded-full bg-gray-200 text-gray-800 whitespace-nowrap lg:flex-grow-0 lg:flex-shrink-0';
-                    button.textContent = capitalizeFirstLetter(category);
+                    
+                    const firstItemOfCategory = allMenuData.find(item => item.category === category);
+                    const isPizzaCategory = firstItemOfCategory && firstItemOfCategory.isPizza;
+                    button.textContent = isPizzaCategory ? `Pizzas ${capitalizeFirstLetter(category)}` : capitalizeFirstLetter(category);
+
                     button.dataset.category = category;
                     button.dataset.targetId = `${category}-section`;
                     
