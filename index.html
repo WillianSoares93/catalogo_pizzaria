@@ -1,4 +1,3 @@
-teste
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1598,6 +1597,13 @@ teste
                 if (!item) {
                     return;
                 }
+                
+                // *** ALTERAÇÃO INICIA AQUI: Lógica de verificação movida para o clique ***
+                if (isSelectingHalfPizza && !isFirstHalfPromotional && item.category.toLowerCase() === 'promocionais') {
+                    showMessageModal('Você começou a montar uma pizza meio a meio com um sabor não promocional. A segunda metade não pode ser de uma pizza promocional.');
+                    return; // Impede a continuação da função
+                }
+                // *** ALTERAÇÃO TERMINA AQUI ***
 
                 const itemImageUrl = item.isPizza ? item.imageUrl : null;
                 
@@ -1618,9 +1624,6 @@ teste
                             document.getElementById('promocionais-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
                             setActiveCategoryButton('promocionais');
                         });
-                        return;
-                    } else if (!isFirstHalfPromotional && item.category.toLowerCase() === 'promocionais') {
-                        showMessageModal('Você começou a montar uma pizza meio a meio com um sabor não promocional. A segunda metade não pode ser de uma pizza promocional.');
                         return;
                     }
 
@@ -2382,33 +2385,6 @@ teste
                         return;
                     }
 
-                    // *** ALTERAÇÃO INICIA AQUI ***
-                    // Primeiro, verifica o cenário específico da pizza meio a meio inválida
-                    let invalidScrollAttempt = false;
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting && isSelectingHalfPizza && !isFirstHalfPromotional) {
-                            const category = entry.target.id.replace('-section', '').toLowerCase();
-                            if (category === 'promocionais') {
-                                const originalCategory = firstHalfPizza.category.toLowerCase();
-                                setActiveCategoryButton(originalCategory); // Reverte o botão ativo
-                                currentActiveCategoryByScroll = originalCategory;
-                                
-                                isScrollingFromClick = true;
-                                document.getElementById(`${originalCategory}-section`).scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                setTimeout(() => { isScrollingFromClick = false; }, 700);
-
-                                showMessageModal('Você começou a montar uma pizza meio a meio com um sabor não promocional. A segunda metade não pode ser de uma pizza promocional.');
-                                invalidScrollAttempt = true;
-                            }
-                        }
-                    });
-
-                    if (invalidScrollAttempt) {
-                        return; // Interrompe a execução se um scroll inválido foi detectado
-                    }
-                    // *** ALTERAÇÃO TERMINA AQUI ***
-
-                    // Lógica original para determinar a categoria ativa para a barra de navegação
                     const stickyHeaderHeight = getStickyHeaderHeight();
                     let newActiveCategory = null;
                     let minDistance = Infinity; 
