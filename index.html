@@ -1381,42 +1381,45 @@
                                 }
 
                                 if (item.isPizza) {
+                                    // *** ALTERAÇÃO INICIA AQUI ***
                                     let priceDisplayHtml = '';
-                                    if (item.price4Slices > 0) {
-                                        priceDisplayHtml += `
-                                            <div class="flex flex-col items-center text-center px-1 flex-shrink-0">
-                                                <span class="font-bold text-gray-800 whitespace-nowrap">4F</span>
-                                                <span class="font-bold text-red-600 text-lg whitespace-nowrap">R$ ${item.price4Slices.toFixed(2).replace('.', ',')}</span>
-                                            </div>
-                                        `;
+                                    if (item.price4Slices > 0 || item.price6Slices > 0 || item.basePrice > 0) {
+                                        priceDisplayHtml += '<div class="flex justify-around items-center mt-4 pt-4 border-t border-gray-200">';
+                                        if (item.price4Slices > 0) {
+                                            priceDisplayHtml += `
+                                                <div class="text-center px-1">
+                                                    <span class="font-bold text-gray-800 text-sm md:text-base whitespace-nowrap">4 Fatias</span>
+                                                    <p class="font-bold text-red-600 text-base md:text-lg">R$ ${item.price4Slices.toFixed(2).replace('.', ',')}</p>
+                                                </div>
+                                            `;
+                                        }
+                                        if (item.price6Slices > 0) {
+                                            priceDisplayHtml += `
+                                                <div class="text-center px-1">
+                                                    <span class="font-bold text-gray-800 text-sm md:text-base whitespace-nowrap">6 Fatias</span>
+                                                    <p class="font-bold text-red-600 text-base md:text-lg">R$ ${item.price6Slices.toFixed(2).replace('.', ',')}</p>
+                                                </div>
+                                            `;
+                                        }
+                                        if (item.basePrice > 0) {
+                                            priceDisplayHtml += `
+                                                <div class="text-center px-1">
+                                                    <span class="font-bold text-gray-800 text-sm md:text-base whitespace-nowrap">8 Fatias</span>
+                                                    <p class="font-bold text-red-600 text-base md:text-lg">R$ ${item.basePrice.toFixed(2).replace('.', ',')}</p>
+                                                </div>
+                                            `;
+                                        }
+                                        priceDisplayHtml += '</div>';
                                     }
-                                    if (item.price4Slices > 0 && (item.price6Slices > 0 || item.basePrice > 0)) {
-                                        priceDisplayHtml += `<span class="text-gray-400 self-center">|</span>`;
-                                    }
-                                    if (item.price6Slices > 0) {
-                                        priceDisplayHtml += `
-                                            <div class="flex flex-col items-center text-center px-1 flex-shrink-0">
-                                                <span class="font-bold text-gray-800 whitespace-nowrap">6F</span>
-                                                <span class="font-bold text-red-600 text-lg whitespace-nowrap">R$ ${item.price6Slices.toFixed(2).replace('.', ',')}</span>
-                                            </div>
-                                        `;
-                                    }
-                                    if (item.basePrice > 0) { 
-                                        priceDisplayHtml += `
-                                            <div class="flex flex-col items-center text-center px-1 flex-shrink-0">
-                                                <span class="font-bold text-gray-800 whitespace-nowrap">8F</span>
-                                                <span class="font-bold text-red-600 text-lg whitespace-nowrap">R$ ${item.basePrice.toFixed(2).replace('.', ',')}</span>
-                                            </div>
-                                        `;
-                                    }
-                                    
+
                                     itemHtml = `
-                                        <div class="flavor-card bg-white rounded-xl overflow-hidden shadow-lg transition duration-300">
+                                        <div class="flavor-card bg-white rounded-xl overflow-hidden shadow-lg flex flex-col">
                                             ${imageElement}
-                                            <div class="p-6">
+                                            <div class="p-6 flex flex-col flex-grow">
                                                 <h3 class="text-xl font-bold text-gray-800 mb-2">${item.name}</h3>
-                                                <p class="text-gray-600 text-sm mb-4">${item.description}</p>
-                                                <div class="flex justify-end mt-auto">
+                                                <p class="text-gray-600 text-sm mb-4 flex-grow">${item.description}</p>
+                                                ${priceDisplayHtml}
+                                                <div class="flex justify-end mt-4">
                                                     <button class="add-item-btn bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full text-sm font-medium transition duration-300"
                                                             data-item-id="${item.id}" data-image-url="${trimmedImageUrl}">
                                                         Adicionar
@@ -1425,6 +1428,7 @@
                                             </div>
                                         </div>
                                     `;
+                                    // *** ALTERAÇÃO TERMINA AQUI ***
                                 } else {
                                     let imageElement = '';
                                     const trimmedImageUrl = String(item.imageUrl || '').trim();
@@ -1439,7 +1443,7 @@
                                     const buttonText = item.isCustomizable ? 'Montar' : 'Adicionar';
 
                                     itemHtml = `
-                                        <div class="flavor-card bg-white rounded-xl overflow-hidden shadow-lg transition duration-300">
+                                        <div class="flavor-card bg-white rounded-xl overflow-hidden shadow-lg">
                                             ${imageElement}
                                             <div class="p-6">
                                             <h3 class="text-xl font-bold text-gray-800 mb-2">${item.name}</h3>
