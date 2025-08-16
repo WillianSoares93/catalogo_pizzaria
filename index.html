@@ -2376,48 +2376,36 @@ teste
                 }
 
                 const categorySections = document.querySelectorAll('.pizza-category-section'); 
-
+                const stickyHeaderHeight = getStickyHeaderHeight();
+                
                 categoryObserver = new IntersectionObserver((entries) => {
                     if (isScrollingFromClick) {
                         return;
                     }
                     
-                    // --- INÍCIO DA ALTERAÇÃO ---
-                    // Nova lógica para encontrar a categoria ativa.
-                    // Busca a primeira categoria que está totalmente visível no topo do viewport,
-                    // logo abaixo do cabeçalho fixo.
-                    const stickyHeaderHeight = getStickyHeaderHeight();
                     let newActiveCategory = null;
-                    const offset = 10; // Pequeno offset para garantir que a interseção ocorra após o topo do cabeçalho.
-
-                    let visibleEntry = entries.find(entry => {
-                        const rect = entry.boundingClientRect;
-                        return rect.top >= stickyHeaderHeight - offset && rect.top < window.innerHeight;
-                    });
                     
-                    if (!visibleEntry) {
-                        // Se não houver uma entrada totalmente visível, tenta encontrar a que está mais próxima do topo
-                        let minDistance = Infinity;
-                        entries.forEach(entry => {
-                            const rect = entry.boundingClientRect;
-                            const distance = Math.abs(rect.top - stickyHeaderHeight);
-                            if (distance < minDistance) {
-                                visibleEntry = entry;
-                                minDistance = distance;
-                            }
-                        });
-                    }
+                    // Encontra a categoria cuja seção está mais próxima do topo da viewport
+                    let closestSection = null;
+                    let minDistance = Infinity;
 
-                    if (visibleEntry) {
-                        newActiveCategory = visibleEntry.target.id.replace('-section', '');
+                    entries.forEach(entry => {
+                        const rect = entry.boundingClientRect;
+                        const distance = Math.abs(rect.top - stickyHeaderHeight);
+                        if (distance < minDistance) {
+                            minDistance = distance;
+                            closestSection = entry.target;
+                        }
+                    });
+
+                    if (closestSection) {
+                        newActiveCategory = closestSection.id.replace('-section', '');
                     }
                     
                     // Lógica para o caso de pizzas meio a meio
                     if (isSelectingHalfPizza) {
                         if (isFirstHalfPromotional) {
                             if (newActiveCategory && newActiveCategory.toLowerCase() !== 'promocionais') {
-                                // Se a nova categoria não for "promocionais" e a primeira metade era promocional,
-                                // o scroll é revertido para a seção de promoções.
                                 setActiveCategoryButton('promocionais');
                                 currentActiveCategoryByScroll = 'promocionais'; 
                                 isScrollingFromClick = true; 
@@ -2428,16 +2416,12 @@ teste
                             }
                         } else {
                             if (newActiveCategory && newActiveCategory.toLowerCase() === 'promocionais') {
-                                // Se a nova categoria for "promocionais" mas a primeira metade não era,
-                                // o scroll é revertido.
                                 const originalCategory = firstHalfPizza.category.toLowerCase();
-                                setActiveCategoryButton(originalCategory); // Reverte o botão ativo
+                                setActiveCategoryButton(originalCategory); 
                                 currentActiveCategoryByScroll = originalCategory;
-                                
                                 isScrollingFromClick = true;
                                 document.getElementById(`${originalCategory}-section`).scrollIntoView({ behavior: 'smooth', block: 'start' });
                                 setTimeout(() => { isScrollingFromClick = false; }, 700);
-
                                 showMessageModal('Você começou a montar uma pizza meio a meio com um sabor não promocional. A segunda metade não pode ser de uma pizza promocional.');
                                 return;
                             }
@@ -2448,11 +2432,9 @@ teste
                         setActiveCategoryButton(newActiveCategory);
                         currentActiveCategoryByScroll = newActiveCategory;
                     }
-                    // --- FIM DA ALTERAÇÃO ---
-
                 }, {
                     root: null,
-                    rootMargin: `-${getStickyHeaderHeight()}px 0px 0px 0px`, 
+                    rootMargin: `-${stickyHeaderHeight}px 0px -99% 0px`, 
                     threshold: 0 
                 });
 
