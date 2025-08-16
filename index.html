@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sâmia - Cardápio Online</title>
+    <meta name="theme-color" content="#f8f4e9"/>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" href="https://raw.githubusercontent.com/WillianSoares93/catalogo_pizzaria/refs/heads/main/logo.png" type="image/png">
@@ -1381,13 +1382,12 @@
                                 }
 
                                 if (item.isPizza) {
-                                    // *** ALTERAÇÃO INICIA AQUI ***
                                     let pricesHtml = '';
                                     if (item.price4Slices > 0) {
                                         pricesHtml += `
                                             <div class="text-center px-1">
                                                 <span class="text-xs text-gray-500">4 Fatias</span>
-                                                <p class="font-bold text-red-600">R$ ${item.price4Slices.toFixed(2).replace('.', ',')}</p>
+                                                <p class="font-bold text-red-600 whitespace-nowrap">R$ ${item.price4Slices.toFixed(2).replace('.', ',')}</p>
                                             </div>
                                         `;
                                     }
@@ -1395,7 +1395,7 @@
                                         pricesHtml += `
                                             <div class="text-center px-2 border-l border-r border-gray-200">
                                                 <span class="text-xs text-gray-500">6 Fatias</span>
-                                                <p class="font-bold text-red-600">R$ ${item.price6Slices.toFixed(2).replace('.', ',')}</p>
+                                                <p class="font-bold text-red-600 whitespace-nowrap">R$ ${item.price6Slices.toFixed(2).replace('.', ',')}</p>
                                             </div>
                                         `;
                                     }
@@ -1403,7 +1403,7 @@
                                         pricesHtml += `
                                             <div class="text-center px-1">
                                                 <span class="text-xs text-gray-500">8 Fatias</span>
-                                                <p class="font-bold text-red-600">R$ ${item.basePrice.toFixed(2).replace('.', ',')}</p>
+                                                <p class="font-bold text-red-600 whitespace-nowrap">R$ ${item.basePrice.toFixed(2).replace('.', ',')}</p>
                                             </div>
                                         `;
                                     }
@@ -1429,7 +1429,6 @@
                                             </div>
                                         </div>
                                     `;
-                                    // *** ALTERAÇÃO TERMINA AQUI ***
                                 } else {
                                     let imageElement = '';
                                     const trimmedImageUrl = String(item.imageUrl || '').trim();
@@ -3039,3 +3038,20 @@
     </script>
 </body>
 </html>
+" code between  and  in the most up-to-date Canvas "Cardápio Sâmia - index.html" document above and am asking a query about/based on this code below.
+Instructions to follow:
+  * Don't output/edit the document if the query is Direct/Simple. For example, if the query asks for a simple explanation, output a direct answer.
+  * Make sure to **edit** the document if the query shows the intent of editing the document, in which case output the entire edited document, **not just that section or the edits**.
+    * Don't output the same document/empty document and say that you have edited it.
+    * Don't change unrelated code in the document.
+  * Don't output  and  in your final response.
+  * Any references like "this" or "selected code" refers to the code between  and  tags.
+  * Just acknowledge my request in the introduction.
+  * Make sure to refer to the document as "Canvas" in your response.
+
+em alguns sabores de pizzas que os número são maiores, está havendo uma quebra de linha entre "R$" e o valor exemplo:
+4 Fatias
+    R$
+ 26,50
+
+tem alguma maneira de evitar isso, para que fique em uma linha 
