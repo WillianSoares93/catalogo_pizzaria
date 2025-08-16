@@ -1,4 +1,3 @@
-teste
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -525,7 +524,7 @@ teste
 
     <section id="menu" class="py-8 px-4 max-w-6xl mx-auto">
         <div class="text-center mb-8">
-            <h2 class="text-4xl font-bold text-gray-800 mb-4">Nosso Cardápio- teste</h2>
+            <h2 class="text-4xl font-bold text-gray-800 mb-4">Nosso Cardápio</h2>
             <p class="text-gray-600 text-lg mx-auto">Escolha sua pizza favorita ou uma bebida refrescante!</p>
         </div>
 
@@ -1383,34 +1382,30 @@ teste
 
                                 if (item.isPizza) {
                                     // *** ALTERAÇÃO INICIA AQUI ***
-                                    let priceDisplayHtml = '';
-                                    if (item.price4Slices > 0 || item.price6Slices > 0 || item.basePrice > 0) {
-                                        priceDisplayHtml += '<div class="flex justify-around items-center mt-4 pt-4 border-t border-gray-200">';
-                                        if (item.price4Slices > 0) {
-                                            priceDisplayHtml += `
-                                                <div class="text-center px-1">
-                                                    <span class="font-bold text-gray-800 text-sm md:text-base whitespace-nowrap">4 Fatias</span>
-                                                    <p class="font-bold text-red-600 text-base md:text-lg">R$ ${item.price4Slices.toFixed(2).replace('.', ',')}</p>
-                                                </div>
-                                            `;
-                                        }
-                                        if (item.price6Slices > 0) {
-                                            priceDisplayHtml += `
-                                                <div class="text-center px-1">
-                                                    <span class="font-bold text-gray-800 text-sm md:text-base whitespace-nowrap">6 Fatias</span>
-                                                    <p class="font-bold text-red-600 text-base md:text-lg">R$ ${item.price6Slices.toFixed(2).replace('.', ',')}</p>
-                                                </div>
-                                            `;
-                                        }
-                                        if (item.basePrice > 0) {
-                                            priceDisplayHtml += `
-                                                <div class="text-center px-1">
-                                                    <span class="font-bold text-gray-800 text-sm md:text-base whitespace-nowrap">8 Fatias</span>
-                                                    <p class="font-bold text-red-600 text-base md:text-lg">R$ ${item.basePrice.toFixed(2).replace('.', ',')}</p>
-                                                </div>
-                                            `;
-                                        }
-                                        priceDisplayHtml += '</div>';
+                                    let pricesHtml = '';
+                                    if (item.price4Slices > 0) {
+                                        pricesHtml += `
+                                            <div class="text-center px-1">
+                                                <span class="text-xs text-gray-500">4 Fatias</span>
+                                                <p class="font-bold text-red-600">R$ ${item.price4Slices.toFixed(2).replace('.', ',')}</p>
+                                            </div>
+                                        `;
+                                    }
+                                    if (item.price6Slices > 0) {
+                                        pricesHtml += `
+                                            <div class="text-center px-2 border-l border-r border-gray-200">
+                                                <span class="text-xs text-gray-500">6 Fatias</span>
+                                                <p class="font-bold text-red-600">R$ ${item.price6Slices.toFixed(2).replace('.', ',')}</p>
+                                            </div>
+                                        `;
+                                    }
+                                    if (item.basePrice > 0) {
+                                        pricesHtml += `
+                                            <div class="text-center px-1">
+                                                <span class="text-xs text-gray-500">8 Fatias</span>
+                                                <p class="font-bold text-red-600">R$ ${item.basePrice.toFixed(2).replace('.', ',')}</p>
+                                            </div>
+                                        `;
                                     }
 
                                     itemHtml = `
@@ -1419,12 +1414,17 @@ teste
                                             <div class="p-6 flex flex-col flex-grow">
                                                 <h3 class="text-xl font-bold text-gray-800 mb-2">${item.name}</h3>
                                                 <p class="text-gray-600 text-sm mb-4 flex-grow">${item.description}</p>
-                                                ${priceDisplayHtml}
-                                                <div class="flex justify-end mt-4">
-                                                    <button class="add-item-btn bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full text-sm font-medium transition duration-300"
-                                                            data-item-id="${item.id}" data-image-url="${trimmedImageUrl}">
-                                                        Adicionar
-                                                    </button>
+                                                
+                                                <div class="mt-auto pt-4 border-t border-gray-100">
+                                                    <div class="flex justify-between items-center">
+                                                        <div class="flex space-x-1 items-baseline">
+                                                            ${pricesHtml}
+                                                        </div>
+                                                        <button class="add-item-btn bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full text-sm font-medium transition duration-300 flex-shrink-0"
+                                                                data-item-id="${item.id}" data-image-url="${trimmedImageUrl}">
+                                                            Adicionar
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -2672,6 +2672,7 @@ teste
                     }, 100);
 
                 } catch (error) {
+                    console.error('Erro ao carregar o cardápio:', error);
                     showMessageModal('Não foi possível carregar o cardápio no momento. Por favor, tente novamente mais tarde.');
                 }
             }
