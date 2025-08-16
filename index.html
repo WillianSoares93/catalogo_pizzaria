@@ -1,9 +1,11 @@
+teste
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sâmia - Cardápio Online</title>
+    <meta name="theme-color" content="#f8f4e9"/>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" href="https://raw.githubusercontent.com/WillianSoares93/catalogo_pizzaria/refs/heads/main/logo.png" type="image/png">
@@ -2379,42 +2381,43 @@
                     if (isScrollingFromClick) {
                         return;
                     }
-
+                    
+                    // --- INÍCIO DA ALTERAÇÃO ---
+                    // Nova lógica para encontrar a categoria ativa.
+                    // Busca a primeira categoria que está totalmente visível no topo do viewport,
+                    // logo abaixo do cabeçalho fixo.
                     const stickyHeaderHeight = getStickyHeaderHeight();
                     let newActiveCategory = null;
-                    let minDistance = Infinity; 
+                    const offset = 10; // Pequeno offset para garantir que a interseção ocorra após o topo do cabeçalho.
 
-                    categorySections.forEach(section => {
-                        const rect = section.getBoundingClientRect();
-                        const category = section.id.replace('-section', '');
-
-                        if (rect.top <= stickyHeaderHeight + 5 && rect.bottom > stickyHeaderHeight) {
+                    let visibleEntry = entries.find(entry => {
+                        const rect = entry.boundingClientRect;
+                        return rect.top >= stickyHeaderHeight - offset && rect.top < window.innerHeight;
+                    });
+                    
+                    if (!visibleEntry) {
+                        // Se não houver uma entrada totalmente visível, tenta encontrar a que está mais próxima do topo
+                        let minDistance = Infinity;
+                        entries.forEach(entry => {
+                            const rect = entry.boundingClientRect;
                             const distance = Math.abs(rect.top - stickyHeaderHeight);
                             if (distance < minDistance) {
-                                newActiveCategory = category;
+                                visibleEntry = entry;
                                 minDistance = distance;
                             }
-                        }
-                    });
+                        });
+                    }
 
-                    if (!newActiveCategory && categorySections.length > 0) {
-                        if (window.scrollY <= stickyHeaderHeight + 20) {
-                            newActiveCategory = categorySections[0].id.replace('-section', ''); 
-                        } else {
-                            for (let i = 0; i < categorySections.length; i++) {
-                                const section = categorySections[i];
-                                const rect = section.getBoundingClientRect();
-                                if (rect.bottom > 0 && rect.top < window.innerHeight) {
-                                    newActiveCategory = section.id.replace('-section', '');
-                                    break;
-                                }
-                            }
-                        }
+                    if (visibleEntry) {
+                        newActiveCategory = visibleEntry.target.id.replace('-section', '');
                     }
                     
-                    if (isSelectingHalfPizza) { 
-                        if (isFirstHalfPromotional) { 
+                    // Lógica para o caso de pizzas meio a meio
+                    if (isSelectingHalfPizza) {
+                        if (isFirstHalfPromotional) {
                             if (newActiveCategory && newActiveCategory.toLowerCase() !== 'promocionais') {
+                                // Se a nova categoria não for "promocionais" e a primeira metade era promocional,
+                                // o scroll é revertido para a seção de promoções.
                                 setActiveCategoryButton('promocionais');
                                 currentActiveCategoryByScroll = 'promocionais'; 
                                 isScrollingFromClick = true; 
@@ -2423,16 +2426,20 @@
                                 showMessageModal('Para pizzas promocionais, a segunda metade deve ser também de uma pizza promocional.');
                                 return; 
                             }
-                        } else { 
+                        } else {
                             if (newActiveCategory && newActiveCategory.toLowerCase() === 'promocionais') {
+                                // Se a nova categoria for "promocionais" mas a primeira metade não era,
+                                // o scroll é revertido.
                                 const originalCategory = firstHalfPizza.category.toLowerCase();
-                                setActiveCategoryButton(originalCategory);
-                                currentActiveCategoryByScroll = originalCategory; 
-                                isScrollingFromClick = true; 
+                                setActiveCategoryButton(originalCategory); // Reverte o botão ativo
+                                currentActiveCategoryByScroll = originalCategory;
+                                
+                                isScrollingFromClick = true;
                                 document.getElementById(`${originalCategory}-section`).scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                setTimeout(() => { isScrollingFromClick = false; }, 700); 
+                                setTimeout(() => { isScrollingFromClick = false; }, 700);
+
                                 showMessageModal('Você começou a montar uma pizza meio a meio com um sabor não promocional. A segunda metade não pode ser de uma pizza promocional.');
-                                return; 
+                                return;
                             }
                         }
                     }
@@ -2441,6 +2448,8 @@
                         setActiveCategoryButton(newActiveCategory);
                         currentActiveCategoryByScroll = newActiveCategory;
                     }
+                    // --- FIM DA ALTERAÇÃO ---
+
                 }, {
                     root: null,
                     rootMargin: `-${getStickyHeaderHeight()}px 0px 0px 0px`, 
@@ -3037,20 +3046,3 @@
     </script>
 </body>
 </html>
-" code between  and  in the most up-to-date Canvas "Cardápio Sâmia - index.html" document above and am asking a query about/based on this code below.
-Instructions to follow:
-  * Don't output/edit the document if the query is Direct/Simple. For example, if the query asks for a simple explanation, output a direct answer.
-  * Make sure to **edit** the document if the query shows the intent of editing the document, in which case output the entire edited document, **not just that section or the edits**.
-    * Don't output the same document/empty document and say that you have edited it.
-    * Don't change unrelated code in the document.
-  * Don't output  and  in your final response.
-  * Any references like "this" or "selected code" refers to the code between  and  tags.
-  * Just acknowledge my request in the introduction.
-  * Make sure to refer to the document as "Canvas" in your response.
-
-em alguns sabores de pizzas que os número são maiores, está havendo uma quebra de linha entre "R$" e o valor exemplo:
-4 Fatias
-    R$
- 26,50
-
-tem alguma maneira de evitar isso, para que fique em uma linha 
