@@ -1,10 +1,10 @@
+teste
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sâmia - Cardápio Online</title>
-    <meta name="theme-color" content="#f8f4e9"/>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" href="https://raw.githubusercontent.com/WillianSoares93/catalogo_pizzaria/refs/heads/main/logo.png" type="image/png">
@@ -525,7 +525,7 @@
 
     <section id="menu" class="py-8 px-4 max-w-6xl mx-auto">
         <div class="text-center mb-8">
-            <h2 class="text-4xl font-bold text-gray-800 mb-4">Nosso Cardápio</h2>
+            <h2 class="text-4xl font-bold text-gray-800 mb-4">Nosso Cardápio- teste</h2>
             <p class="text-gray-600 text-lg mx-auto">Escolha sua pizza favorita ou uma bebida refrescante!</p>
         </div>
 
@@ -1382,12 +1382,13 @@
                                 }
 
                                 if (item.isPizza) {
+                                    // *** ALTERAÇÃO INICIA AQUI ***
                                     let pricesHtml = '';
                                     if (item.price4Slices > 0) {
                                         pricesHtml += `
                                             <div class="text-center px-1">
                                                 <span class="text-xs text-gray-500">4 Fatias</span>
-                                                <p class="font-bold text-red-600 whitespace-nowrap">R$ ${item.price4Slices.toFixed(2).replace('.', ',')}</p>
+                                                <p class="font-bold text-red-600">R$ ${item.price4Slices.toFixed(2).replace('.', ',')}</p>
                                             </div>
                                         `;
                                     }
@@ -1395,7 +1396,7 @@
                                         pricesHtml += `
                                             <div class="text-center px-2 border-l border-r border-gray-200">
                                                 <span class="text-xs text-gray-500">6 Fatias</span>
-                                                <p class="font-bold text-red-600 whitespace-nowrap">R$ ${item.price6Slices.toFixed(2).replace('.', ',')}</p>
+                                                <p class="font-bold text-red-600">R$ ${item.price6Slices.toFixed(2).replace('.', ',')}</p>
                                             </div>
                                         `;
                                     }
@@ -1403,7 +1404,7 @@
                                         pricesHtml += `
                                             <div class="text-center px-1">
                                                 <span class="text-xs text-gray-500">8 Fatias</span>
-                                                <p class="font-bold text-red-600 whitespace-nowrap">R$ ${item.basePrice.toFixed(2).replace('.', ',')}</p>
+                                                <p class="font-bold text-red-600">R$ ${item.basePrice.toFixed(2).replace('.', ',')}</p>
                                             </div>
                                         `;
                                     }
@@ -1429,6 +1430,7 @@
                                             </div>
                                         </div>
                                     `;
+                                    // *** ALTERAÇÃO TERMINA AQUI ***
                                 } else {
                                     let imageElement = '';
                                     const trimmedImageUrl = String(item.imageUrl || '').trim();
@@ -2671,7 +2673,6 @@
                     }, 100);
 
                 } catch (error) {
-                    console.error('Erro ao carregar o cardápio:', error);
                     showMessageModal('Não foi possível carregar o cardápio no momento. Por favor, tente novamente mais tarde.');
                 }
             }
