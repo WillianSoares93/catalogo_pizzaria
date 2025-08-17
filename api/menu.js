@@ -81,7 +81,7 @@ function parseCsvData(csvText) {
             case 'Seleção Única': return 'isSingleChoice';
             case 'Limite': return 'limit';
             case 'É Obrigatório?(SIM/NÃO)': return 'isRequired';
-            case 'Quantidade Maxima': return 'maxQuantity';
+            case 'Limite Ingrediente': return 'maxQuantity';
             case 'Dados': return 'data';
             case 'Valor': return 'value';
             default:
