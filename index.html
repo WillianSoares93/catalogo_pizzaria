@@ -1,4 +1,3 @@
-teste1
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -472,9 +471,11 @@ teste1
             border-color: #dc2626;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
         }
-        .ingredient-option input[type="radio"] {
+        .ingredient-option input[type="radio"], .ingredient-option input[type="checkbox"] {
             margin-right: 12px;
             accent-color: #dc2626;
+            height: 1.25rem;
+            width: 1.25rem;
         }
         .ingredient-option .price {
             font-weight: bold;
@@ -506,7 +507,6 @@ teste1
             font-size: 0.875rem;
             color: #4b5563;
         }
-        /* NEW STYLES FOR QUANTITY SELECTOR */
         .quantity-btn {
             background-color: #e5e7eb;
             color: #374151;
@@ -1126,7 +1126,7 @@ teste1
                         case 'Preço': return 'price';
                         case 'Seleção Única': return 'isSingleChoice';
                         case 'Limite': return 'limit';
-                        case 'Limite Ingrediente': return 'ingredientLimit'; // NEW: Handle new column
+                        case 'Limite Ingrediente': return 'ingredientLimit';
                         case 'É Obrigatório?(SIM/NÃO)': return 'isRequired';
                         case 'Disponível': return 'available'; 
                         case 'Dados': return 'data';
@@ -1155,7 +1155,7 @@ teste1
                             if (['basePrice', 'price6Slices', 'price4Slices', 'promoPrice', 'deliveryFee', 'price'].includes(headerKey)) {
                                 const parsedValue = parseFloat(String(value).replace(',', '.'));
                                 item[headerKey] = isNaN(parsedValue) ? 0 : parsedValue;
-                            } else if (headerKey === 'limit' || headerKey === 'ingredientLimit') { // NEW: Parse ingredientLimit
+                            } else if (headerKey === 'limit' || headerKey === 'ingredientLimit') {
                                 const parsedValue = parseInt(value, 10);
                                 item[headerKey] = isNaN(parsedValue) ? Infinity : parsedValue;
                             }
@@ -1177,7 +1177,6 @@ teste1
                 return parsedData;
             }
 
-            // MODIFIED: Function to handle quantity changes and validation
             function handleQuantityChange(plusBtn, minusBtn, quantityDisplay, ingredient) {
                 const categoryContainer = plusBtn.closest('.ingredient-category');
                 const categoryLimit = parseInt(categoryContainer.dataset.limit, 10) || Infinity;
@@ -1186,13 +1185,11 @@ teste1
                 plusBtn.addEventListener('click', () => {
                     let currentQuantity = parseInt(quantityDisplay.textContent, 10);
                     
-                    // Check individual ingredient limit
                     if (currentQuantity >= ingredientLimit) {
                         showMessageModal(`Você pode adicionar no máximo ${ingredientLimit} unidade(s) de ${ingredient.name}.`);
                         return;
                     }
 
-                    // Check overall category limit for *different* items
                     const selectedItemsCount = Array.from(categoryContainer.querySelectorAll('.quantity-display')).filter(d => parseInt(d.textContent, 10) > 0).length;
                     
                     if (currentQuantity === 0 && selectedItemsCount >= categoryLimit) {
@@ -1227,7 +1224,7 @@ teste1
                         
                         const categoryDiv = document.createElement('div');
                         categoryDiv.className = 'ingredient-category';
-                        categoryDiv.dataset.limit = categoryLimit; // Store category limit
+                        categoryDiv.dataset.limit = categoryLimit;
                         
                         let categoryTitle = capitalizeFirstLetter(category);
                         if (isRequired) {
@@ -1246,7 +1243,6 @@ teste1
                             const priceDisplay = ingredient.price > 0 ? `+ R$ ${ingredient.price.toFixed(2).replace('.', ',')}` : '';
                             
                             if (isSingleChoice) {
-                                // Keep radio buttons for single choice categories
                                 const label = document.createElement('label');
                                 label.className = 'ingredient-option cursor-pointer';
                                 label.innerHTML = `
@@ -1265,55 +1261,86 @@ teste1
                                 });
                                 categoryDiv.appendChild(label);
                             } else {
-                                // NEW: Implement quantity selector for multiple choice categories
-                                const optionDiv = document.createElement('div');
-                                optionDiv.className = 'ingredient-option items-center';
-                                optionDiv.dataset.id = ingredient.id;
-                                optionDiv.dataset.price = ingredient.price;
-                                optionDiv.dataset.name = ingredient.name;
-                                optionDiv.dataset.category = ingredient.category;
-                                
-                                const nameSpan = document.createElement('span');
-                                nameSpan.className = 'flex-grow';
-                                nameSpan.textContent = ingredient.name;
-                                
-                                const priceSpan = document.createElement('span');
-                                priceSpan.className = 'price mr-4';
-                                priceSpan.textContent = priceDisplay;
+                                const ingredientLimit = ingredient.ingredientLimit || 1;
 
-                                const quantitySelector = document.createElement('div');
-                                quantitySelector.className = 'flex items-center';
-                                
-                                const minusBtn = document.createElement('button');
-                                minusBtn.className = 'quantity-btn minus-btn';
-                                minusBtn.textContent = '-';
-                                
-                                const quantityDisplay = document.createElement('span');
-                                quantityDisplay.className = 'quantity-display';
-                                quantityDisplay.textContent = '0';
-                                
-                                const plusBtn = document.createElement('button');
-                                plusBtn.className = 'quantity-btn plus-btn';
-                                plusBtn.textContent = '+';
+                                if (ingredientLimit <= 1) {
+                                    const label = document.createElement('label');
+                                    label.className = 'ingredient-option cursor-pointer';
+                                    label.innerHTML = `
+                                        <div class="flex items-center">
+                                            <input type="checkbox" id="multiple-${category}-${ingredient.id}" name="multiple-${category}" value="${ingredient.id}" data-price="${ingredient.price}" class="form-checkbox">
+                                            <span class="flex-grow ml-3">${ingredient.name}</span>
+                                            <span class="price ml-2 whitespace-nowrap text-right">${priceDisplay}</span>
+                                        </div>
+                                    `;
+                                    label.querySelector('input').addEventListener('change', (e) => {
+                                        const categoryContainer = e.target.closest('.ingredient-category');
+                                        const categoryLimit = parseInt(categoryContainer.dataset.limit, 10) || Infinity;
+                                        const checkedCount = categoryContainer.querySelectorAll('input[type="checkbox"]:checked').length;
+                                        
+                                        if (checkedCount > categoryLimit) {
+                                            e.target.checked = false;
+                                            showMessageModal(`Você pode escolher no máximo ${categoryLimit} item(ns) diferente(s) para esta categoria.`);
+                                        } else {
+                                             if (e.target.checked) {
+                                                label.classList.add('selected');
+                                            } else {
+                                                label.classList.remove('selected');
+                                            }
+                                            updateBurgerPrice();
+                                        }
+                                    });
+                                    categoryDiv.appendChild(label);
+                                } else {
+                                    const optionDiv = document.createElement('div');
+                                    optionDiv.className = 'ingredient-option items-center';
+                                    optionDiv.dataset.id = ingredient.id;
+                                    optionDiv.dataset.price = ingredient.price;
+                                    optionDiv.dataset.name = ingredient.name;
+                                    optionDiv.dataset.category = ingredient.category;
+                                    
+                                    const nameSpan = document.createElement('span');
+                                    nameSpan.className = 'flex-grow';
+                                    nameSpan.textContent = ingredient.name;
+                                    
+                                    const priceSpan = document.createElement('span');
+                                    priceSpan.className = 'price mr-4';
+                                    priceSpan.textContent = priceDisplay;
 
-                                quantitySelector.appendChild(minusBtn);
-                                quantitySelector.appendChild(quantityDisplay);
-                                quantitySelector.appendChild(plusBtn);
+                                    const quantitySelector = document.createElement('div');
+                                    quantitySelector.className = 'flex items-center';
+                                    
+                                    const minusBtn = document.createElement('button');
+                                    minusBtn.className = 'quantity-btn minus-btn';
+                                    minusBtn.textContent = '-';
+                                    
+                                    const quantityDisplay = document.createElement('span');
+                                    quantityDisplay.className = 'quantity-display';
+                                    quantityDisplay.textContent = '0';
+                                    
+                                    const plusBtn = document.createElement('button');
+                                    plusBtn.className = 'quantity-btn plus-btn';
+                                    plusBtn.textContent = '+';
 
-                                optionDiv.appendChild(nameSpan);
-                                optionDiv.appendChild(priceSpan);
-                                optionDiv.appendChild(quantitySelector);
-                                
-                                categoryDiv.appendChild(optionDiv);
+                                    quantitySelector.appendChild(minusBtn);
+                                    quantitySelector.appendChild(quantityDisplay);
+                                    quantitySelector.appendChild(plusBtn);
 
-                                handleQuantityChange(plusBtn, minusBtn, quantityDisplay, ingredient);
+                                    optionDiv.appendChild(nameSpan);
+                                    optionDiv.appendChild(priceSpan);
+                                    optionDiv.appendChild(quantitySelector);
+                                    
+                                    categoryDiv.appendChild(optionDiv);
+
+                                    handleQuantityChange(plusBtn, minusBtn, quantityDisplay, ingredient);
+                                }
                             }
                         });
                         burgerIngredientsContainer.appendChild(categoryDiv);
                     }
                 }
                 
-                updateBurgerPrice(); // Initial price calculation
+                updateBurgerPrice();
                 
                 addCustomBurgerBtn.onclick = () => addCustomBurgerToOrder(baseBurgerItem);
                 
@@ -1324,13 +1351,16 @@ teste1
             function updateBurgerPrice() {
                 let total = parseFloat(burgerBuilderModal.dataset.basePrice) || 0;
                 
-                // Calculate price from single-choice (radio) categories
                 const selectedRadios = document.querySelectorAll('input[type="radio"]:checked');
                 selectedRadios.forEach(radio => {
                     total += parseFloat(radio.dataset.price);
                 });
 
-                // Calculate price from multi-choice (quantity selector) categories
+                const selectedCheckboxes = document.querySelectorAll('input[type="checkbox"]:checked');
+                selectedCheckboxes.forEach(checkbox => {
+                    total += parseFloat(checkbox.dataset.price);
+                });
+
                 const quantityOptions = document.querySelectorAll('.ingredient-option .quantity-display');
                 quantityOptions.forEach(display => {
                     const quantity = parseInt(display.textContent, 10);
@@ -1346,8 +1376,6 @@ teste1
 
             function addCustomBurgerToOrder(baseBurgerItem) {
                 const selectedIngredients = [];
-                let total = baseBurgerItem.basePrice;
-                
                 let allRequiredCategoriesFilled = true;
 
                 for (const category in allBurgerIngredients) {
@@ -1358,8 +1386,11 @@ teste1
                     const isSingleChoice = firstIngredient.isSingleChoice;
                     const isRequired = firstIngredient.isRequired || false;
 
+                    const categoryContainer = Array.from(document.querySelectorAll('.ingredient-category')).find(el => el.querySelector('h4').textContent.toLowerCase().includes(category.toLowerCase()));
+                    if (!categoryContainer) continue;
+
                     if (isSingleChoice) {
-                        const selectedInput = document.querySelector(`input[name="${category}"]:checked`);
+                        const selectedInput = categoryContainer.querySelector(`input[name="${category}"]:checked`);
                         if (isRequired && !selectedInput) {
                             showMessageModal(`Por favor, escolha uma opção na categoria "${capitalizeFirstLetter(category)}".`);
                             allRequiredCategoriesFilled = false;
@@ -1369,31 +1400,32 @@ teste1
                             const ingredient = ingredients.find(ing => ing.id === selectedInput.value);
                             if (ingredient) {
                                 selectedIngredients.push({ name: ingredient.name, category: ingredient.category, quantity: 1 });
-                                total += ingredient.price;
                             }
                         }
                     } else {
-                        // NEW: Logic for quantity selectors
-                        const categoryContainer = document.querySelector(`#burger-ingredients-container .ingredient-category h4:first-child`)
-                                                    ?.textContent.toLowerCase().includes(category.toLowerCase()) 
-                                                    ? document.querySelector(`#burger-ingredients-container .ingredient-category h4:first-child`)?.parentNode 
-                                                    : null;
+                        let itemsInCategoryCount = 0;
+                        
+                        categoryContainer.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
+                            itemsInCategoryCount++;
+                            const ingredient = ingredients.find(ing => ing.id === checkbox.value);
+                            if (ingredient) {
+                                selectedIngredients.push({ name: ingredient.name, category: ingredient.category, quantity: 1 });
+                            }
+                        });
 
-                        let itemsInCategory = 0;
-                        if (categoryContainer) {
-                            categoryContainer.querySelectorAll('.ingredient-option').forEach(optionDiv => {
-                                const quantity = parseInt(optionDiv.querySelector('.quantity-display').textContent, 10);
-                                if (quantity > 0) {
-                                    itemsInCategory++;
-                                    const ingredient = ingredients.find(ing => ing.id === optionDiv.dataset.id);
-                                    if (ingredient) {
-                                        selectedIngredients.push({ name: ingredient.name, category: ingredient.category, quantity: quantity });
-                                        total += ingredient.price * quantity;
-                                    }
+                        categoryContainer.querySelectorAll('.ingredient-option .quantity-display').forEach(display => {
+                            const quantity = parseInt(display.textContent, 10);
+                            if (quantity > 0) {
+                                itemsInCategoryCount++;
+                                const optionDiv = display.closest('.ingredient-option');
+                                const ingredient = ingredients.find(ing => ing.id === optionDiv.dataset.id);
+                                if (ingredient) {
+                                    selectedIngredients.push({ name: ingredient.name, category: ingredient.category, quantity: quantity });
                                 }
-                            });
-                        }
-                        if (isRequired && itemsInCategory === 0) {
+                            }
+                        });
+
+                        if (isRequired && itemsInCategoryCount === 0) {
                             showMessageModal(`Por favor, adicione pelo menos um item na categoria "${capitalizeFirstLetter(category)}".`);
                             allRequiredCategoriesFilled = false;
                             break;
@@ -1405,10 +1437,12 @@ teste1
                     return;
                 }
 
+                const finalPrice = parseFloat(burgerTotalPriceEl.textContent.replace('R$ ', '').replace(',', '.'));
+
                 addToOrder({
                     type: 'custom_burger',
                     name: 'Hambúrguer Personalizado',
-                    price: total,
+                    price: finalPrice,
                     description: `Monte seu hambúrguer.`,
                     ingredients: selectedIngredients,
                     category: baseBurgerItem.category
@@ -1946,7 +1980,6 @@ teste1
                             itemName = `<b>${sizeLabel}</b>: ${item.name}`;
                         } else if (item.type === 'custom_burger') {
                             itemName = `<i class="fas fa-hamburger text-red-600 mr-2"></i> ${item.name}`;
-                            // NEW: Display ingredient quantities
                             const ingredientsListHtml = `
                                 <ul class="text-xs text-gray-500 mt-1 pl-4 list-disc list-inside">
                                     ${item.ingredients.map(ing => `<li>${ing.quantity > 1 ? `${ing.quantity}x ` : ''}${ing.name}</li>`).join('')}
@@ -2090,7 +2123,6 @@ teste1
                         return;
                     } else if (item.type === 'custom_burger') {
                         itemName = `Hambúrguer Personalizado`;
-                        // NEW: Format ingredients with quantities for WhatsApp
                         itemDescription = item.ingredients.map(ing => `  - ${ing.quantity > 1 ? `${ing.quantity}x ` : ''}${ing.name}`).join('\n');
                         message += `- ${itemName}: R$ ${item.price.toFixed(2).replace('.', ',')}\n${itemDescription}\n`;
                     }
@@ -3116,3 +3148,4 @@ teste1
     </script>
 </body>
 </html>
+", there is a bug in the code. When I try to add a custom burger, the modal doesn't show up. Can you please fix the b
