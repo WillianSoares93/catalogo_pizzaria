@@ -1,3 +1,4 @@
+teste
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -846,236 +847,6 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // ... (todo o seu código JS existente até a função openBurgerBuilderModal)
-
-            // =======================================================================
-            // INÍCIO DAS FUNÇÕES MODIFICADAS PARA QUANTIDADE DE INGREDIENTES
-            // =======================================================================
-
-            // 1. SUBSTITUA a função openBurgerBuilderModal original por esta:
-            function openBurgerBuilderModal(baseBurgerItem) {
-                burgerIngredientsContainer.innerHTML = '';
-                burgerBuilderModal.dataset.basePrice = baseBurgerItem.basePrice;
-
-                for (const category in allBurgerIngredients) {
-                    const ingredients = allBurgerIngredients[category];
-                    if (ingredients.length > 0) {
-                        const firstIngredient = ingredients[0];
-                        const isSingleChoice = firstIngredient.isSingleChoice;
-                        const isRequired = firstIngredient.isRequired || false;
-
-                        const categoryDiv = document.createElement('div');
-                        categoryDiv.className = 'ingredient-category';
-
-                        let categoryTitle = capitalizeFirstLetter(category);
-                        if (isRequired) {
-                            categoryTitle += ' (Obrigatório)';
-                        }
-
-                        categoryDiv.innerHTML = `<h4>${categoryTitle}</h4>`;
-
-                        ingredients.forEach(ingredient => {
-                            const priceDisplay = ingredient.price > 0 ? `+ R$ ${ingredient.price.toFixed(2).replace('.', ',')}` : 'Grátis';
-                            const optionDiv = document.createElement('div');
-                            optionDiv.className = 'ingredient-option';
-                            optionDiv.dataset.ingredientId = ingredient.id;
-
-                            if (isSingleChoice) {
-                                // Mantém o radio button para seleção única (ex: pães)
-                                optionDiv.innerHTML = `
-                                    <label class="flex items-center w-full cursor-pointer">
-                                        <input type="radio" name="${category}" value="${ingredient.id}" data-price="${ingredient.price}" class="form-radio">
-                                        <span class="flex-grow ml-3">${ingredient.name}</span>
-                                        <span class="price ml-2">${priceDisplay}</span>
-                                    </label>
-                                `;
-                            } else {
-                                // NOVO: Seletor de quantidade para os demais ingredientes
-                                const maxQuantity = ingredient.maxQuantity || 1;
-                                optionDiv.innerHTML = `
-                                    <span class="flex-grow">${ingredient.name}</span>
-                                    <span class="price ml-4">${priceDisplay}</span>
-                                    <div class="flex items-center ml-4" data-ingredient-id="${ingredient.id}" data-price="${ingredient.price}" data-max-quantity="${maxQuantity}">
-                                        <button type="button" class="quantity-btn minus-btn bg-gray-300 rounded-full w-7 h-7 flex items-center justify-center text-lg font-bold transition hover:bg-gray-400" disabled>-</button>
-                                        <span class="quantity-value mx-3 font-bold text-lg">0</span>
-                                        <button type="button" class="quantity-btn plus-btn bg-red-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-lg font-bold transition hover:bg-red-700">+</button>
-                                    </div>
-                                `;
-                            }
-                            categoryDiv.appendChild(optionDiv);
-                        });
-                        burgerIngredientsContainer.appendChild(categoryDiv);
-                    }
-                }
-
-                // Adiciona os event listeners para os novos botões de quantidade
-                burgerIngredientsContainer.querySelectorAll('.quantity-btn').forEach(button => {
-                    button.addEventListener('click', (e) => {
-                        const container = e.target.closest('div');
-                        const maxQuantity = parseInt(container.dataset.maxQuantity);
-                        const quantityEl = container.querySelector('.quantity-value');
-                        let currentQuantity = parseInt(quantityEl.textContent);
-
-                        if (e.target.classList.contains('plus-btn')) {
-                            if (currentQuantity < maxQuantity) {
-                                currentQuantity++;
-                            }
-                        } else if (e.target.classList.contains('minus-btn')) {
-                            if (currentQuantity > 0) {
-                                currentQuantity--;
-                            }
-                        }
-
-                        quantityEl.textContent = currentQuantity;
-                        container.querySelector('.minus-btn').disabled = currentQuantity === 0;
-                        container.querySelector('.plus-btn').disabled = currentQuantity >= maxQuantity;
-
-                        const optionDiv = container.closest('.ingredient-option');
-                        if (currentQuantity > 0) {
-                            optionDiv.classList.add('selected');
-                        } else {
-                            optionDiv.classList.remove('selected');
-                        }
-                        updateBurgerPrice();
-                    });
-                });
-
-                // Adiciona event listener para os radio buttons
-                burgerIngredientsContainer.querySelectorAll('input[type="radio"]').forEach(radio => {
-                    radio.addEventListener('change', () => {
-                        // Atualiza a classe 'selected' para os radio buttons
-                        document.querySelectorAll(`input[name="${radio.name}"]`).forEach(r => {
-                            r.closest('.ingredient-option').classList.remove('selected');
-                        });
-                        if (radio.checked) {
-                            radio.closest('.ingredient-option').classList.add('selected');
-                        }
-                        updateBurgerPrice();
-                    });
-                });
-
-                updateBurgerPrice();
-                burgerBuilderModal.style.display = 'flex';
-                updatePromotionButtonVisibility();
-            }
-
-            // 2. SUBSTITUA a função updateBurgerPrice original por esta:
-            function updateBurgerPrice() {
-                let total = parseFloat(burgerBuilderModal.dataset.basePrice) || 0;
-
-                // Soma o preço do item de seleção única (radio button)
-                const selectedRadio = document.querySelector('#burger-ingredients-container input[type="radio"]:checked');
-                if (selectedRadio) {
-                    total += parseFloat(selectedRadio.dataset.price);
-                }
-
-                // Soma os preços dos ingredientes com quantidade
-                document.querySelectorAll('#burger-ingredients-container .quantity-value').forEach(quantityEl => {
-                    const quantity = parseInt(quantityEl.textContent);
-                    if (quantity > 0) {
-                        const container = quantityEl.closest('div');
-                        const price = parseFloat(container.dataset.price);
-                        total += price * quantity;
-                    }
-                });
-
-                burgerTotalPriceEl.textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
-            }
-
-
-            // 3. SUBSTITUA a função addCustomBurgerToOrder original por esta:
-            function addCustomBurgerToOrder(baseBurgerItem) {
-                const selectedIngredients = [];
-                let total = parseFloat(burgerBuilderModal.dataset.basePrice) || 0;
-                let allRequiredCategoriesFilled = true;
-
-                for (const category in allBurgerIngredients) {
-                    const ingredients = allBurgerIngredients[category];
-                    const firstIngredient = ingredients[0];
-                    if (!firstIngredient) continue;
-
-                    const isSingleChoice = firstIngredient.isSingleChoice;
-                    const isRequired = firstIngredient.isRequired || false;
-                    let categoryHasSelection = false;
-
-                    if (isSingleChoice) {
-                        const selectedRadio = document.querySelector(`#burger-ingredients-container input[name="${category}"]:checked`);
-                        if (selectedRadio) {
-                            const ingredientId = selectedRadio.value;
-                            const ingredient = ingredients.find(ing => ing.id === ingredientId);
-                            if(ingredient) {
-                                selectedIngredients.push({ name: ingredient.name, category: ingredient.category });
-                                total += ingredient.price;
-                                categoryHasSelection = true;
-                            }
-                        }
-                    } else {
-                        // Encontra o container da categoria de forma segura
-                        let categoryContainer = null;
-                        const allCategoryHeaders = burgerIngredientsContainer.querySelectorAll('.ingredient-category h4');
-                        for (const h4 of allCategoryHeaders) {
-                            // Compara o texto do h4 com o nome da categoria
-                            if (h4.textContent.toUpperCase().startsWith(capitalizeFirstLetter(category).toUpperCase())) {
-                                categoryContainer = h4.parentElement;
-                                break;
-                            }
-                        }
-
-                        if(categoryContainer){
-                            categoryContainer.querySelectorAll('.quantity-value').forEach(quantityEl => {
-                                const quantity = parseInt(quantityEl.textContent);
-                                if (quantity > 0) {
-                                    const container = quantityEl.closest('div');
-                                    const ingredientId = container.dataset.ingredientId;
-                                    const ingredient = ingredients.find(ing => ing.id === ingredientId);
-                                    
-                                    if(ingredient){
-                                        const ingredientName = quantity > 1 ? `${quantity}x ${ingredient.name}` : ingredient.name;
-                                        selectedIngredients.push({ name: ingredientName, category: ingredient.category });
-                                        total += ingredient.price * quantity;
-                                        categoryHasSelection = true;
-                                    }
-                                }
-                            });
-                        }
-                    }
-
-                    if (isRequired && !categoryHasSelection) {
-                        showMessageModal(`Por favor, escolha uma opção na categoria obrigatória "${capitalizeFirstLetter(category)}".`);
-                        allRequiredCategoriesFilled = false;
-                        break; 
-                    }
-                }
-
-                if (!allRequiredCategoriesFilled) {
-                    return;
-                }
-
-                addToOrder({
-                    type: 'custom_burger',
-                    name: 'Hambúrguer Personalizado',
-                    price: total,
-                    description: `Monte seu hambúrguer.`,
-                    ingredients: selectedIngredients,
-                    category: baseBurgerItem.category
-                }, addCustomBurgerBtn);
-
-                burgerBuilderModal.style.display = 'none';
-                updatePromotionButtonVisibility();
-            }
-
-            // =======================================================================
-            // FIM DAS FUNÇÕES MODIFICADAS
-            // =======================================================================
-
-            // ... (resto do seu código JS, começando da função populateMenu)
-            
-            // Cole o restante do seu código JavaScript original aqui...
-            // Por exemplo:
-            // function populateMenu(menuItems, orderedCategories) { ... }
-            // ... e todas as outras funções até o final do script.
-            
-            // O código original continua aqui...
             let order = [];
             let allMenuData = [];
             let allPromotionsData = [];
@@ -1256,6 +1027,7 @@
                 return ''; 
             }
 
+            // This function is NOT USED when fetching from /api/menu, but is kept for potential fallback/local testing.
             function parseCsvData(csvText, type) {
                 const lines = csvText.split('\n').filter(line => line.trim() !== '');
 
@@ -1370,6 +1142,227 @@
                 }
                 return parsedData;
             }
+
+            // =======================================================================
+            // INÍCIO DAS FUNÇÕES MODIFICADAS PARA QUANTIDADE DE INGREDIENTES
+            // =======================================================================
+
+            // 1. SUBSTITUA a função openBurgerBuilderModal original por esta:
+            function openBurgerBuilderModal(baseBurgerItem) {
+                burgerIngredientsContainer.innerHTML = '';
+                burgerBuilderModal.dataset.basePrice = baseBurgerItem.basePrice;
+
+                for (const category in allBurgerIngredients) {
+                    const ingredients = allBurgerIngredients[category];
+                    if (ingredients.length > 0) {
+                        const firstIngredient = ingredients[0];
+                        const isSingleChoice = firstIngredient.isSingleChoice;
+                        const isRequired = firstIngredient.isRequired || false;
+
+                        const categoryDiv = document.createElement('div');
+                        categoryDiv.className = 'ingredient-category';
+
+                        let categoryTitle = capitalizeFirstLetter(category);
+                        if (isRequired) {
+                            categoryTitle += ' (Obrigatório)';
+                        }
+
+                        categoryDiv.innerHTML = `<h4>${categoryTitle}</h4>`;
+
+                        ingredients.forEach(ingredient => {
+                            const priceDisplay = ingredient.price > 0 ? `+ R$ ${ingredient.price.toFixed(2).replace('.', ',')}` : 'Grátis';
+                            const optionDiv = document.createElement('div');
+                            optionDiv.className = 'ingredient-option';
+                            optionDiv.dataset.ingredientId = ingredient.id;
+
+                            if (isSingleChoice) {
+                                // Mantém o radio button para seleção única (ex: pães)
+                                optionDiv.innerHTML = `
+                                    <label class="flex items-center w-full cursor-pointer">
+                                        <input type="radio" name="${category}" value="${ingredient.id}" data-price="${ingredient.price}" class="form-radio">
+                                        <span class="flex-grow ml-3">${ingredient.name}</span>
+                                        <span class="price ml-2">${priceDisplay}</span>
+                                    </label>
+                                `;
+                            } else {
+                                // NOVO: Seletor de quantidade para os demais ingredientes
+                                const maxQuantity = ingredient.maxQuantity || 1;
+                                optionDiv.innerHTML = `
+                                    <span class="flex-grow">${ingredient.name}</span>
+                                    <span class="price ml-4">${priceDisplay}</span>
+                                    <div class="flex items-center ml-4" data-ingredient-id="${ingredient.id}" data-price="${ingredient.price}" data-max-quantity="${maxQuantity}">
+                                        <button type="button" class="quantity-btn minus-btn bg-gray-300 rounded-full w-7 h-7 flex items-center justify-center text-lg font-bold transition hover:bg-gray-400" disabled>-</button>
+                                        <span class="quantity-value mx-3 font-bold text-lg">0</span>
+                                        <button type="button" class="quantity-btn plus-btn bg-red-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-lg font-bold transition hover:bg-red-700">+</button>
+                                    </div>
+                                `;
+                            }
+                            categoryDiv.appendChild(optionDiv);
+                        });
+                        burgerIngredientsContainer.appendChild(categoryDiv);
+                    }
+                }
+
+                // Adiciona os event listeners para os novos botões de quantidade
+                burgerIngredientsContainer.querySelectorAll('.quantity-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const container = e.target.closest('div');
+                        const maxQuantity = parseInt(container.dataset.maxQuantity);
+                        const quantityEl = container.querySelector('.quantity-value');
+                        let currentQuantity = parseInt(quantityEl.textContent);
+
+                        if (e.target.classList.contains('plus-btn')) {
+                            if (currentQuantity < maxQuantity) {
+                                currentQuantity++;
+                            }
+                        } else if (e.target.classList.contains('minus-btn')) {
+                            if (currentQuantity > 0) {
+                                currentQuantity--;
+                            }
+                        }
+
+                        quantityEl.textContent = currentQuantity;
+                        container.querySelector('.minus-btn').disabled = currentQuantity === 0;
+                        container.querySelector('.plus-btn').disabled = currentQuantity >= maxQuantity;
+
+                        const optionDiv = container.closest('.ingredient-option');
+                        if (currentQuantity > 0) {
+                            optionDiv.classList.add('selected');
+                        } else {
+                            optionDiv.classList.remove('selected');
+                        }
+                        updateBurgerPrice();
+                    });
+                });
+
+                // Adiciona event listener para os radio buttons
+                burgerIngredientsContainer.querySelectorAll('input[type="radio"]').forEach(radio => {
+                    radio.addEventListener('change', () => {
+                        // Atualiza a classe 'selected' para os radio buttons
+                        document.querySelectorAll(`input[name="${radio.name}"]`).forEach(r => {
+                            r.closest('.ingredient-option').classList.remove('selected');
+                        });
+                        if (radio.checked) {
+                            radio.closest('.ingredient-option').classList.add('selected');
+                        }
+                        updateBurgerPrice();
+                    });
+                });
+
+                updateBurgerPrice();
+                burgerBuilderModal.style.display = 'flex';
+                updatePromotionButtonVisibility();
+            }
+
+            // 2. SUBSTITUA a função updateBurgerPrice original por esta:
+            function updateBurgerPrice() {
+                let total = parseFloat(burgerBuilderModal.dataset.basePrice) || 0;
+
+                // Soma o preço do item de seleção única (radio button)
+                const selectedRadio = document.querySelector('#burger-ingredients-container input[type="radio"]:checked');
+                if (selectedRadio) {
+                    total += parseFloat(selectedRadio.dataset.price);
+                }
+
+                // Soma os preços dos ingredientes com quantidade
+                document.querySelectorAll('#burger-ingredients-container .quantity-value').forEach(quantityEl => {
+                    const quantity = parseInt(quantityEl.textContent);
+                    if (quantity > 0) {
+                        const container = quantityEl.closest('div');
+                        const price = parseFloat(container.dataset.price);
+                        total += price * quantity;
+                    }
+                });
+
+                burgerTotalPriceEl.textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
+            }
+
+
+            // 3. SUBSTITUA a função addCustomBurgerToOrder original por esta:
+            function addCustomBurgerToOrder(baseBurgerItem) {
+                const selectedIngredients = [];
+                let total = parseFloat(burgerBuilderModal.dataset.basePrice) || 0;
+                let allRequiredCategoriesFilled = true;
+
+                for (const category in allBurgerIngredients) {
+                    const ingredients = allBurgerIngredients[category];
+                    const firstIngredient = ingredients[0];
+                    if (!firstIngredient) continue;
+
+                    const isSingleChoice = firstIngredient.isSingleChoice;
+                    const isRequired = firstIngredient.isRequired || false;
+                    let categoryHasSelection = false;
+
+                    if (isSingleChoice) {
+                        const selectedRadio = document.querySelector(`#burger-ingredients-container input[name="${category}"]:checked`);
+                        if (selectedRadio) {
+                            const ingredientId = selectedRadio.value;
+                            const ingredient = ingredients.find(ing => ing.id === ingredientId);
+                            if(ingredient) {
+                                selectedIngredients.push({ name: ingredient.name, category: ingredient.category });
+                                total += ingredient.price;
+                                categoryHasSelection = true;
+                            }
+                        }
+                    } else {
+                        // Encontra o container da categoria de forma segura
+                        let categoryContainer = null;
+                        const allCategoryHeaders = burgerIngredientsContainer.querySelectorAll('.ingredient-category h4');
+                        for (const h4 of allCategoryHeaders) {
+                            // Compara o texto do h4 com o nome da categoria
+                            const categoryNameFromHeader = h4.textContent.split(' (')[0];
+                            if (categoryNameFromHeader.toUpperCase() === capitalizeFirstLetter(category).toUpperCase()) {
+                                categoryContainer = h4.parentElement;
+                                break;
+                            }
+                        }
+
+                        if(categoryContainer){
+                            categoryContainer.querySelectorAll('.quantity-value').forEach(quantityEl => {
+                                const quantity = parseInt(quantityEl.textContent);
+                                if (quantity > 0) {
+                                    const container = quantityEl.closest('div');
+                                    const ingredientId = container.dataset.ingredientId;
+                                    const ingredient = ingredients.find(ing => ing.id === ingredientId);
+                                    
+                                    if(ingredient){
+                                        const ingredientName = quantity > 1 ? `${quantity}x ${ingredient.name}` : ingredient.name;
+                                        selectedIngredients.push({ name: ingredientName, category: ingredient.category });
+                                        total += ingredient.price * quantity;
+                                        categoryHasSelection = true;
+                                    }
+                                }
+                            });
+                        }
+                    }
+
+                    if (isRequired && !categoryHasSelection) {
+                        showMessageModal(`Por favor, escolha uma opção na categoria obrigatória "${capitalizeFirstLetter(category)}".`);
+                        allRequiredCategoriesFilled = false;
+                        break; 
+                    }
+                }
+
+                if (!allRequiredCategoriesFilled) {
+                    return;
+                }
+
+                addToOrder({
+                    type: 'custom_burger',
+                    name: 'Hambúrguer Personalizado',
+                    price: total,
+                    description: `Monte seu hambúrguer.`,
+                    ingredients: selectedIngredients,
+                    category: baseBurgerItem.category
+                }, addCustomBurgerBtn);
+
+                burgerBuilderModal.style.display = 'none';
+                updatePromotionButtonVisibility();
+            }
+
+            // =======================================================================
+            // FIM DAS FUNÇÕES MODIFICADAS
+            // =======================================================================
 
             function populateMenu(menuItems, orderedCategories) {
                 const dynamicSectionsContainer = document.getElementById('dynamic-pizza-sections');
@@ -3048,3 +3041,182 @@
     </script>
 </body>
 </html>
+```
+
+Most up-to-date Immersive Artifact for "menu_js_updated" is:
+
+```javascript
+// Este arquivo é uma função Serverless para o Vercel.
+// Ele é responsável por buscar os dados do cardápio, promoções, taxas de entrega
+// e agora os ingredientes de hambúrguer e informações de contato de planilhas Google Sheets publicadas como CSV e retorná-los para a aplicação front-end.
+//
+// Para garantir que o Node.js no ambiente Vercel trate este arquivo como um módulo ES (permitindo 'import'),
+// você deve ter "type": "module" no seu arquivo package.json.
+
+import fetch from 'node-fetch'; // Importa a biblioteca 'node-fetch' para fazer requisições HTTP
+
+// URLs das suas planilhas Google Sheets publicadas como CSV.
+// É CRÍTICO que estas URLs estejam corretas e que as planilhas estejam configuradas
+// para serem "Visíveis para qualquer pessoa com o link".
+const CARDAPIO_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=664943668&single=true&output=csv';
+const PROMOCOES_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=600393470&single=true&output=csv';
+const DELIVERY_FEES_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=1695668250&single=true&output=csv';
+const INGREDIENTES_HAMBURGUER_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=1816106560&single=true&output=csv';
+const CONTACT_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=2043568216&single=true&output=csv';
+
+// Função auxiliar para parsear os dados do CSV
+// NOTA: Esta função foi movida para fora do handler principal para melhor organização.
+function parseCsvData(csvText) {
+    const lines = csvText.split('\n').filter(line => line.trim() !== '');
+    if (lines.length < 2) return [];
+
+    // Função interna para lidar com vírgulas dentro de campos com aspas
+    function parseCsvLine(line) {
+        const values = [];
+        let inQuote = false;
+        let currentField = '';
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            if (char === '"') {
+                if (inQuote && i + 1 < line.length && line[i + 1] === '"') {
+                    currentField += '"';
+                    i++;
+                } else {
+                    inQuote = !inQuote;
+                }
+            } else if (char === ',' && !inQuote) {
+                values.push(currentField);
+                currentField = '';
+            } else {
+                currentField += char;
+            }
+        }
+        values.push(currentField);
+        return values.map(v => (v || '').replace(/^"|"$/g, '').replace(/""/g, '"').trim());
+    }
+
+    const headersRaw = parseCsvLine(lines[0]);
+    
+    // Mapeia os cabeçalhos da planilha para chaves de objeto mais limpas
+    const mappedHeaders = headersRaw.map(header => {
+        let cleanedHeader = header.trim();
+        switch (cleanedHeader) {
+            case 'ID Item (único)': return 'id';
+            case 'Nome do Item': return 'name';
+            case 'Descrição': return 'description';
+            case 'Preço 8 fatias': return 'basePrice';
+            case 'Preço 6 fatias': return 'price6Slices';
+            case 'Preço 4 fatias': return 'price4Slices';
+            case 'Categoria': return 'category';
+            case 'É Pizza? (SIM/NÃO)': return 'isPizza';
+            case 'É Montável? (SIM/NAO)': return 'isCustomizable';
+            case 'Disponível (SIM/NÃO)': return 'available';
+            case 'Imagem': return 'imageUrl';
+            case 'ID Promocao': return 'id';
+            case 'Nome da Promocao': return 'name';
+            case 'Preco Promocional': return 'promoPrice';
+            case 'ID Item Aplicavel': return 'itemId';
+            case 'Ativo (SIM/NAO)': return 'active';
+            case 'Bairros': return 'neighborhood';
+            case 'Valor Frete': return 'deliveryFee';
+            case 'ID Intem': return 'id'; // Corrigido para 'ID Item' se necessário
+            case 'Ingredientes': return 'name';
+            case 'Preço': return 'price';
+            case 'Seleção Única': return 'isSingleChoice';
+            case 'Limite': return 'limit';
+            case 'É Obrigatório?(SIM/NÃO)': return 'isRequired';
+            case 'Quantidade Maxima': return 'maxQuantity'; // <-- ALTERAÇÃO AQUI
+            case 'Dados': return 'data';
+            case 'Valor': return 'value';
+            default:
+                return cleanedHeader.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+        }
+    });
+
+    const parsedData = [];
+    for (let i = 1; i < lines.length; i++) {
+        const rowValues = parseCsvLine(lines[i]);
+        if (rowValues.length === mappedHeaders.length) {
+            let item = {};
+            for (let j = 0; j < mappedHeaders.length; j++) {
+                let headerKey = mappedHeaders[j];
+                let value = rowValues[j];
+
+                if (['basePrice', 'price6Slices', 'price4Slices', 'promoPrice', 'deliveryFee', 'price'].includes(headerKey)) {
+                    const parsedValue = parseFloat(String(value).replace(',', '.'));
+                    item[headerKey] = isNaN(parsedValue) ? 0 : parsedValue;
+                } else if (headerKey === 'limit') {
+                    const parsedValue = parseInt(value, 10);
+                    item[headerKey] = isNaN(parsedValue) ? Infinity : parsedValue;
+                } else if (headerKey === 'maxQuantity') { // <-- ALTERAÇÃO AQUI
+                    const parsedValue = parseInt(value, 10);
+                    item[headerKey] = isNaN(parsedValue) || parsedValue < 1 ? 1 : parsedValue;
+                } else if (['isPizza', 'available', 'active', 'isCustomizable', 'isSingleChoice', 'isRequired'].includes(headerKey)) {
+                    item[headerKey] = (value || '').toUpperCase().startsWith('SIM');
+                } else {
+                    item[headerKey] = value;
+                }
+            }
+             // Adiciona apenas se o item tiver um ID e nome válidos para evitar linhas vazias
+            if (item.id && item.name) {
+                parsedData.push(item);
+            }
+        }
+    }
+    return parsedData;
+}
+
+
+// A função principal que será exportada e executada pelo Vercel.
+export default async (req, res) => {
+    // Define cabeçalhos de cache para otimizar o desempenho no Vercel.
+    res.setHeader('Cache-Control', 's-maxage=10, stale-while-revalidate=30');
+
+    try {
+        // Função auxiliar para buscar dados de uma URL
+        const fetchData = async (url, name) => {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`Falha ao buscar ${name}: ${response.statusText}`);
+            }
+            return response.text();
+        };
+
+        // Busca de dados em paralelo para otimizar o tempo de resposta
+        const [
+            cardapioCsv,
+            promocoesCsv,
+            deliveryFeesCsv,
+            ingredientesHamburguerCsv,
+            contactCsv
+        ] = await Promise.all([
+            fetchData(CARDAPIO_CSV_URL, 'Cardápio'),
+            fetchData(PROMOCOES_CSV_URL, 'Promoções'),
+            fetchData(DELIVERY_FEES_CSV_URL, 'Taxas de Entrega'),
+            fetchData(INGREDIENTES_HAMBURGUER_CSV_URL, 'Ingredientes de Hambúrguer'),
+            fetchData(CONTACT_CSV_URL, 'Informações de Contato')
+        ]);
+        
+        // Parseia todos os dados CSV
+        const cardapioData = parseCsvData(cardapioCsv);
+        const promocoesData = parseCsvData(promocoesCsv);
+        const deliveryFeesData = parseCsvData(deliveryFeesCsv);
+        const ingredientesHamburguerData = parseCsvData(ingredientesHamburguerCsv);
+        const contactData = parseCsvData(contactCsv);
+
+
+        // Envia a resposta de sucesso
+        res.status(200).json({
+            cardapio: cardapioData,
+            promocoes: promocoesData,
+            deliveryFees: deliveryFeesData,
+            ingredientesHamburguer: ingredientesHamburguerData,
+            contact: contactData
+        });
+
+    } catch (error) {
+        // Tratamento de Erros
+        console.error('Erro na função serverless:', error);
+        res.status(500).json({ error: `Erro interno no servidor: ${error.message}` });
+    }
+};
