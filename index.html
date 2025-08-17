@@ -1,3 +1,4 @@
+teste1
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -509,7 +510,6 @@
     </style>
 </head>
 <body>
-    <!-- O restante do seu HTML (header, section#menu, etc.) permanece o mesmo -->
     <header class="header-bg text-white py-16 px-4 text-center">
         <div class="max-w-4xl mx-auto">
             <img src="https://raw.githubusercontent.com/WillianSoares93/catalogo_pizzaria/refs/heads/main/logo.png" alt="Logotipo Sâmia" class="h-64 mx-auto mb-4 object-contain">
@@ -1026,10 +1026,6 @@
                 return ''; 
             }
 
-            // =======================================================================
-            // INÍCIO DAS FUNÇÕES MODIFICADAS PARA QUANTIDADE DE INGREDIENTES
-            // =======================================================================
-
             function openBurgerBuilderModal(baseBurgerItem) {
                 burgerIngredientsContainer.innerHTML = '';
                 burgerBuilderModal.dataset.basePrice = baseBurgerItem.basePrice;
@@ -1229,11 +1225,7 @@
                 burgerBuilderModal.style.display = 'none';
                 updatePromotionButtonVisibility();
             }
-
-            // =======================================================================
-            // FIM DAS FUNÇÕES MODIFICADAS
-            // =======================================================================
-
+            
             function populateMenu(menuItems, orderedCategories) {
                 const dynamicSectionsContainer = document.getElementById('dynamic-pizza-sections');
                 dynamicSectionsContainer.innerHTML = ''; 
@@ -1333,7 +1325,6 @@
                                         </div>
                                     `;
                                 } else {
-                                    // CORREÇÃO APLICADA AQUI
                                     const buttonText = item.isCustomizable ? 'Montar' : 'Adicionar';
 
                                     itemHtml = `
@@ -2503,19 +2494,46 @@
                     }
                     const data = await response.json(); 
                     
+                    // --- INÍCIO DO CÓDIGO DE DIAGNÓSTICO ---
+                    console.log("--- Diagnóstico de Ingredientes ---");
+                    console.log("Dados brutos recebidos da API:", data);
+                    if (data.ingredientesHamburguer && Array.isArray(data.ingredientesHamburguer)) {
+                        console.log("Array 'ingredientesHamburguer' recebido:", data.ingredientesHamburguer);
+                        
+                        const rawBurgerIngredients = data.ingredientesHamburguer.filter(ing => ing.available);
+                        console.log("Ingredientes após filtrar por 'disponível':", rawBurgerIngredients);
+                        
+                        if(data.ingredientesHamburguer.length > 0 && rawBurgerIngredients.length === 0) {
+                            console.warn("AVISO: Nenhum ingrediente está marcado como 'disponível'. Verifique a coluna 'Disponível (SIM/NÃO)' na sua planilha de ingredientes e certifique-se de que o valor é 'SIM'.");
+                        }
+
+                        allBurgerIngredients = rawBurgerIngredients.reduce((acc, current) => {
+                            if (!current.category) {
+                                console.warn("AVISO: Ingrediente sem categoria encontrado e ignorado:", current);
+                                return acc;
+                            }
+                            if (!acc[current.category]) {
+                                acc[current.category] = [];
+                            }
+                            acc[current.category].push(current);
+                            return acc;
+                        }, {});
+                        console.log("Ingredientes agrupados por categoria (objeto final):", allBurgerIngredients);
+
+                        if(rawBurgerIngredients.length > 0 && Object.keys(allBurgerIngredients).length === 0) {
+                             console.error("ERRO: O objeto final de ingredientes está vazio. Verifique se a coluna 'Categoria' está preenchida corretamente para todos os ingredientes na planilha.");
+                        }
+
+                    } else {
+                        console.error("ERRO: O array 'ingredientesHamburguer' não foi recebido da API, está vazio ou não é um array. Verifique a URL e o conteúdo da sua planilha de ingredientes.");
+                    }
+                    console.log("--- Fim do Diagnóstico ---");
+                    // --- FIM DO CÓDIGO DE DIAGNÓSTICO ---
+
                     allMenuData = data.cardapio.filter(item => item.available);
                     allPromotionsData = data.promocoes.filter(promo => promo.active);
                     deliveryFeesData = data.deliveryFees;
                     
-                    const rawBurgerIngredients = data.ingredientesHamburguer.filter(ing => ing.available);
-                    allBurgerIngredients = rawBurgerIngredients.reduce((acc, current) => {
-                        if (!acc[current.category]) {
-                            acc[current.category] = [];
-                        }
-                        acc[current.category].push(current);
-                        return acc;
-                    }, {});
-
                     contactInfo = data.contact.reduce((acc, curr) => {
                         if (curr.data && curr.value) {
                             acc[curr.data.toLowerCase().replace(/[^a-z0-9]/g, '')] = curr.value;
