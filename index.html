@@ -1,3 +1,4 @@
+teste
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1176,6 +1177,13 @@
                 }
                 return parsedData;
             }
+            
+            // NEW: Helper function to count all selected items in a category
+            function getSelectedItemsCountInCategory(categoryContainer) {
+                const checkedCheckboxes = categoryContainer.querySelectorAll('input[type="checkbox"]:checked').length;
+                const itemsWithQuantity = Array.from(categoryContainer.querySelectorAll('.quantity-display')).filter(d => parseInt(d.textContent, 10) > 0).length;
+                return checkedCheckboxes + itemsWithQuantity;
+            }
 
             function handleQuantityChange(plusBtn, minusBtn, quantityDisplay, ingredient) {
                 const categoryContainer = plusBtn.closest('.ingredient-category');
@@ -1189,12 +1197,14 @@
                         showMessageModal(`Você pode adicionar no máximo ${ingredientLimit} unidade(s) de ${ingredient.name}.`);
                         return;
                     }
-
-                    const selectedItemsCount = Array.from(categoryContainer.querySelectorAll('.quantity-display')).filter(d => parseInt(d.textContent, 10) > 0).length;
                     
-                    if (currentQuantity === 0 && selectedItemsCount >= categoryLimit) {
-                        showMessageModal(`Você pode escolher no máximo ${categoryLimit} item(ns) diferente(s) para esta categoria.`);
-                        return;
+                    // CORRECTED: Check category limit only when adding a new *type* of item
+                    if (currentQuantity === 0) {
+                        const totalSelectedInCategory = getSelectedItemsCountInCategory(categoryContainer);
+                        if (totalSelectedInCategory >= categoryLimit) {
+                            showMessageModal(`Você pode escolher no máximo ${categoryLimit} item(ns) diferente(s) para esta categoria.`);
+                            return;
+                        }
                     }
 
                     quantityDisplay.textContent = currentQuantity + 1;
@@ -1276,19 +1286,23 @@
                                     label.querySelector('input').addEventListener('change', (e) => {
                                         const categoryContainer = e.target.closest('.ingredient-category');
                                         const categoryLimit = parseInt(categoryContainer.dataset.limit, 10) || Infinity;
-                                        const checkedCount = categoryContainer.querySelectorAll('input[type="checkbox"]:checked').length;
                                         
-                                        if (checkedCount > categoryLimit) {
-                                            e.target.checked = false;
-                                            showMessageModal(`Você pode escolher no máximo ${categoryLimit} item(ns) diferente(s) para esta categoria.`);
-                                        } else {
-                                             if (e.target.checked) {
-                                                label.classList.add('selected');
-                                            } else {
-                                                label.classList.remove('selected');
+                                        // CORRECTED: Unified check for category limit
+                                        if (e.target.checked) {
+                                            const totalSelectedInCategory = getSelectedItemsCountInCategory(categoryContainer);
+                                            if (totalSelectedInCategory > categoryLimit) {
+                                                e.target.checked = false; // Revert the action
+                                                showMessageModal(`Você pode escolher no máximo ${categoryLimit} item(ns) diferente(s) para esta categoria.`);
+                                                return;
                                             }
-                                            updateBurgerPrice();
                                         }
+                                        
+                                        if (e.target.checked) {
+                                            label.classList.add('selected');
+                                        } else {
+                                            label.classList.remove('selected');
+                                        }
+                                        updateBurgerPrice();
                                     });
                                     categoryDiv.appendChild(label);
                                 } else {
@@ -3148,4 +3162,3 @@
     </script>
 </body>
 </html>
-", there is a bug in the code. When I try to add a custom burger, the modal doesn't show up. Can you please fix the b
