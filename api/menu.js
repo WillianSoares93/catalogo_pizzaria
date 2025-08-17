@@ -47,30 +47,35 @@ function parseCsvData(csvText) {
 
     const headersRaw = parseCsvLine(lines[0]);
     
+    // Mapeamento de cabeçalhos mais robusto para evitar erros com pequenas variações nos nomes das colunas.
     const mappedHeaders = headersRaw.map(header => {
         let cleanedHeader = header.trim();
         switch (cleanedHeader) {
-            case 'ID Item (único)': return 'id';
-            case 'Nome do Item': return 'name';
+            case 'ID Item (único)':
+            case 'ID Item':
+            case 'ID Intem': // Mantido por segurança
+            case 'ID Promocao':
+                return 'id';
+            
+            case 'Nome do Item':
+            case 'Ingredientes':
+            case 'Nome da Promocao':
+                return 'name';
+
             case 'Descrição': return 'description';
             case 'Preço 8 fatias': return 'basePrice';
             case 'Preço 6 fatias': return 'price6Slices';
             case 'Preço 4 fatias': return 'price4Slices';
             case 'Categoria': return 'category';
             case 'É Pizza? (SIM/NÃO)': return 'isPizza';
-            // CORREÇÃO APLICADA AQUI
             case 'É Montável? (SIM/NÃO)': return 'isCustomizable'; 
             case 'Disponível (SIM/NÃO)': return 'available';
             case 'Imagem': return 'imageUrl';
-            case 'ID Promocao': return 'id';
-            case 'Nome da Promocao': return 'name';
             case 'Preco Promocional': return 'promoPrice';
             case 'ID Item Aplicavel': return 'itemId';
             case 'Ativo (SIM/NAO)': return 'active';
             case 'Bairros': return 'neighborhood';
             case 'Valor Frete': return 'deliveryFee';
-            case 'ID Intem': return 'id';
-            case 'Ingredientes': return 'name';
             case 'Preço': return 'price';
             case 'Seleção Única': return 'isSingleChoice';
             case 'Limite': return 'limit';
