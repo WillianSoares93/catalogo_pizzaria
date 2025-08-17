@@ -10,42 +10,137 @@ import fetch from 'node-fetch'; // Importa a biblioteca 'node-fetch' para fazer 
 // URLs das suas planilhas Google Sheets publicadas como CSV.
 // É CRÍTICO que estas URLs estejam corretas e que as planilhas estejam configuradas
 // para serem "Visíveis para qualquer pessoa com o link".
-const CARDAPIO_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=664943668&single=true&output=csv'; 
-const PROMOCOES_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=600393470&single=true&output=csv'; 
+const CARDAPIO_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=664943668&single=true&output=csv';
+const PROMOCOES_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=600393470&single=true&output=csv';
 const DELIVERY_FEES_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=1695668250&single=true&output=csv';
 const INGREDIENTES_HAMBURGUER_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=1816106560&single=true&output=csv';
 const CONTACT_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=2043568216&single=true&output=csv';
 
+// Função auxiliar para parsear os dados do CSV
+// NOTA: Esta função foi movida para fora do handler principal para melhor organização.
+function parseCsvData(csvText) {
+    const lines = csvText.split('\n').filter(line => line.trim() !== '');
+    if (lines.length < 2) return [];
+
+    // Função interna para lidar com vírgulas dentro de campos com aspas
+    function parseCsvLine(line) {
+        const values = [];
+        let inQuote = false;
+        let currentField = '';
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            if (char === '"') {
+                if (inQuote && i + 1 < line.length && line[i + 1] === '"') {
+                    currentField += '"';
+                    i++;
+                } else {
+                    inQuote = !inQuote;
+                }
+            } else if (char === ',' && !inQuote) {
+                values.push(currentField);
+                currentField = '';
+            } else {
+                currentField += char;
+            }
+        }
+        values.push(currentField);
+        return values.map(v => (v || '').replace(/^"|"$/g, '').replace(/""/g, '"').trim());
+    }
+
+    const headersRaw = parseCsvLine(lines[0]);
+    
+    // Mapeia os cabeçalhos da planilha para chaves de objeto mais limpas
+    const mappedHeaders = headersRaw.map(header => {
+        let cleanedHeader = header.trim();
+        switch (cleanedHeader) {
+            case 'ID Item (único)': return 'id';
+            case 'Nome do Item': return 'name';
+            case 'Descrição': return 'description';
+            case 'Preço 8 fatias': return 'basePrice';
+            case 'Preço 6 fatias': return 'price6Slices';
+            case 'Preço 4 fatias': return 'price4Slices';
+            case 'Categoria': return 'category';
+            case 'É Pizza? (SIM/NÃO)': return 'isPizza';
+            case 'É Montável? (SIM/NAO)': return 'isCustomizable';
+            case 'Disponível (SIM/NÃO)': return 'available';
+            case 'Imagem': return 'imageUrl';
+            case 'ID Promocao': return 'id';
+            case 'Nome da Promocao': return 'name';
+            case 'Preco Promocional': return 'promoPrice';
+            case 'ID Item Aplicavel': return 'itemId';
+            case 'Ativo (SIM/NAO)': return 'active';
+            case 'Bairros': return 'neighborhood';
+            case 'Valor Frete': return 'deliveryFee';
+            case 'ID Intem': return 'id'; // Corrigido para 'ID Item' se necessário
+            case 'Ingredientes': return 'name';
+            case 'Preço': return 'price';
+            case 'Seleção Única': return 'isSingleChoice';
+            case 'Limite': return 'limit';
+            case 'É Obrigatório?(SIM/NÃO)': return 'isRequired';
+            case 'Limite Ingrediente': return 'maxQuantity'; // <-- ALTERAÇÃO AQUI
+            case 'Dados': return 'data';
+            case 'Valor': return 'value';
+            default:
+                return cleanedHeader.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+        }
+    });
+
+    const parsedData = [];
+    for (let i = 1; i < lines.length; i++) {
+        const rowValues = parseCsvLine(lines[i]);
+        if (rowValues.length === mappedHeaders.length) {
+            let item = {};
+            for (let j = 0; j < mappedHeaders.length; j++) {
+                let headerKey = mappedHeaders[j];
+                let value = rowValues[j];
+
+                if (['basePrice', 'price6Slices', 'price4Slices', 'promoPrice', 'deliveryFee', 'price'].includes(headerKey)) {
+                    const parsedValue = parseFloat(String(value).replace(',', '.'));
+                    item[headerKey] = isNaN(parsedValue) ? 0 : parsedValue;
+                } else if (headerKey === 'limit') {
+                    const parsedValue = parseInt(value, 10);
+                    item[headerKey] = isNaN(parsedValue) ? Infinity : parsedValue;
+                } else if (headerKey === 'maxQuantity') { // <-- ALTERAÇÃO AQUI
+                    const parsedValue = parseInt(value, 10);
+                    item[headerKey] = isNaN(parsedValue) || parsedValue < 1 ? 1 : parsedValue;
+                } else if (['isPizza', 'available', 'active', 'isCustomizable', 'isSingleChoice', 'isRequired'].includes(headerKey)) {
+                    item[headerKey] = (value || '').toUpperCase().startsWith('SIM');
+                } else {
+                    item[headerKey] = value;
+                }
+            }
+             // Adiciona apenas se o item tiver um ID e nome válidos para evitar linhas vazias
+            if (item.id && item.name) {
+                parsedData.push(item);
+            }
+        }
+    }
+    return parsedData;
+}
+
+
 // A função principal que será exportada e executada pelo Vercel.
-// 'req' é o objeto de requisição (request) e 'res' é o objeto de resposta (response).
 export default async (req, res) => {
     // Define cabeçalhos de cache para otimizar o desempenho no Vercel.
-    res.setHeader('Cache-Control', 's-maxage=5, stale-while-revalidate'); 
+    res.setHeader('Cache-Control', 's-maxage=10, stale-while-revalidate=30');
 
     try {
-        console.log('Vercel Function: Iniciando processo de busca de dados...');
-
         // Função auxiliar para buscar dados de uma URL
         const fetchData = async (url, name) => {
-            console.log(`Vercel Function: Tentando buscar dados de ${name} da URL:`, url);
             const response = await fetch(url);
             if (!response.ok) {
-                const errorText = await response.text(); 
-                console.error(`Vercel Function: Erro HTTP ao buscar ${name}. Status: ${response.status}, StatusText: ${response.statusText}. Corpo da Resposta (parcial): ${errorText.substring(0, 200)}...`);
-                throw new Error(`Falha ao buscar ${name}: ${response.statusText || 'Erro desconhecido'}`);
+                throw new Error(`Falha ao buscar ${name}: ${response.statusText}`);
             }
-            const data = await response.text();
-            console.log(`Vercel Function: Dados de ${name} buscados com sucesso.`);
-            return data;
+            return response.text();
         };
 
-        // --- Busca de dados em paralelo para otimizar o tempo de resposta ---
+        // Busca de dados em paralelo para otimizar o tempo de resposta
         const [
-            cardapioData,
-            promocoesData,
-            deliveryFeesData,
-            ingredientesHamburguerData,
-            contactData
+            cardapioCsv,
+            promocoesCsv,
+            deliveryFeesCsv,
+            ingredientesHamburguerCsv,
+            contactCsv
         ] = await Promise.all([
             fetchData(CARDAPIO_CSV_URL, 'Cardápio'),
             fetchData(PROMOCOES_CSV_URL, 'Promoções'),
@@ -53,9 +148,16 @@ export default async (req, res) => {
             fetchData(INGREDIENTES_HAMBURGUER_CSV_URL, 'Ingredientes de Hambúrguer'),
             fetchData(CONTACT_CSV_URL, 'Informações de Contato')
         ]);
+        
+        // Parseia todos os dados CSV
+        const cardapioData = parseCsvData(cardapioCsv);
+        const promocoesData = parseCsvData(promocoesCsv);
+        const deliveryFeesData = parseCsvData(deliveryFeesCsv);
+        const ingredientesHamburguerData = parseCsvData(ingredientesHamburguerCsv);
+        const contactData = parseCsvData(contactCsv);
 
-        // --- Envia a resposta de sucesso ---
-        console.log('Vercel Function: Todos os dados foram buscados com sucesso. Enviando resposta JSON.');
+
+        // Envia a resposta de sucesso
         res.status(200).json({
             cardapio: cardapioData,
             promocoes: promocoesData,
@@ -65,8 +167,8 @@ export default async (req, res) => {
         });
 
     } catch (error) {
-        // --- Tratamento de Erros ---
-        console.error('Vercel Function: Erro fatal capturado no bloco try-catch:', error.message);
-        res.status(500).json({ error: `Erro interno no servidor ao carregar dados: ${error.message}` });
+        // Tratamento de Erros
+        console.error('Erro na função serverless:', error);
+        res.status(500).json({ error: `Erro interno no servidor: ${error.message}` });
     }
 };
