@@ -70,6 +70,7 @@ function parseCsvData(csvText) {
             case 'É Pizza? (SIM/NÃO)': return 'isPizza';
             case 'É Montável? (SIM/NÃO)': return 'isCustomizable'; 
             case 'Disponível (SIM/NÃO)': return 'available';
+            case 'Disponível': return 'available';
             case 'Imagem': return 'imageUrl';
             case 'Preco Promocional': return 'promoPrice';
             case 'ID Item Aplicavel': return 'itemId';
