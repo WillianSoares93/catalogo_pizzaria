@@ -1,3 +1,4 @@
+teste1
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -460,7 +461,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background-color: #fff;
+            background-color: #f9fafb;
             padding: 10px 15px;
             border-radius: 8px;
             margin-bottom: 8px;
@@ -483,7 +484,6 @@
         .ingredient-option.selected {
             background-color: #fee2e2;
             border-color: #dc2626;
-            box-shadow: 0 2px 8px rgba(220, 38, 38, 0.2);
         }
         .burger-summary {
             background-color: #fff;
@@ -505,6 +505,33 @@
         .burger-summary li {
             font-size: 0.875rem;
             color: #4b5563;
+        }
+        /* NEW STYLES FOR QUANTITY SELECTOR */
+        .quantity-btn {
+            background-color: #e5e7eb;
+            color: #374151;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .quantity-btn:hover {
+            background-color: #d1d5db;
+        }
+        .quantity-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .quantity-display {
+            min-width: 30px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #1f2937;
         }
     </style>
 </head>
@@ -633,8 +660,7 @@
             <h3 class="text-xl font-bold text-gray-800 mb-4">Monte Seu Hambúrguer</h3>
             
             <div id="burger-ingredients-container" class="mb-4 max-h-[50vh] overflow-y-auto pr-2">
-                <!-- Ingredientes serão inseridos aqui -->
-            </div>
+                </div>
             
             <div class="flex justify-between items-center bg-gray-100 p-4 rounded-lg mt-4">
                 <span class="text-lg font-bold">Total:</span>
@@ -868,7 +894,8 @@
             };
 
             const defaultImage = 'https://www.bakelitsul.com.br/Assets/img/sem-produto-detalhe.png';
-            
+            const CONTACT_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=2043568216&single=true&output=csv';
+
             const orderSidebar = document.getElementById('orderSidebar');
             const cartCount = document.getElementById('cartCount');
             const orderItemsContainer = document.getElementById('orderItems');
@@ -981,22 +1008,31 @@
                 messageModal.style.display = 'flex';
                 updatePromotionButtonVisibility();
 
-                okMessageModalBtn.onclick = null;
-                closeMessageModalBtn.onclick = null;
+                okMessageModalBtn.removeEventListener('click', hideMessageModal);
+                closeMessageModalBtn.removeEventListener('click', hideMessageModal);
                 messageModal.onclick = null; 
 
-                const action = () => {
-                    hideMessageModal();
-                    if (onOkCallback) onOkCallback();
-                };
-
-                okMessageModalBtn.onclick = action;
-                closeMessageModalBtn.onclick = action;
-                messageModal.onclick = (event) => {
-                    if (event.target === messageModal) {
-                        action();
-                    }
-                };
+                if (onOkCallback) {
+                    const specificAction = () => {
+                        hideMessageModal();
+                        onOkCallback();
+                    };
+                    okMessageModalBtn.addEventListener('click', specificAction);
+                    closeMessageModalBtn.addEventListener('click', specificAction);
+                    messageModal.onclick = (event) => {
+                        if (event.target === messageModal) {
+                            specificAction();
+                        }
+                    };
+                } else {
+                    okMessageModalBtn.addEventListener('click', hideMessageModal);
+                    closeMessageModalBtn.addEventListener('click', hideMessageModal);
+                    messageModal.onclick = (event) => {
+                        if (event.target === messageModal) {
+                            hideMessageModal();
+                        }
+                    };
+                }
             }
 
             function hideMessageModal() {
@@ -1025,130 +1061,293 @@
                 return ''; 
             }
 
+            function parseCsvData(csvText, type) {
+                const lines = csvText.split('\n').filter(line => line.trim() !== '');
+
+                if (lines.length === 0) {
+                    return [];
+                }
+
+                function parseCsvLine(line) {
+                    const values = [];
+                    let inQuote = false;
+                    let currentField = '';
+                    for (let i = 0; i < line.length; i++) {
+                        const char = line[i];
+                        if (char === '"') {
+                            if (inQuote && i + 1 < line.length && line[i + 1] === '"') {
+                                currentField += '"';
+                                i++;
+                            } else {
+                                inQuote = !inQuote;
+                            }
+                        } else if (char === ',' && !inQuote) {
+                            values.push(currentField);
+                            currentField = '';
+                        } else {
+                            currentField += char;
+                        }
+                    }
+                    values.push(currentField);
+                    return values.map(v => {
+                        if (v === undefined || v === null) return '';
+                        let processed = v;
+                        if (processed.startsWith('"') && processed.endsWith('"')) {
+                            processed = processed.substring(1, processed.length - 1);
+                        }
+                        return processed.replace(/""/g, '"').trim();
+                    });
+                }
+
+                const headersRaw = parseCsvLine(lines[0]);
+                const mappedHeaders = headersRaw.map(header => {
+                    let cleanedHeader = header.trim();
+                    switch (cleanedHeader) {
+                        case 'ID Item (único)': return 'id';
+                        case 'Nome do Item': return 'name';
+                        case 'Descrição': return 'description';
+                        case 'Preço 8 fatias': return 'basePrice';
+                        case 'Preço 6 fatias': return 'price6Slices';
+                        case 'Preço 4 fatias': return 'price4Slices';
+                        case 'Categoria': return 'category';
+                        case 'É Pizza? (SIM/NÃO)': return 'isPizza';
+                        case 'É Montável? (SIM/NAO)': return 'isCustomizable';
+                        case 'Disponível (SIM/NÃO)': return 'available'; 
+                        case 'Imagem': return 'imageUrl'; 
+                        case 'ID Promocao': return 'id';
+                        case 'Nome da Promocao': return 'name';
+                        case 'Preco Promocional': return 'promoPrice';
+                        case 'ID Item Aplicavel': return 'itemId';
+                        case 'Ativo (SIM/NAO)': return 'active';
+                        case 'Bairros': return 'neighborhood';
+                        case 'Valor Frete': return 'deliveryFee';
+                        case 'ID Intem': return 'id';
+                        case 'Ingredientes': return 'name';
+                        case 'Preço': return 'price';
+                        case 'Seleção Única': return 'isSingleChoice';
+                        case 'Limite': return 'limit';
+                        case 'Limite Ingrediente': return 'ingredientLimit'; // NEW: Handle new column
+                        case 'É Obrigatório?(SIM/NÃO)': return 'isRequired';
+                        case 'Disponível': return 'available'; 
+                        case 'Dados': return 'data';
+                        case 'Valor': return 'value';
+                        default: 
+                            if (cleanedHeader.includes('É Montável')) {
+                                return 'isCustomizable';
+                            }
+                            return cleanedHeader.toLowerCase().replace(/\s/g, '').replace(/[^a-z0-9]/g, '');
+                    }
+                });
+                
+                const parsedData = [];
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i];
+                    const rowValues = parseCsvLine(line);
+                    if (rowValues.length === mappedHeaders.length) {
+                        let item = {};
+                        for (let j = 0; j < mappedHeaders.length; j++) {
+                            let headerKey = mappedHeaders[j];
+                            let value = rowValues[j];
+                            
+                            if (['neighborhood', 'name', 'category', 'data'].includes(headerKey) && (value === undefined || value === null || value.trim() === '')) {
+                                value = '';
+                            }
+                            if (['basePrice', 'price6Slices', 'price4Slices', 'promoPrice', 'deliveryFee', 'price'].includes(headerKey)) {
+                                const parsedValue = parseFloat(String(value).replace(',', '.'));
+                                item[headerKey] = isNaN(parsedValue) ? 0 : parsedValue;
+                            } else if (headerKey === 'limit' || headerKey === 'ingredientLimit') { // NEW: Parse ingredientLimit
+                                const parsedValue = parseInt(value, 10);
+                                item[headerKey] = isNaN(parsedValue) ? Infinity : parsedValue;
+                            }
+                            else if (['isPizza', 'available', 'active', 'isCustomizable', 'isSingleChoice', 'isRequired'].includes(headerKey)) {
+                                item[headerKey] = value.toUpperCase() === 'SIM' || value.toUpperCase() === 'SIM\r';
+                            } else {
+                                item[headerKey] = value;
+                            }
+                        }
+                        if (type === 'cardapio') {
+                            item.imageUrl = (String(item.imageUrl || '').trim());
+                        }
+
+                        if ((type === 'cardapio' && item.available) || (type === 'promocoes' && item.active) || type === 'deliveryFees' || (type === 'ingredientesHamburguer' && item.available) || (type === 'contact')) {
+                            parsedData.push(item);
+                        }
+                    }
+                }
+                return parsedData;
+            }
+
+            // MODIFIED: Function to handle quantity changes and validation
+            function handleQuantityChange(plusBtn, minusBtn, quantityDisplay, ingredient) {
+                const categoryContainer = plusBtn.closest('.ingredient-category');
+                const categoryLimit = parseInt(categoryContainer.dataset.limit, 10) || Infinity;
+                const ingredientLimit = parseInt(ingredient.ingredientLimit, 10) || 1;
+
+                plusBtn.addEventListener('click', () => {
+                    let currentQuantity = parseInt(quantityDisplay.textContent, 10);
+                    
+                    // Check individual ingredient limit
+                    if (currentQuantity >= ingredientLimit) {
+                        showMessageModal(`Você pode adicionar no máximo ${ingredientLimit} unidade(s) de ${ingredient.name}.`);
+                        return;
+                    }
+
+                    // Check overall category limit for *different* items
+                    const selectedItemsCount = Array.from(categoryContainer.querySelectorAll('.quantity-display')).filter(d => parseInt(d.textContent, 10) > 0).length;
+                    
+                    if (currentQuantity === 0 && selectedItemsCount >= categoryLimit) {
+                        showMessageModal(`Você pode escolher no máximo ${categoryLimit} item(ns) diferente(s) para esta categoria.`);
+                        return;
+                    }
+
+                    quantityDisplay.textContent = currentQuantity + 1;
+                    updateBurgerPrice();
+                });
+
+                minusBtn.addEventListener('click', () => {
+                    let currentQuantity = parseInt(quantityDisplay.textContent, 10);
+                    if (currentQuantity > 0) {
+                        quantityDisplay.textContent = currentQuantity - 1;
+                        updateBurgerPrice();
+                    }
+                });
+            }
+
             function openBurgerBuilderModal(baseBurgerItem) {
                 burgerIngredientsContainer.innerHTML = '';
                 burgerBuilderModal.dataset.basePrice = baseBurgerItem.basePrice;
-
+                
                 for (const category in allBurgerIngredients) {
                     const ingredients = allBurgerIngredients[category];
                     if (ingredients.length > 0) {
                         const firstIngredient = ingredients[0];
                         const isSingleChoice = firstIngredient.isSingleChoice;
+                        const categoryLimit = firstIngredient.limit || Infinity;
                         const isRequired = firstIngredient.isRequired || false;
-
+                        
                         const categoryDiv = document.createElement('div');
                         categoryDiv.className = 'ingredient-category';
-
+                        categoryDiv.dataset.limit = categoryLimit; // Store category limit
+                        
                         let categoryTitle = capitalizeFirstLetter(category);
                         if (isRequired) {
                             categoryTitle += ' (Obrigatório)';
+                        } else if (!isSingleChoice && categoryLimit !== Infinity && categoryLimit > 1) {
+                            categoryTitle += ` (Escolha até ${categoryLimit} tipos)`;
+                        } else if (!isSingleChoice && categoryLimit === 1) {
+                            categoryTitle += ` (Escolha 1 tipo)`;
+                        } else if (isSingleChoice) {
+                             categoryTitle += ` (Escolha 1)`;
                         }
 
                         categoryDiv.innerHTML = `<h4>${categoryTitle}</h4>`;
-
+                        
                         ingredients.forEach(ingredient => {
-                            const priceDisplay = ingredient.price > 0 ? `+ R$ ${ingredient.price.toFixed(2).replace('.', ',')}` : 'Grátis';
-                            const optionDiv = document.createElement('div');
-                            optionDiv.className = 'ingredient-option';
-                            optionDiv.dataset.ingredientId = ingredient.id;
-
+                            const priceDisplay = ingredient.price > 0 ? `+ R$ ${ingredient.price.toFixed(2).replace('.', ',')}` : '';
+                            
                             if (isSingleChoice) {
-                                optionDiv.innerHTML = `
-                                    <label class="flex items-center w-full cursor-pointer">
-                                        <input type="radio" name="${category}" value="${ingredient.id}" data-price="${ingredient.price}" class="form-radio">
+                                // Keep radio buttons for single choice categories
+                                const label = document.createElement('label');
+                                label.className = 'ingredient-option cursor-pointer';
+                                label.innerHTML = `
+                                    <div class="flex items-center">
+                                        <input type="radio" id="${category}-${ingredient.id}" name="${category}" value="${ingredient.id}" data-price="${ingredient.price}" class="form-radio">
                                         <span class="flex-grow ml-3">${ingredient.name}</span>
-                                        <span class="price ml-2">${priceDisplay}</span>
-                                    </label>
-                                `;
-                            } else {
-                                const maxQuantity = ingredient.maxQuantity || 1;
-                                optionDiv.innerHTML = `
-                                    <span class="flex-grow">${ingredient.name}</span>
-                                    <span class="price ml-4">${priceDisplay}</span>
-                                    <div class="flex items-center ml-4" data-ingredient-id="${ingredient.id}" data-price="${ingredient.price}" data-max-quantity="${maxQuantity}">
-                                        <button type="button" class="quantity-btn minus-btn bg-gray-300 rounded-full w-7 h-7 flex items-center justify-center text-lg font-bold transition hover:bg-gray-400" disabled>-</button>
-                                        <span class="quantity-value mx-3 font-bold text-lg">0</span>
-                                        <button type="button" class="quantity-btn plus-btn bg-red-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-lg font-bold transition hover:bg-red-700">+</button>
+                                        <span class="price ml-2 whitespace-nowrap text-right">${priceDisplay}</span>
                                     </div>
                                 `;
+                                label.querySelector('input').addEventListener('change', () => {
+                                    document.querySelectorAll(`input[name="${category}"]`).forEach(el => {
+                                        el.closest('.ingredient-option').classList.remove('selected');
+                                    });
+                                    label.classList.add('selected');
+                                    updateBurgerPrice();
+                                });
+                                categoryDiv.appendChild(label);
+                            } else {
+                                // NEW: Implement quantity selector for multiple choice categories
+                                const optionDiv = document.createElement('div');
+                                optionDiv.className = 'ingredient-option items-center';
+                                optionDiv.dataset.id = ingredient.id;
+                                optionDiv.dataset.price = ingredient.price;
+                                optionDiv.dataset.name = ingredient.name;
+                                optionDiv.dataset.category = ingredient.category;
+                                
+                                const nameSpan = document.createElement('span');
+                                nameSpan.className = 'flex-grow';
+                                nameSpan.textContent = ingredient.name;
+                                
+                                const priceSpan = document.createElement('span');
+                                priceSpan.className = 'price mr-4';
+                                priceSpan.textContent = priceDisplay;
+
+                                const quantitySelector = document.createElement('div');
+                                quantitySelector.className = 'flex items-center';
+                                
+                                const minusBtn = document.createElement('button');
+                                minusBtn.className = 'quantity-btn minus-btn';
+                                minusBtn.textContent = '-';
+                                
+                                const quantityDisplay = document.createElement('span');
+                                quantityDisplay.className = 'quantity-display';
+                                quantityDisplay.textContent = '0';
+                                
+                                const plusBtn = document.createElement('button');
+                                plusBtn.className = 'quantity-btn plus-btn';
+                                plusBtn.textContent = '+';
+
+                                quantitySelector.appendChild(minusBtn);
+                                quantitySelector.appendChild(quantityDisplay);
+                                quantitySelector.appendChild(plusBtn);
+
+                                optionDiv.appendChild(nameSpan);
+                                optionDiv.appendChild(priceSpan);
+                                optionDiv.appendChild(quantitySelector);
+                                
+                                categoryDiv.appendChild(optionDiv);
+
+                                handleQuantityChange(plusBtn, minusBtn, quantityDisplay, ingredient);
                             }
-                            categoryDiv.appendChild(optionDiv);
                         });
                         burgerIngredientsContainer.appendChild(categoryDiv);
                     }
                 }
-
-                burgerIngredientsContainer.querySelectorAll('.quantity-btn').forEach(button => {
-                    button.addEventListener('click', (e) => {
-                        const container = e.target.closest('div');
-                        const maxQuantity = parseInt(container.dataset.maxQuantity);
-                        const quantityEl = container.querySelector('.quantity-value');
-                        let currentQuantity = parseInt(quantityEl.textContent);
-
-                        if (e.target.classList.contains('plus-btn')) {
-                            if (currentQuantity < maxQuantity) {
-                                currentQuantity++;
-                            }
-                        } else if (e.target.classList.contains('minus-btn')) {
-                            if (currentQuantity > 0) {
-                                currentQuantity--;
-                            }
-                        }
-
-                        quantityEl.textContent = currentQuantity;
-                        container.querySelector('.minus-btn').disabled = currentQuantity === 0;
-                        container.querySelector('.plus-btn').disabled = currentQuantity >= maxQuantity;
-
-                        const optionDiv = container.closest('.ingredient-option');
-                        if (currentQuantity > 0) {
-                            optionDiv.classList.add('selected');
-                        } else {
-                            optionDiv.classList.remove('selected');
-                        }
-                        updateBurgerPrice();
-                    });
-                });
-
-                burgerIngredientsContainer.querySelectorAll('input[type="radio"]').forEach(radio => {
-                    radio.addEventListener('change', () => {
-                        document.querySelectorAll(`input[name="${radio.name}"]`).forEach(r => {
-                            r.closest('.ingredient-option').classList.remove('selected');
-                        });
-                        if (radio.checked) {
-                            radio.closest('.ingredient-option').classList.add('selected');
-                        }
-                        updateBurgerPrice();
-                    });
-                });
-
-                updateBurgerPrice();
+                
+                updateBurgerPrice(); // Initial price calculation
+                
+                addCustomBurgerBtn.onclick = () => addCustomBurgerToOrder(baseBurgerItem);
+                
                 burgerBuilderModal.style.display = 'flex';
                 updatePromotionButtonVisibility();
             }
-
+            
             function updateBurgerPrice() {
                 let total = parseFloat(burgerBuilderModal.dataset.basePrice) || 0;
-
-                const selectedRadio = document.querySelector('#burger-ingredients-container input[type="radio"]:checked');
-                if (selectedRadio) {
-                    total += parseFloat(selectedRadio.dataset.price);
-                }
-
-                document.querySelectorAll('#burger-ingredients-container .quantity-value').forEach(quantityEl => {
-                    const quantity = parseInt(quantityEl.textContent);
-                    if (quantity > 0) {
-                        const container = quantityEl.closest('div');
-                        const price = parseFloat(container.dataset.price);
-                        total += price * quantity;
-                    }
+                
+                // Calculate price from single-choice (radio) categories
+                const selectedRadios = document.querySelectorAll('input[type="radio"]:checked');
+                selectedRadios.forEach(radio => {
+                    total += parseFloat(radio.dataset.price);
                 });
 
+                // Calculate price from multi-choice (quantity selector) categories
+                const quantityOptions = document.querySelectorAll('.ingredient-option .quantity-display');
+                quantityOptions.forEach(display => {
+                    const quantity = parseInt(display.textContent, 10);
+                    if (quantity > 0) {
+                        const optionDiv = display.closest('.ingredient-option');
+                        const price = parseFloat(optionDiv.dataset.price);
+                        total += quantity * price;
+                    }
+                });
+                
                 burgerTotalPriceEl.textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
             }
 
             function addCustomBurgerToOrder(baseBurgerItem) {
                 const selectedIngredients = [];
-                let total = parseFloat(burgerBuilderModal.dataset.basePrice) || 0;
+                let total = baseBurgerItem.basePrice;
+                
                 let allRequiredCategoriesFilled = true;
 
                 for (const category in allBurgerIngredients) {
@@ -1158,56 +1357,50 @@
 
                     const isSingleChoice = firstIngredient.isSingleChoice;
                     const isRequired = firstIngredient.isRequired || false;
-                    let categoryHasSelection = false;
 
                     if (isSingleChoice) {
-                        const selectedRadio = document.querySelector(`#burger-ingredients-container input[name="${category}"]:checked`);
-                        if (selectedRadio) {
-                            const ingredientId = selectedRadio.value;
-                            const ingredient = ingredients.find(ing => ing.id === ingredientId);
-                            if(ingredient) {
-                                selectedIngredients.push({ name: ingredient.name, category: ingredient.category });
+                        const selectedInput = document.querySelector(`input[name="${category}"]:checked`);
+                        if (isRequired && !selectedInput) {
+                            showMessageModal(`Por favor, escolha uma opção na categoria "${capitalizeFirstLetter(category)}".`);
+                            allRequiredCategoriesFilled = false;
+                            break;
+                        }
+                        if (selectedInput) {
+                            const ingredient = ingredients.find(ing => ing.id === selectedInput.value);
+                            if (ingredient) {
+                                selectedIngredients.push({ name: ingredient.name, category: ingredient.category, quantity: 1 });
                                 total += ingredient.price;
-                                categoryHasSelection = true;
                             }
                         }
                     } else {
-                        let categoryContainer = null;
-                        const allCategoryHeaders = burgerIngredientsContainer.querySelectorAll('.ingredient-category h4');
-                        for (const h4 of allCategoryHeaders) {
-                            const categoryNameFromHeader = h4.textContent.split(' (')[0];
-                            if (categoryNameFromHeader.toUpperCase() === capitalizeFirstLetter(category).toUpperCase()) {
-                                categoryContainer = h4.parentElement;
-                                break;
-                            }
-                        }
+                        // NEW: Logic for quantity selectors
+                        const categoryContainer = document.querySelector(`#burger-ingredients-container .ingredient-category h4:first-child`)
+                                                    ?.textContent.toLowerCase().includes(category.toLowerCase()) 
+                                                    ? document.querySelector(`#burger-ingredients-container .ingredient-category h4:first-child`)?.parentNode 
+                                                    : null;
 
-                        if(categoryContainer){
-                            categoryContainer.querySelectorAll('.quantity-value').forEach(quantityEl => {
-                                const quantity = parseInt(quantityEl.textContent);
+                        let itemsInCategory = 0;
+                        if (categoryContainer) {
+                            categoryContainer.querySelectorAll('.ingredient-option').forEach(optionDiv => {
+                                const quantity = parseInt(optionDiv.querySelector('.quantity-display').textContent, 10);
                                 if (quantity > 0) {
-                                    const container = quantityEl.closest('div');
-                                    const ingredientId = container.dataset.ingredientId;
-                                    const ingredient = ingredients.find(ing => ing.id === ingredientId);
-                                    
-                                    if(ingredient){
-                                        const ingredientName = quantity > 1 ? `${quantity}x ${ingredient.name}` : ingredient.name;
-                                        selectedIngredients.push({ name: ingredientName, category: ingredient.category });
+                                    itemsInCategory++;
+                                    const ingredient = ingredients.find(ing => ing.id === optionDiv.dataset.id);
+                                    if (ingredient) {
+                                        selectedIngredients.push({ name: ingredient.name, category: ingredient.category, quantity: quantity });
                                         total += ingredient.price * quantity;
-                                        categoryHasSelection = true;
                                     }
                                 }
                             });
                         }
-                    }
-
-                    if (isRequired && !categoryHasSelection) {
-                        showMessageModal(`Por favor, escolha uma opção na categoria obrigatória "${capitalizeFirstLetter(category)}".`);
-                        allRequiredCategoriesFilled = false;
-                        break; 
+                        if (isRequired && itemsInCategory === 0) {
+                            showMessageModal(`Por favor, adicione pelo menos um item na categoria "${capitalizeFirstLetter(category)}".`);
+                            allRequiredCategoriesFilled = false;
+                            break;
+                        }
                     }
                 }
-
+                
                 if (!allRequiredCategoriesFilled) {
                     return;
                 }
@@ -1220,11 +1413,11 @@
                     ingredients: selectedIngredients,
                     category: baseBurgerItem.category
                 }, addCustomBurgerBtn);
-
+                
                 burgerBuilderModal.style.display = 'none';
                 updatePromotionButtonVisibility();
             }
-            
+
             function populateMenu(menuItems, orderedCategories) {
                 const dynamicSectionsContainer = document.getElementById('dynamic-pizza-sections');
                 dynamicSectionsContainer.innerHTML = ''; 
@@ -1238,7 +1431,7 @@
                 });
 
                 orderedCategories.forEach(category => {
-                    const sectionId = `${category.toLowerCase().replace(/\s+/g, '-')}-section`;
+                    const sectionId = `${category}-section`;
                     let sectionEl = document.getElementById(sectionId);
 
                     if (!sectionEl) {
@@ -1251,12 +1444,12 @@
 
                         sectionEl.innerHTML = `
                             <h3 class="text-xl font-bold text-white p-2 rounded-md bg-red-600 mb-6">${title}</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="${category.toLowerCase().replace(/\s+/g, '-')}-items"></div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="${category}-items"></div>
                         `;
                         dynamicSectionsContainer.appendChild(sectionEl);
                     }
 
-                    const categoryItemsEl = document.getElementById(`${category.toLowerCase().replace(/\s+/g, '-')}-items`);
+                    const categoryItemsEl = document.getElementById(`${category}-items`);
                     categoryItemsEl.innerHTML = ''; 
 
                     if (itemsByCategory[category]) {
@@ -1270,7 +1463,7 @@
                                 if (trimmedImageUrl.toLowerCase() === 'sem imagem') {
                                     imageElement = `<div class="no-image-placeholder">Sem Imagem</div>`;
                                 } else if (trimmedImageUrl.length > 0) {
-                                    imageElement = `<img src="${trimmedImageUrl}" alt="Imagem de ${item.name}" class="w-full h-40 object-cover" onerror="this.onerror=null;this.parentElement.innerHTML='<div class=\\'no-image-placeholder\\'>Sem Imagem</div>';">`;
+                                    imageElement = `<img src="${trimmedImageUrl}" alt="Imagem de ${item.name}" class="w-full h-40 object-cover" onerror="this.onerror=null;this.src='';">`;
                                 } else {
                                     imageElement = '';
                                 }
@@ -1324,6 +1517,16 @@
                                         </div>
                                     `;
                                 } else {
+                                    let imageElement = '';
+                                    const trimmedImageUrl = String(item.imageUrl || '').trim();
+                                    if (trimmedImageUrl.toLowerCase() === 'sem imagem') {
+                                        imageElement = `<div class="no-image-placeholder">Sem Imagem</div>`;
+                                    } else if (trimmedImageUrl.length > 0) {
+                                        imageElement = `<img src="${trimmedImageUrl}" alt="${item.name}" class="w-full h-40 object-cover" onerror="this.onerror=null;this.src='';">`;
+                                    } else {
+                                        imageElement = '';
+                                    }
+                                    
                                     const buttonText = item.isCustomizable ? 'Montar' : 'Adicionar';
 
                                     itemHtml = `
@@ -1353,7 +1556,6 @@
             }
 
             function capitalizeFirstLetter(string) {
-                if (!string) return '';
                 return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
             }
 
@@ -1370,7 +1572,7 @@
                     button.textContent = isPizzaCategory ? `Pizzas ${capitalizeFirstLetter(category)}` : capitalizeFirstLetter(category);
 
                     button.dataset.category = category;
-                    button.dataset.targetId = `${category.toLowerCase().replace(/\s+/g, '-')}-section`;
+                    button.dataset.targetId = `${category}-section`;
                     
                     button.addEventListener('click', function(event) { 
                         const targetCategory = this.dataset.category;
@@ -1744,9 +1946,10 @@
                             itemName = `<b>${sizeLabel}</b>: ${item.name}`;
                         } else if (item.type === 'custom_burger') {
                             itemName = `<i class="fas fa-hamburger text-red-600 mr-2"></i> ${item.name}`;
+                            // NEW: Display ingredient quantities
                             const ingredientsListHtml = `
                                 <ul class="text-xs text-gray-500 mt-1 pl-4 list-disc list-inside">
-                                    ${item.ingredients.map(ing => `<li>${ing.name}</li>`).join('')}
+                                    ${item.ingredients.map(ing => `<li>${ing.quantity > 1 ? `${ing.quantity}x ` : ''}${ing.name}</li>`).join('')}
                                 </ul>
                             `;
                             itemDescription = ingredientsListHtml;
@@ -1884,13 +2087,15 @@
                     } else if (item.selected_slices) {
                         let sizeLabel = `${item.selected_slices} FATIAS`.toUpperCase();
                         message += `- ${sizeLabel}: ${item.name} R$ ${item.price.toFixed(2).replace('.', ',')}\n`;
-                        subtotal += item.price;
                         return;
                     } else if (item.type === 'custom_burger') {
                         itemName = `Hambúrguer Personalizado`;
-                        itemDescription = item.ingredients.map(ing => `  - ${ing.name}`).join('\n');
+                        // NEW: Format ingredients with quantities for WhatsApp
+                        itemDescription = item.ingredients.map(ing => `  - ${ing.quantity > 1 ? `${ing.quantity}x ` : ''}${ing.name}`).join('\n');
                         message += `- ${itemName}: R$ ${item.price.toFixed(2).replace('.', ',')}\n${itemDescription}\n`;
-                    } else {
+                    }
+
+                    if (item.type !== 'custom_burger') {
                         message += `- ${itemName}: R$ ${item.price.toFixed(2).replace('.', ',')}\n`;
                     }
                     subtotal += item.price;
@@ -2268,6 +2473,7 @@
                     
                     let newActiveCategory = null;
                     
+                    // Encontra a categoria cuja seção está mais próxima do topo da viewport
                     let closestSection = null;
                     let minDistance = Infinity;
 
@@ -2281,11 +2487,10 @@
                     });
 
                     if (closestSection) {
-                        newActiveCategory = closestSection.id.replace('-section', '').replace(/-/g, ' ');
-                        const originalCategory = allMenuData.find(item => item.category.toLowerCase().replace(/\s+/g, ' ') === newActiveCategory)?.category;
-                        if(originalCategory) newActiveCategory = originalCategory;
+                        newActiveCategory = closestSection.id.replace('-section', '');
                     }
                     
+                    // Lógica para o caso de pizzas meio a meio
                     if (isSelectingHalfPizza) {
                         if (isFirstHalfPromotional) {
                             if (newActiveCategory && newActiveCategory.toLowerCase() !== 'promocionais') {
@@ -2299,11 +2504,11 @@
                             }
                         } else {
                             if (newActiveCategory && newActiveCategory.toLowerCase() === 'promocionais') {
-                                const originalCategory = firstHalfPizza.category;
+                                const originalCategory = firstHalfPizza.category.toLowerCase();
                                 setActiveCategoryButton(originalCategory); 
                                 currentActiveCategoryByScroll = originalCategory;
                                 isScrollingFromClick = true;
-                                document.getElementById(`${originalCategory.toLowerCase().replace(/\s+/g, '-')}-section`).scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                document.getElementById(`${originalCategory}-section`).scrollIntoView({ behavior: 'smooth', block: 'start' });
                                 setTimeout(() => { isScrollingFromClick = false; }, 700);
                                 showMessageModal('Você começou a montar uma pizza meio a meio com um sabor não promocional. A segunda metade não pode ser de uma pizza promocional.');
                                 return;
@@ -2317,7 +2522,7 @@
                     }
                 }, {
                     root: null,
-                    rootMargin: `-${stickyHeaderHeight}px 0px -90% 0px`, 
+                    rootMargin: `-${stickyHeaderHeight}px 0px -99% 0px`, 
                     threshold: 0 
                 });
 
@@ -2493,47 +2698,21 @@
                     }
                     const data = await response.json(); 
                     
-                    // --- INÍCIO DO CÓDIGO DE DIAGNÓSTICO ---
-                    console.log("--- Diagnóstico de Ingredientes ---");
-                    console.log("Dados brutos recebidos da API:", data);
-                    if (data.ingredientesHamburguer && Array.isArray(data.ingredientesHamburguer)) {
-                        console.log("Array 'ingredientesHamburguer' recebido:", data.ingredientesHamburguer);
-                        
-                        const rawBurgerIngredients = data.ingredientesHamburguer.filter(ing => ing.available);
-                        console.log("Ingredientes após filtrar por 'disponível':", rawBurgerIngredients);
-                        
-                        if(data.ingredientesHamburguer.length > 0 && rawBurgerIngredients.length === 0) {
-                            console.warn("AVISO: Nenhum ingrediente está marcado como 'disponível'. Verifique a coluna 'Disponível (SIM/NÃO)' na sua planilha de ingredientes e certifique-se de que o valor é 'SIM'.");
-                        }
-
-                        allBurgerIngredients = rawBurgerIngredients.reduce((acc, current) => {
-                            if (!current.category) {
-                                console.warn("AVISO: Ingrediente sem categoria encontrado e ignorado:", current);
-                                return acc;
-                            }
-                            if (!acc[current.category]) {
-                                acc[current.category] = [];
-                            }
-                            acc[current.category].push(current);
-                            return acc;
-                        }, {});
-                        console.log("Ingredientes agrupados por categoria (objeto final):", allBurgerIngredients);
-
-                        if(rawBurgerIngredients.length > 0 && Object.keys(allBurgerIngredients).length === 0) {
-                             console.error("ERRO: O objeto final de ingredientes está vazio. Verifique se a coluna 'Categoria' está preenchida corretamente para todos os ingredientes na planilha.");
-                        }
-
-                    } else {
-                        console.error("ERRO: O array 'ingredientesHamburguer' não foi recebido da API, está vazio ou não é um array. Verifique a URL e o conteúdo da sua planilha de ingredientes.");
-                    }
-                    console.log("--- Fim do Diagnóstico ---");
-                    // --- FIM DO CÓDIGO DE DIAGNÓSTICO ---
-
-                    allMenuData = data.cardapio.filter(item => item.available);
-                    allPromotionsData = data.promocoes.filter(promo => promo.active);
-                    deliveryFeesData = data.deliveryFees;
+                    allMenuData = parseCsvData(data.cardapio, 'cardapio');
+                    allPromotionsData = parseCsvData(data.promocoes, 'promocoes');
+                    deliveryFeesData = parseCsvData(data.deliveryFees, 'deliveryFees');
                     
-                    contactInfo = data.contact.reduce((acc, curr) => {
+                    const rawBurgerIngredients = parseCsvData(data.ingredientesHamburguer, 'ingredientesHamburguer');
+                    allBurgerIngredients = rawBurgerIngredients.reduce((acc, current) => {
+                        if (!acc[current.category]) {
+                            acc[current.category] = [];
+                        }
+                        acc[current.category].push(current);
+                        return acc;
+                    }, {});
+
+                    const parsedContactInfo = parseCsvData(data.contact, 'contact');
+                    contactInfo = parsedContactInfo.reduce((acc, curr) => {
                         if (curr.data && curr.value) {
                             acc[curr.data.toLowerCase().replace(/[^a-z0-9]/g, '')] = curr.value;
                         }
@@ -2554,7 +2733,7 @@
                     createCategoryButtons(orderedUniqueCategories); 
                     populateMenu(allMenuData, orderedUniqueCategories); 
                     populateNeighborhoodDropdown(deliveryFeesData); 
-                    populateContactInfo(data.contact);
+                    populateContactInfo(parsedContactInfo);
                     setupCategoryObserver(); 
                     updatePromotionButtonVisibility(); 
                     updateCartCount(); 
@@ -2576,7 +2755,13 @@
             }
 
             function isPwaInstalled() {
-                return window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+                if (window.matchMedia('(display-mode: standalone)').matches) {
+                    return true;
+                }
+                if (navigator.standalone) {
+                    return true;
+                }
+                return false;
             }
 
             cartButton.addEventListener('click', toggleOrderSidebar);
@@ -2648,6 +2833,8 @@
 
             proceedWithoutDrinksBtn.addEventListener('click', function() {
                 drinkSuggestionModal.style.display = 'none';
+                const hasDrinks = order.some(item => item.category === 'bebidas');
+
                 if (!selectedPaymentMethod) {
                     isCheckoutInitiated = true; 
                     openPaymentMethodModal(true); 
@@ -2761,7 +2948,7 @@
                         const trocoParaValue = parseFloat(trocoParaInput.value);
 
                         if (isNaN(trocoParaValue) || trocoParaValue < totalOrder) {
-                            showMessageModal(`O valor para troco não pode ser menor que o total do pedido (R$ ${totalOrder.toFixed(2).replace('.', ',')}).`);
+                            showMessageModal(`O valor para troco (R$ ${totalOrder.toFixed(2).replace('.', ',')}) não pode ser menor que o total do pedido (R$ ${totalOrder.toFixed(2).replace('.', ',')}).`);
                             return; 
                         }
                         const trocoCalculado = trocoParaValue - totalOrder;
