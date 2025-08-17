@@ -1,4 +1,3 @@
-teste
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -8,7 +7,7 @@ teste
     <meta name="theme-color" content="#f8f4e9"/>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="icon" href="https://raw.githubusercontent.com/WillianSoares93/catalogo_pizzaria/refs/heads/main/logo.png" type="image/png">
+    <link rel="icon" href="https://raw.githubusercontent.com/WillianSoares93/cardapio_samia/refs/heads/main/logo.png" type="image/png">
     <link rel="manifest" href="/manifest.json">
     <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
     <style>
@@ -41,7 +40,7 @@ teste
             box-shadow: 0 3px 10px rgba(251, 191, 36, 0.4);
         }
         .header-bg {
-            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://invexo.com.br/blog/wp-content/uploads/2022/12/pizza-pizzaria-gavea-rio-de-janeiro.jpg');
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://raw.githubusercontent.com/WillianSoares93/cardapio_samia/refs/heads/main/imagem_fundo_cabe%C3%A7alho.jpg');
             background-size: cover;
             background-position: center;
         }
@@ -461,11 +460,10 @@ teste
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background-color: #f9fafb;
+            background-color: #fff;
             padding: 10px 15px;
             border-radius: 8px;
             margin-bottom: 8px;
-            cursor: pointer;
             transition: all 0.2s ease-in-out;
             border: 1px solid #e5e7eb;
         }
@@ -473,8 +471,7 @@ teste
             border-color: #dc2626;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
         }
-        .ingredient-option input[type="radio"],
-        .ingredient-option input[type="checkbox"] {
+        .ingredient-option input[type="radio"] {
             margin-right: 12px;
             accent-color: #dc2626;
         }
@@ -512,6 +509,7 @@ teste
     </style>
 </head>
 <body>
+    <!-- O restante do seu HTML (header, section#menu, etc.) permanece o mesmo -->
     <header class="header-bg text-white py-16 px-4 text-center">
         <div class="max-w-4xl mx-auto">
             <img src="https://raw.githubusercontent.com/WillianSoares93/catalogo_pizzaria/refs/heads/main/logo.png" alt="Logotipo Sâmia" class="h-64 mx-auto mb-4 object-contain">
@@ -635,15 +633,16 @@ teste
             <span class="close-button" id="close-burger-builder-modal">&times;</span>
             <h3 class="text-xl font-bold text-gray-800 mb-4">Monte Seu Hambúrguer</h3>
             
-            <div id="burger-ingredients-container" class="mb-4">
-                </div>
+            <div id="burger-ingredients-container" class="mb-4 max-h-[50vh] overflow-y-auto pr-2">
+                <!-- Ingredientes serão inseridos aqui -->
+            </div>
             
             <div class="flex justify-between items-center bg-gray-100 p-4 rounded-lg mt-4">
                 <span class="text-lg font-bold">Total:</span>
                 <span id="burger-total-price" class="text-2xl font-bold text-red-600">R$ 0,00</span>
             </div>
             
-            <button id="add-custom-burger-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-full transition w-full">
+            <button id="add-custom-burger-btn" class="mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-full transition w-full">
                 Adicionar ao Pedido
             </button>
         </div>
@@ -847,6 +846,236 @@ teste
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // ... (todo o seu código JS existente até a função openBurgerBuilderModal)
+
+            // =======================================================================
+            // INÍCIO DAS FUNÇÕES MODIFICADAS PARA QUANTIDADE DE INGREDIENTES
+            // =======================================================================
+
+            // 1. SUBSTITUA a função openBurgerBuilderModal original por esta:
+            function openBurgerBuilderModal(baseBurgerItem) {
+                burgerIngredientsContainer.innerHTML = '';
+                burgerBuilderModal.dataset.basePrice = baseBurgerItem.basePrice;
+
+                for (const category in allBurgerIngredients) {
+                    const ingredients = allBurgerIngredients[category];
+                    if (ingredients.length > 0) {
+                        const firstIngredient = ingredients[0];
+                        const isSingleChoice = firstIngredient.isSingleChoice;
+                        const isRequired = firstIngredient.isRequired || false;
+
+                        const categoryDiv = document.createElement('div');
+                        categoryDiv.className = 'ingredient-category';
+
+                        let categoryTitle = capitalizeFirstLetter(category);
+                        if (isRequired) {
+                            categoryTitle += ' (Obrigatório)';
+                        }
+
+                        categoryDiv.innerHTML = `<h4>${categoryTitle}</h4>`;
+
+                        ingredients.forEach(ingredient => {
+                            const priceDisplay = ingredient.price > 0 ? `+ R$ ${ingredient.price.toFixed(2).replace('.', ',')}` : 'Grátis';
+                            const optionDiv = document.createElement('div');
+                            optionDiv.className = 'ingredient-option';
+                            optionDiv.dataset.ingredientId = ingredient.id;
+
+                            if (isSingleChoice) {
+                                // Mantém o radio button para seleção única (ex: pães)
+                                optionDiv.innerHTML = `
+                                    <label class="flex items-center w-full cursor-pointer">
+                                        <input type="radio" name="${category}" value="${ingredient.id}" data-price="${ingredient.price}" class="form-radio">
+                                        <span class="flex-grow ml-3">${ingredient.name}</span>
+                                        <span class="price ml-2">${priceDisplay}</span>
+                                    </label>
+                                `;
+                            } else {
+                                // NOVO: Seletor de quantidade para os demais ingredientes
+                                const maxQuantity = ingredient.maxQuantity || 1;
+                                optionDiv.innerHTML = `
+                                    <span class="flex-grow">${ingredient.name}</span>
+                                    <span class="price ml-4">${priceDisplay}</span>
+                                    <div class="flex items-center ml-4" data-ingredient-id="${ingredient.id}" data-price="${ingredient.price}" data-max-quantity="${maxQuantity}">
+                                        <button type="button" class="quantity-btn minus-btn bg-gray-300 rounded-full w-7 h-7 flex items-center justify-center text-lg font-bold transition hover:bg-gray-400" disabled>-</button>
+                                        <span class="quantity-value mx-3 font-bold text-lg">0</span>
+                                        <button type="button" class="quantity-btn plus-btn bg-red-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-lg font-bold transition hover:bg-red-700">+</button>
+                                    </div>
+                                `;
+                            }
+                            categoryDiv.appendChild(optionDiv);
+                        });
+                        burgerIngredientsContainer.appendChild(categoryDiv);
+                    }
+                }
+
+                // Adiciona os event listeners para os novos botões de quantidade
+                burgerIngredientsContainer.querySelectorAll('.quantity-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const container = e.target.closest('div');
+                        const maxQuantity = parseInt(container.dataset.maxQuantity);
+                        const quantityEl = container.querySelector('.quantity-value');
+                        let currentQuantity = parseInt(quantityEl.textContent);
+
+                        if (e.target.classList.contains('plus-btn')) {
+                            if (currentQuantity < maxQuantity) {
+                                currentQuantity++;
+                            }
+                        } else if (e.target.classList.contains('minus-btn')) {
+                            if (currentQuantity > 0) {
+                                currentQuantity--;
+                            }
+                        }
+
+                        quantityEl.textContent = currentQuantity;
+                        container.querySelector('.minus-btn').disabled = currentQuantity === 0;
+                        container.querySelector('.plus-btn').disabled = currentQuantity >= maxQuantity;
+
+                        const optionDiv = container.closest('.ingredient-option');
+                        if (currentQuantity > 0) {
+                            optionDiv.classList.add('selected');
+                        } else {
+                            optionDiv.classList.remove('selected');
+                        }
+                        updateBurgerPrice();
+                    });
+                });
+
+                // Adiciona event listener para os radio buttons
+                burgerIngredientsContainer.querySelectorAll('input[type="radio"]').forEach(radio => {
+                    radio.addEventListener('change', () => {
+                        // Atualiza a classe 'selected' para os radio buttons
+                        document.querySelectorAll(`input[name="${radio.name}"]`).forEach(r => {
+                            r.closest('.ingredient-option').classList.remove('selected');
+                        });
+                        if (radio.checked) {
+                            radio.closest('.ingredient-option').classList.add('selected');
+                        }
+                        updateBurgerPrice();
+                    });
+                });
+
+                updateBurgerPrice();
+                burgerBuilderModal.style.display = 'flex';
+                updatePromotionButtonVisibility();
+            }
+
+            // 2. SUBSTITUA a função updateBurgerPrice original por esta:
+            function updateBurgerPrice() {
+                let total = parseFloat(burgerBuilderModal.dataset.basePrice) || 0;
+
+                // Soma o preço do item de seleção única (radio button)
+                const selectedRadio = document.querySelector('#burger-ingredients-container input[type="radio"]:checked');
+                if (selectedRadio) {
+                    total += parseFloat(selectedRadio.dataset.price);
+                }
+
+                // Soma os preços dos ingredientes com quantidade
+                document.querySelectorAll('#burger-ingredients-container .quantity-value').forEach(quantityEl => {
+                    const quantity = parseInt(quantityEl.textContent);
+                    if (quantity > 0) {
+                        const container = quantityEl.closest('div');
+                        const price = parseFloat(container.dataset.price);
+                        total += price * quantity;
+                    }
+                });
+
+                burgerTotalPriceEl.textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
+            }
+
+
+            // 3. SUBSTITUA a função addCustomBurgerToOrder original por esta:
+            function addCustomBurgerToOrder(baseBurgerItem) {
+                const selectedIngredients = [];
+                let total = parseFloat(burgerBuilderModal.dataset.basePrice) || 0;
+                let allRequiredCategoriesFilled = true;
+
+                for (const category in allBurgerIngredients) {
+                    const ingredients = allBurgerIngredients[category];
+                    const firstIngredient = ingredients[0];
+                    if (!firstIngredient) continue;
+
+                    const isSingleChoice = firstIngredient.isSingleChoice;
+                    const isRequired = firstIngredient.isRequired || false;
+                    let categoryHasSelection = false;
+
+                    if (isSingleChoice) {
+                        const selectedRadio = document.querySelector(`#burger-ingredients-container input[name="${category}"]:checked`);
+                        if (selectedRadio) {
+                            const ingredientId = selectedRadio.value;
+                            const ingredient = ingredients.find(ing => ing.id === ingredientId);
+                            if(ingredient) {
+                                selectedIngredients.push({ name: ingredient.name, category: ingredient.category });
+                                total += ingredient.price;
+                                categoryHasSelection = true;
+                            }
+                        }
+                    } else {
+                        // Encontra o container da categoria de forma segura
+                        let categoryContainer = null;
+                        const allCategoryHeaders = burgerIngredientsContainer.querySelectorAll('.ingredient-category h4');
+                        for (const h4 of allCategoryHeaders) {
+                            // Compara o texto do h4 com o nome da categoria
+                            if (h4.textContent.toUpperCase().startsWith(capitalizeFirstLetter(category).toUpperCase())) {
+                                categoryContainer = h4.parentElement;
+                                break;
+                            }
+                        }
+
+                        if(categoryContainer){
+                            categoryContainer.querySelectorAll('.quantity-value').forEach(quantityEl => {
+                                const quantity = parseInt(quantityEl.textContent);
+                                if (quantity > 0) {
+                                    const container = quantityEl.closest('div');
+                                    const ingredientId = container.dataset.ingredientId;
+                                    const ingredient = ingredients.find(ing => ing.id === ingredientId);
+                                    
+                                    if(ingredient){
+                                        const ingredientName = quantity > 1 ? `${quantity}x ${ingredient.name}` : ingredient.name;
+                                        selectedIngredients.push({ name: ingredientName, category: ingredient.category });
+                                        total += ingredient.price * quantity;
+                                        categoryHasSelection = true;
+                                    }
+                                }
+                            });
+                        }
+                    }
+
+                    if (isRequired && !categoryHasSelection) {
+                        showMessageModal(`Por favor, escolha uma opção na categoria obrigatória "${capitalizeFirstLetter(category)}".`);
+                        allRequiredCategoriesFilled = false;
+                        break; 
+                    }
+                }
+
+                if (!allRequiredCategoriesFilled) {
+                    return;
+                }
+
+                addToOrder({
+                    type: 'custom_burger',
+                    name: 'Hambúrguer Personalizado',
+                    price: total,
+                    description: `Monte seu hambúrguer.`,
+                    ingredients: selectedIngredients,
+                    category: baseBurgerItem.category
+                }, addCustomBurgerBtn);
+
+                burgerBuilderModal.style.display = 'none';
+                updatePromotionButtonVisibility();
+            }
+
+            // =======================================================================
+            // FIM DAS FUNÇÕES MODIFICADAS
+            // =======================================================================
+
+            // ... (resto do seu código JS, começando da função populateMenu)
+            
+            // Cole o restante do seu código JavaScript original aqui...
+            // Por exemplo:
+            // function populateMenu(menuItems, orderedCategories) { ... }
+            // ... e todas as outras funções até o final do script.
+            
+            // O código original continua aqui...
             let order = [];
             let allMenuData = [];
             let allPromotionsData = [];
@@ -870,8 +1099,7 @@ teste
             };
 
             const defaultImage = 'https://www.bakelitsul.com.br/Assets/img/sem-produto-detalhe.png';
-            const CONTACT_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJeo2AAETdXC08x9EQlkIG1FiVLEosMng4IvaQYJAdZnIDHJw8CT8J5RAJNtJ5GWHOKHkUsd5V8OSL/pub?gid=2043568216&single=true&output=csv';
-
+            
             const orderSidebar = document.getElementById('orderSidebar');
             const cartCount = document.getElementById('cartCount');
             const orderItemsContainer = document.getElementById('orderItems');
@@ -984,31 +1212,22 @@ teste
                 messageModal.style.display = 'flex';
                 updatePromotionButtonVisibility();
 
-                okMessageModalBtn.removeEventListener('click', hideMessageModal);
-                closeMessageModalBtn.removeEventListener('click', hideMessageModal);
+                okMessageModalBtn.onclick = null;
+                closeMessageModalBtn.onclick = null;
                 messageModal.onclick = null; 
 
-                if (onOkCallback) {
-                    const specificAction = () => {
-                        hideMessageModal();
-                        onOkCallback();
-                    };
-                    okMessageModalBtn.addEventListener('click', specificAction);
-                    closeMessageModalBtn.addEventListener('click', specificAction);
-                    messageModal.onclick = (event) => {
-                        if (event.target === messageModal) {
-                            specificAction();
-                        }
-                    };
-                } else {
-                    okMessageModalBtn.addEventListener('click', hideMessageModal);
-                    closeMessageModalBtn.addEventListener('click', hideMessageModal);
-                    messageModal.onclick = (event) => {
-                        if (event.target === messageModal) {
-                            hideMessageModal();
-                        }
-                    };
-                }
+                const action = () => {
+                    hideMessageModal();
+                    if (onOkCallback) onOkCallback();
+                };
+
+                okMessageModalBtn.onclick = action;
+                closeMessageModalBtn.onclick = action;
+                messageModal.onclick = (event) => {
+                    if (event.target === messageModal) {
+                        action();
+                    }
+                };
             }
 
             function hideMessageModal() {
@@ -1152,186 +1371,6 @@ teste
                 return parsedData;
             }
 
-            function openBurgerBuilderModal(baseBurgerItem) {
-                burgerIngredientsContainer.innerHTML = '';
-                burgerBuilderModal.dataset.basePrice = baseBurgerItem.basePrice;
-                
-                for (const category in allBurgerIngredients) {
-                    const ingredients = allBurgerIngredients[category];
-                    if (ingredients.length > 0) {
-                        const firstIngredient = ingredients[0];
-                        const isSingleChoice = firstIngredient.isSingleChoice;
-                        const limit = firstIngredient.limit || Infinity;
-                        const isRequired = firstIngredient.isRequired || false;
-                        
-                        const categoryDiv = document.createElement('div');
-                        categoryDiv.className = 'ingredient-category';
-                        
-                        let categoryTitle = capitalizeFirstLetter(category);
-                        if (isRequired) {
-                            categoryTitle += ' (Obrigatório)';
-                        } else if (!isSingleChoice && limit !== Infinity && limit > 1) {
-                            categoryTitle += ` (Escolha até ${limit})`;
-                        } else if (!isSingleChoice && limit === 1) {
-                            categoryTitle += ` (Escolha 1)`;
-                        } else if (isSingleChoice) {
-                             categoryTitle += ` (Escolha 1)`;
-                        }
-
-                        categoryDiv.innerHTML = `<h4>${categoryTitle}</h4>`;
-                        
-                        ingredients.forEach(ingredient => {
-                            const inputType = isSingleChoice ? 'radio' : 'checkbox';
-                            const inputName = isSingleChoice ? category : `multiple-${category}`;
-                            const priceDisplay = ingredient.price > 0 ? `+ R$ ${ingredient.price.toFixed(2).replace('.', ',')}` : '';
-                            
-                            const label = document.createElement('label');
-                            label.className = 'ingredient-option';
-                            
-                            const input = document.createElement('input');
-                            input.type = inputType;
-                            input.id = `${inputName}-${ingredient.id}`;
-                            input.name = inputName;
-                            input.value = ingredient.id;
-                            input.dataset.price = ingredient.price;
-                            input.classList.add('form-radio');
-
-                            const textSpan = document.createElement('span');
-                            textSpan.className = "flex-grow";
-                            textSpan.textContent = ingredient.name;
-                            
-                            const priceSpan = document.createElement('span');
-                            priceSpan.className = "price ml-2 whitespace-nowrap text-right";
-                            priceSpan.textContent = priceDisplay;
-
-                            label.appendChild(input);
-                            label.appendChild(textSpan);
-                            label.appendChild(priceSpan);
-                            
-                            input.addEventListener('change', (e) => {
-                                const currentInput = e.target;
-                                const currentLabel = currentInput.closest('.ingredient-option');
-                                const currentCategory = currentInput.name.replace('multiple-', '');
-                                const isCurrentSingleChoice = allBurgerIngredients[currentCategory][0]?.isSingleChoice;
-                                const limit = allBurgerIngredients[currentCategory][0]?.limit || Infinity;
-                                
-                                if (isCurrentSingleChoice) {
-                                    document.querySelectorAll(`input[name="${currentCategory}"]`).forEach(el => {
-                                        el.closest('.ingredient-option').classList.remove('selected');
-                                    });
-                                }
-                                if (currentInput.checked) {
-                                    currentLabel.classList.add('selected');
-                                } else {
-                                    currentLabel.classList.remove('selected');
-                                }
-                                
-                                if (!isSingleChoice && limit !== Infinity) {
-                                    const checkedCount = document.querySelectorAll(`input[name="${e.target.name}"]:checked`).length;
-                                    if (checkedCount > limit) {
-                                        e.target.checked = false;
-                                        e.target.closest('.ingredient-option').classList.remove('selected');
-                                        showMessageModal(`Você pode escolher no máximo ${limit} item(s) da categoria "${capitalizeFirstLetter(currentCategory)}".`);
-                                    }
-                                }
-                                
-                                updateBurgerPrice();
-                            });
-
-                            categoryDiv.appendChild(label);
-                        });
-                        burgerIngredientsContainer.appendChild(categoryDiv);
-                    }
-                }
-                
-                burgerTotalPriceEl.textContent = 'R$ ' + baseBurgerItem.basePrice.toFixed(2).replace('.', ',');
-                
-                addCustomBurgerBtn.onclick = () => addCustomBurgerToOrder(baseBurgerItem);
-                
-                burgerBuilderModal.style.display = 'flex';
-                updatePromotionButtonVisibility();
-            }
-            
-            function updateBurgerPrice() {
-                let total = parseFloat(burgerBuilderModal.dataset.basePrice) || 0;
-                
-                for (const category in allBurgerIngredients) {
-                    const ingredients = allBurgerIngredients[category];
-                    const isSingleChoice = ingredients[0]?.isSingleChoice;
-                    
-                    if (isSingleChoice) {
-                        const selectedRadio = document.querySelector(`input[name="${category}"]:checked`);
-                        if (selectedRadio) {
-                            total += parseFloat(selectedRadio.dataset.price);
-                        }
-                    } else {
-                        document.querySelectorAll(`input[name="multiple-${category}"]:checked`).forEach(checkbox => {
-                            total += parseFloat(checkbox.dataset.price);
-                        });
-                    }
-                }
-                
-                burgerTotalPriceEl.textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
-            }
-
-            function addCustomBurgerToOrder(baseBurgerItem) {
-                const selectedIngredients = [];
-                let total = baseBurgerItem.basePrice;
-                
-                let allRequiredCategoriesFilled = true;
-
-                for (const category in allBurgerIngredients) {
-                    const ingredients = allBurgerIngredients[category];
-                    const firstIngredient = ingredients[0];
-                    const isSingleChoice = firstIngredient?.isSingleChoice;
-                    const isRequired = firstIngredient?.isRequired || false;
-
-                    if (isRequired) {
-                        const selectedInputs = document.querySelectorAll(`input[name="${isSingleChoice ? category : `multiple-${category}`}"]:checked`);
-                        if (selectedInputs.length === 0) {
-                            showMessageModal(`Por favor, escolha uma opção na categoria "${capitalizeFirstLetter(category)}".`);
-                            allRequiredCategoriesFilled = false;
-                            break;
-                        }
-                    }
-
-                    if (isSingleChoice) {
-                        const selectedInput = document.querySelector(`input[name="${category}"]:checked`);
-                        if (selectedInput) {
-                            const ingredient = ingredients.find(ing => ing.id === selectedInput.value);
-                            if (ingredient) {
-                                selectedIngredients.push({ name: ingredient.name, category: ingredient.category });
-                                total += ingredient.price;
-                            }
-                        }
-                    } else {
-                        document.querySelectorAll(`input[name="multiple-${category}"]:checked`).forEach(input => {
-                            const ingredient = ingredients.find(ing => ing.id === input.value);
-                            if (ingredient) {
-                                selectedIngredients.push({ name: ingredient.name, category: ingredient.category });
-                                total += ingredient.price;
-                            }
-                        });
-                    }
-                }
-                
-                if (!allRequiredCategoriesFilled) {
-                    return;
-                }
-
-                addToOrder({
-                    type: 'custom_burger',
-                    name: 'Hambúrguer Personalizado',
-                    price: total,
-                    description: `Monte seu hambúrguer.`,
-                    ingredients: selectedIngredients,
-                    category: baseBurgerItem.category
-                }, addCustomBurgerBtn);
-                
-                burgerBuilderModal.style.display = 'none';
-                updatePromotionButtonVisibility();
-            }
-
             function populateMenu(menuItems, orderedCategories) {
                 const dynamicSectionsContainer = document.getElementById('dynamic-pizza-sections');
                 dynamicSectionsContainer.innerHTML = ''; 
@@ -1345,7 +1384,7 @@ teste
                 });
 
                 orderedCategories.forEach(category => {
-                    const sectionId = `${category}-section`;
+                    const sectionId = `${category.toLowerCase().replace(/\s+/g, '-')}-section`;
                     let sectionEl = document.getElementById(sectionId);
 
                     if (!sectionEl) {
@@ -1358,12 +1397,12 @@ teste
 
                         sectionEl.innerHTML = `
                             <h3 class="text-xl font-bold text-white p-2 rounded-md bg-red-600 mb-6">${title}</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="${category}-items"></div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="${category.toLowerCase().replace(/\s+/g, '-')}-items"></div>
                         `;
                         dynamicSectionsContainer.appendChild(sectionEl);
                     }
 
-                    const categoryItemsEl = document.getElementById(`${category}-items`);
+                    const categoryItemsEl = document.getElementById(`${category.toLowerCase().replace(/\s+/g, '-')}-items`);
                     categoryItemsEl.innerHTML = ''; 
 
                     if (itemsByCategory[category]) {
@@ -1377,7 +1416,7 @@ teste
                                 if (trimmedImageUrl.toLowerCase() === 'sem imagem') {
                                     imageElement = `<div class="no-image-placeholder">Sem Imagem</div>`;
                                 } else if (trimmedImageUrl.length > 0) {
-                                    imageElement = `<img src="${trimmedImageUrl}" alt="Imagem de ${item.name}" class="w-full h-40 object-cover" onerror="this.onerror=null;this.src='';">`;
+                                    imageElement = `<img src="${trimmedImageUrl}" alt="Imagem de ${item.name}" class="w-full h-40 object-cover" onerror="this.onerror=null;this.parentElement.innerHTML='<div class=\\'no-image-placeholder\\'>Sem Imagem</div>';">`;
                                 } else {
                                     imageElement = '';
                                 }
@@ -1431,16 +1470,6 @@ teste
                                         </div>
                                     `;
                                 } else {
-                                    let imageElement = '';
-                                    const trimmedImageUrl = String(item.imageUrl || '').trim();
-                                    if (trimmedImageUrl.toLowerCase() === 'sem imagem') {
-                                        imageElement = `<div class="no-image-placeholder">Sem Imagem</div>`;
-                                    } else if (trimmedImageUrl.length > 0) {
-                                        imageElement = `<img src="${trimmedImageUrl}" alt="${item.name}" class="w-full h-40 object-cover" onerror="this.onerror=null;this.src='';">`;
-                                    } else {
-                                        imageElement = '';
-                                    }
-                                    
                                     const buttonText = item.isCustomizable ? 'Montar' : 'Adicionar';
 
                                     itemHtml = `
@@ -1470,6 +1499,7 @@ teste
             }
 
             function capitalizeFirstLetter(string) {
+                if (!string) return '';
                 return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
             }
 
@@ -1486,7 +1516,7 @@ teste
                     button.textContent = isPizzaCategory ? `Pizzas ${capitalizeFirstLetter(category)}` : capitalizeFirstLetter(category);
 
                     button.dataset.category = category;
-                    button.dataset.targetId = `${category}-section`;
+                    button.dataset.targetId = `${category.toLowerCase().replace(/\s+/g, '-')}-section`;
                     
                     button.addEventListener('click', function(event) { 
                         const targetCategory = this.dataset.category;
@@ -2000,14 +2030,13 @@ teste
                     } else if (item.selected_slices) {
                         let sizeLabel = `${item.selected_slices} FATIAS`.toUpperCase();
                         message += `- ${sizeLabel}: ${item.name} R$ ${item.price.toFixed(2).replace('.', ',')}\n`;
+                        subtotal += item.price;
                         return;
                     } else if (item.type === 'custom_burger') {
                         itemName = `Hambúrguer Personalizado`;
                         itemDescription = item.ingredients.map(ing => `  - ${ing.name}`).join('\n');
                         message += `- ${itemName}: R$ ${item.price.toFixed(2).replace('.', ',')}\n${itemDescription}\n`;
-                    }
-
-                    if (item.type !== 'custom_burger') {
+                    } else {
                         message += `- ${itemName}: R$ ${item.price.toFixed(2).replace('.', ',')}\n`;
                     }
                     subtotal += item.price;
@@ -2385,7 +2414,6 @@ teste
                     
                     let newActiveCategory = null;
                     
-                    // Encontra a categoria cuja seção está mais próxima do topo da viewport
                     let closestSection = null;
                     let minDistance = Infinity;
 
@@ -2399,10 +2427,11 @@ teste
                     });
 
                     if (closestSection) {
-                        newActiveCategory = closestSection.id.replace('-section', '');
+                        newActiveCategory = closestSection.id.replace('-section', '').replace(/-/g, ' ');
+                        const originalCategory = allMenuData.find(item => item.category.toLowerCase().replace(/\s+/g, ' ') === newActiveCategory)?.category;
+                        if(originalCategory) newActiveCategory = originalCategory;
                     }
                     
-                    // Lógica para o caso de pizzas meio a meio
                     if (isSelectingHalfPizza) {
                         if (isFirstHalfPromotional) {
                             if (newActiveCategory && newActiveCategory.toLowerCase() !== 'promocionais') {
@@ -2416,11 +2445,11 @@ teste
                             }
                         } else {
                             if (newActiveCategory && newActiveCategory.toLowerCase() === 'promocionais') {
-                                const originalCategory = firstHalfPizza.category.toLowerCase();
+                                const originalCategory = firstHalfPizza.category;
                                 setActiveCategoryButton(originalCategory); 
                                 currentActiveCategoryByScroll = originalCategory;
                                 isScrollingFromClick = true;
-                                document.getElementById(`${originalCategory}-section`).scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                document.getElementById(`${originalCategory.toLowerCase().replace(/\s+/g, '-')}-section`).scrollIntoView({ behavior: 'smooth', block: 'start' });
                                 setTimeout(() => { isScrollingFromClick = false; }, 700);
                                 showMessageModal('Você começou a montar uma pizza meio a meio com um sabor não promocional. A segunda metade não pode ser de uma pizza promocional.');
                                 return;
@@ -2434,7 +2463,7 @@ teste
                     }
                 }, {
                     root: null,
-                    rootMargin: `-${stickyHeaderHeight}px 0px -99% 0px`, 
+                    rootMargin: `-${stickyHeaderHeight}px 0px -90% 0px`, 
                     threshold: 0 
                 });
 
@@ -2610,11 +2639,11 @@ teste
                     }
                     const data = await response.json(); 
                     
-                    allMenuData = parseCsvData(data.cardapio, 'cardapio');
-                    allPromotionsData = parseCsvData(data.promocoes, 'promocoes');
-                    deliveryFeesData = parseCsvData(data.deliveryFees, 'deliveryFees');
+                    allMenuData = data.cardapio.filter(item => item.available);
+                    allPromotionsData = data.promocoes.filter(promo => promo.active);
+                    deliveryFeesData = data.deliveryFees;
                     
-                    const rawBurgerIngredients = parseCsvData(data.ingredientesHamburguer, 'ingredientesHamburguer');
+                    const rawBurgerIngredients = data.ingredientesHamburguer.filter(ing => ing.available);
                     allBurgerIngredients = rawBurgerIngredients.reduce((acc, current) => {
                         if (!acc[current.category]) {
                             acc[current.category] = [];
@@ -2623,8 +2652,7 @@ teste
                         return acc;
                     }, {});
 
-                    const parsedContactInfo = parseCsvData(data.contact, 'contact');
-                    contactInfo = parsedContactInfo.reduce((acc, curr) => {
+                    contactInfo = data.contact.reduce((acc, curr) => {
                         if (curr.data && curr.value) {
                             acc[curr.data.toLowerCase().replace(/[^a-z0-9]/g, '')] = curr.value;
                         }
@@ -2645,7 +2673,7 @@ teste
                     createCategoryButtons(orderedUniqueCategories); 
                     populateMenu(allMenuData, orderedUniqueCategories); 
                     populateNeighborhoodDropdown(deliveryFeesData); 
-                    populateContactInfo(parsedContactInfo);
+                    populateContactInfo(data.contact);
                     setupCategoryObserver(); 
                     updatePromotionButtonVisibility(); 
                     updateCartCount(); 
@@ -2667,13 +2695,7 @@ teste
             }
 
             function isPwaInstalled() {
-                if (window.matchMedia('(display-mode: standalone)').matches) {
-                    return true;
-                }
-                if (navigator.standalone) {
-                    return true;
-                }
-                return false;
+                return window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
             }
 
             cartButton.addEventListener('click', toggleOrderSidebar);
@@ -2745,8 +2767,6 @@ teste
 
             proceedWithoutDrinksBtn.addEventListener('click', function() {
                 drinkSuggestionModal.style.display = 'none';
-                const hasDrinks = order.some(item => item.category === 'bebidas');
-
                 if (!selectedPaymentMethod) {
                     isCheckoutInitiated = true; 
                     openPaymentMethodModal(true); 
@@ -2860,7 +2880,7 @@ teste
                         const trocoParaValue = parseFloat(trocoParaInput.value);
 
                         if (isNaN(trocoParaValue) || trocoParaValue < totalOrder) {
-                            showMessageModal(`O valor para troco (R$ ${totalOrder.toFixed(2).replace('.', ',')}) não pode ser menor que o total do pedido (R$ ${totalOrder.toFixed(2).replace('.', ',')}).`);
+                            showMessageModal(`O valor para troco não pode ser menor que o total do pedido (R$ ${totalOrder.toFixed(2).replace('.', ',')}).`);
                             return; 
                         }
                         const trocoCalculado = trocoParaValue - totalOrder;
