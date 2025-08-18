@@ -1328,23 +1328,28 @@
                 burgerBuilderModal.style.display = 'flex';
                 updatePromotionButtonVisibility();
             }
+            function parsePrice(value) {
+                const number = parseFloat(value);
+                return isNaN(number) ? 0 : number;
+            }
             
-            function updateBurgerPrice() {
-                    const basePrice = parseFloat(burgerBuilderModal.dataset.basePrice);
-                    let total = isNaN(basePrice) ? 0 : basePrice;
-
+function updateBurgerPrice() {
+                // USA A NOVA FUNÇÃO AQUI para o preço base
+                let total = parsePrice(burgerBuilderModal.dataset.basePrice);
                 
-                const selectedRadios = document.querySelectorAll('input[type="radio"]:checked');
+                const selectedRadios = document.querySelectorAll('#burger-builder-modal input[type="radio"]:checked');
                 selectedRadios.forEach(radio => {
-                    total += parseFloat(radio.dataset.price);
+                    // USA A NOVA FUNÇÃO AQUI para os ingredientes de seleção única
+                    total += parsePrice(radio.dataset.price);
                 });
 
-                const quantityOptions = document.querySelectorAll('.ingredient-option .quantity-display');
+                const quantityOptions = document.querySelectorAll('#burger-builder-modal .ingredient-option .quantity-display');
                 quantityOptions.forEach(display => {
                     const quantity = parseInt(display.textContent, 10);
                     if (quantity > 0) {
                         const optionDiv = display.closest('.ingredient-option');
-                        const price = parseFloat(optionDiv.dataset.price);
+                        // USA A NOVA FUNÇÃO AQUI para os ingredientes com quantidade
+                        const price = parsePrice(optionDiv.dataset.price);
                         total += quantity * price;
                     }
                 });
