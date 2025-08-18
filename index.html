@@ -1,4 +1,3 @@
-teste
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -298,7 +297,7 @@ teste
             border-radius: 6px;
             font-size: 0.875rem;
             font-weight: 500;
-            transition: background-color 0.2s;
+            transition: background-color: 0.2s;
         }
         .suggested-drink-item button:hover {
             background-color: #16a34a;
@@ -518,7 +517,7 @@ teste
             font-weight: bold;
             font-size: 1rem;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: background-color: 0.2s;
         }
         .quantity-btn:hover {
             background-color: #d1d5db;
@@ -1179,12 +1178,11 @@ teste
             }
             
             function getSelectedItemsCountInCategory(categoryContainer) {
-                const checkedCheckboxes = categoryContainer.querySelectorAll('input[type="checkbox"]:checked').length;
                 const itemsWithQuantity = Array.from(categoryContainer.querySelectorAll('.quantity-display')).filter(d => parseInt(d.textContent, 10) > 0).length;
-                return checkedCheckboxes + itemsWithQuantity;
+                return itemsWithQuantity;
             }
 
-            function handleQuantityChange(plusBtn, minusBtn, quantityDisplay, ingredient, checkbox) {
+            function handleQuantityChange(plusBtn, minusBtn, quantityDisplay, ingredient) {
                 const categoryContainer = plusBtn.closest('.ingredient-category');
                 const optionDiv = plusBtn.closest('.ingredient-option');
                 const categoryLimit = parseInt(categoryContainer.dataset.limit, 10) || Infinity;
@@ -1208,7 +1206,6 @@ teste
 
                     currentQuantity++;
                     quantityDisplay.textContent = currentQuantity;
-                    checkbox.checked = true;
                     optionDiv.classList.add('selected');
                     updateBurgerPrice();
                 });
@@ -1219,7 +1216,6 @@ teste
                         currentQuantity--;
                         quantityDisplay.textContent = currentQuantity;
                         if (currentQuantity === 0) {
-                            checkbox.checked = false;
                             optionDiv.classList.remove('selected');
                         }
                         updateBurgerPrice();
@@ -1278,88 +1274,47 @@ teste
                                 });
                                 categoryDiv.appendChild(label);
                             } else {
-                                const ingredientLimit = ingredient.ingredientLimit || 1;
+                                const optionDiv = document.createElement('div');
+                                optionDiv.className = 'ingredient-option items-center';
+                                optionDiv.dataset.id = ingredient.id;
+                                optionDiv.dataset.price = ingredient.price;
+                                optionDiv.dataset.name = ingredient.name;
+                                optionDiv.dataset.category = ingredient.category;
+                                
+                                const nameSpan = document.createElement('span');
+                                nameSpan.className = 'flex-grow';
+                                nameSpan.textContent = ingredient.name;
+                                
+                                const priceSpan = document.createElement('span');
+                                priceSpan.className = 'price mr-4';
+                                priceSpan.textContent = priceDisplay;
 
-                                if (ingredientLimit <= 1) {
-                                    const label = document.createElement('label');
-                                    label.className = 'ingredient-option cursor-pointer';
-                                    label.innerHTML = `
-                                        <div class="flex items-center">
-                                            <input type="checkbox" id="multiple-${category}-${ingredient.id}" name="multiple-${category}" value="${ingredient.id}" data-price="${ingredient.price}" class="form-checkbox">
-                                            <span class="flex-grow ml-3">${ingredient.name}</span>
-                                            <span class="price ml-2 whitespace-nowrap text-right">${priceDisplay}</span>
-                                        </div>
-                                    `;
-                                    label.querySelector('input').addEventListener('change', (e) => {
-                                        const categoryContainer = e.target.closest('.ingredient-category');
-                                        const categoryLimit = parseInt(categoryContainer.dataset.limit, 10) || Infinity;
-                                        
-                                        if (e.target.checked) {
-                                            const totalSelectedInCategory = getSelectedItemsCountInCategory(categoryContainer);
-                                            if (totalSelectedInCategory > categoryLimit) {
-                                                e.target.checked = false;
-                                                showMessageModal(`Você pode escolher no máximo ${categoryLimit} item(ns) diferente(s) para esta categoria.`);
-                                                return;
-                                            }
-                                        }
-                                        
-                                        if (e.target.checked) {
-                                            label.classList.add('selected');
-                                        } else {
-                                            label.classList.remove('selected');
-                                        }
-                                        updateBurgerPrice();
-                                    });
-                                    categoryDiv.appendChild(label);
-                                } else {
-                                    const optionDiv = document.createElement('div');
-                                    optionDiv.className = 'ingredient-option items-center';
-                                    optionDiv.dataset.id = ingredient.id;
-                                    optionDiv.dataset.price = ingredient.price;
-                                    optionDiv.dataset.name = ingredient.name;
-                                    optionDiv.dataset.category = ingredient.category;
-                                    
-                                    const checkbox = document.createElement('input');
-                                    checkbox.type = 'checkbox';
-                                    checkbox.className = 'form-checkbox pointer-events-none';
-                                    checkbox.disabled = true;
+                                const quantitySelector = document.createElement('div');
+                                quantitySelector.className = 'flex items-center';
+                                
+                                const minusBtn = document.createElement('button');
+                                minusBtn.className = 'quantity-btn minus-btn';
+                                minusBtn.textContent = '-';
+                                
+                                const quantityDisplay = document.createElement('span');
+                                quantityDisplay.className = 'quantity-display';
+                                quantityDisplay.textContent = '0';
+                                
+                                const plusBtn = document.createElement('button');
+                                plusBtn.className = 'quantity-btn plus-btn';
+                                plusBtn.textContent = '+';
 
-                                    const nameSpan = document.createElement('span');
-                                    nameSpan.className = 'flex-grow ml-3';
-                                    nameSpan.textContent = ingredient.name;
-                                    
-                                    const priceSpan = document.createElement('span');
-                                    priceSpan.className = 'price mr-4';
-                                    priceSpan.textContent = priceDisplay;
+                                quantitySelector.appendChild(minusBtn);
+                                quantitySelector.appendChild(quantityDisplay);
+                                quantitySelector.appendChild(plusBtn);
 
-                                    const quantitySelector = document.createElement('div');
-                                    quantitySelector.className = 'flex items-center';
-                                    
-                                    const minusBtn = document.createElement('button');
-                                    minusBtn.className = 'quantity-btn minus-btn';
-                                    minusBtn.textContent = '-';
-                                    
-                                    const quantityDisplay = document.createElement('span');
-                                    quantityDisplay.className = 'quantity-display';
-                                    quantityDisplay.textContent = '0';
-                                    
-                                    const plusBtn = document.createElement('button');
-                                    plusBtn.className = 'quantity-btn plus-btn';
-                                    plusBtn.textContent = '+';
+                                optionDiv.appendChild(nameSpan);
+                                optionDiv.appendChild(priceSpan);
+                                optionDiv.appendChild(quantitySelector);
+                                
+                                categoryDiv.appendChild(optionDiv);
 
-                                    quantitySelector.appendChild(minusBtn);
-                                    quantitySelector.appendChild(quantityDisplay);
-                                    quantitySelector.appendChild(plusBtn);
-
-                                    optionDiv.appendChild(checkbox);
-                                    optionDiv.appendChild(nameSpan);
-                                    optionDiv.appendChild(priceSpan);
-                                    optionDiv.appendChild(quantitySelector);
-                                    
-                                    categoryDiv.appendChild(optionDiv);
-
-                                    handleQuantityChange(plusBtn, minusBtn, quantityDisplay, ingredient, checkbox);
-                                }
+                                handleQuantityChange(plusBtn, minusBtn, quantityDisplay, ingredient);
                             }
                         });
                         burgerIngredientsContainer.appendChild(categoryDiv);
@@ -1380,11 +1335,6 @@ teste
                 const selectedRadios = document.querySelectorAll('input[type="radio"]:checked');
                 selectedRadios.forEach(radio => {
                     total += parseFloat(radio.dataset.price);
-                });
-
-                const selectedCheckboxes = document.querySelectorAll('input[type="checkbox"]:checked');
-                selectedCheckboxes.forEach(checkbox => {
-                    total += parseFloat(checkbox.dataset.price);
                 });
 
                 const quantityOptions = document.querySelectorAll('.ingredient-option .quantity-display');
@@ -1431,14 +1381,6 @@ teste
                     } else {
                         let itemsInCategoryCount = 0;
                         
-                        categoryContainer.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
-                            itemsInCategoryCount++;
-                            const ingredient = ingredients.find(ing => ing.id === checkbox.value);
-                            if (ingredient) {
-                                selectedIngredients.push({ name: ingredient.name, category: ingredient.category, quantity: 1 });
-                            }
-                        });
-
                         categoryContainer.querySelectorAll('.ingredient-option .quantity-display').forEach(display => {
                             const quantity = parseInt(display.textContent, 10);
                             if (quantity > 0) {
@@ -3174,4 +3116,4 @@ teste
     </script>
 </body>
 </html>
-", there is a bug in the code. When I try to add a custom burger, the modal doesn't show up. Can you please fix the b
+", there is a bug in the code. When I try to add a custom burger, the modal doesn't show up. Can you please fix th
