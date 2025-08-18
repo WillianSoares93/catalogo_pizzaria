@@ -1,4 +1,3 @@
-teste
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1329,12 +1328,17 @@ teste
                 burgerBuilderModal.style.display = 'flex';
                 updatePromotionButtonVisibility();
             }
-            function parsePrice(value) {
-                const number = parseFloat(value);
-                return isNaN(number) ? 0 : number;
-            }
             
-function updateBurgerPrice() {
+            function parsePrice(value) {
+                if (typeof value !== 'string' || value.trim() === '') {
+                    return 0;
+                }
+                const numericString = value.replace(',', '.');
+                const parsed = parseFloat(numericString);
+                return isNaN(parsed) ? 0 : parsed;
+            }
+
+            function updateBurgerPrice() {
                 // USA A NOVA FUNÇÃO AQUI para o preço base
                 let total = parsePrice(burgerBuilderModal.dataset.basePrice);
                 
