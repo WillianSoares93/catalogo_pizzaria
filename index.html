@@ -1,4 +1,3 @@
-teste
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1178,14 +1177,13 @@ teste
                 return parsedData;
             }
             
-            // NEW: Helper function to count all selected items in a category
             function getSelectedItemsCountInCategory(categoryContainer) {
                 const checkedCheckboxes = categoryContainer.querySelectorAll('input[type="checkbox"]:checked').length;
                 const itemsWithQuantity = Array.from(categoryContainer.querySelectorAll('.quantity-display')).filter(d => parseInt(d.textContent, 10) > 0).length;
                 return checkedCheckboxes + itemsWithQuantity;
             }
 
-            function handleQuantityChange(plusBtn, minusBtn, quantityDisplay, ingredient) {
+            function handleQuantityChange(plusBtn, minusBtn, quantityDisplay, ingredient, checkbox) {
                 const categoryContainer = plusBtn.closest('.ingredient-category');
                 const categoryLimit = parseInt(categoryContainer.dataset.limit, 10) || Infinity;
                 const ingredientLimit = parseInt(ingredient.ingredientLimit, 10) || 1;
@@ -1198,7 +1196,6 @@ teste
                         return;
                     }
                     
-                    // CORRECTED: Check category limit only when adding a new *type* of item
                     if (currentQuantity === 0) {
                         const totalSelectedInCategory = getSelectedItemsCountInCategory(categoryContainer);
                         if (totalSelectedInCategory >= categoryLimit) {
@@ -1207,14 +1204,20 @@ teste
                         }
                     }
 
-                    quantityDisplay.textContent = currentQuantity + 1;
+                    currentQuantity++;
+                    quantityDisplay.textContent = currentQuantity;
+                    checkbox.checked = true;
                     updateBurgerPrice();
                 });
 
                 minusBtn.addEventListener('click', () => {
                     let currentQuantity = parseInt(quantityDisplay.textContent, 10);
                     if (currentQuantity > 0) {
-                        quantityDisplay.textContent = currentQuantity - 1;
+                        currentQuantity--;
+                        quantityDisplay.textContent = currentQuantity;
+                        if (currentQuantity === 0) {
+                            checkbox.checked = false;
+                        }
                         updateBurgerPrice();
                     }
                 });
@@ -1287,11 +1290,10 @@ teste
                                         const categoryContainer = e.target.closest('.ingredient-category');
                                         const categoryLimit = parseInt(categoryContainer.dataset.limit, 10) || Infinity;
                                         
-                                        // CORRECTED: Unified check for category limit
                                         if (e.target.checked) {
                                             const totalSelectedInCategory = getSelectedItemsCountInCategory(categoryContainer);
                                             if (totalSelectedInCategory > categoryLimit) {
-                                                e.target.checked = false; // Revert the action
+                                                e.target.checked = false;
                                                 showMessageModal(`Você pode escolher no máximo ${categoryLimit} item(ns) diferente(s) para esta categoria.`);
                                                 return;
                                             }
@@ -1313,8 +1315,13 @@ teste
                                     optionDiv.dataset.name = ingredient.name;
                                     optionDiv.dataset.category = ingredient.category;
                                     
+                                    const checkbox = document.createElement('input');
+                                    checkbox.type = 'checkbox';
+                                    checkbox.className = 'form-checkbox pointer-events-none';
+                                    checkbox.disabled = true;
+
                                     const nameSpan = document.createElement('span');
-                                    nameSpan.className = 'flex-grow';
+                                    nameSpan.className = 'flex-grow ml-3';
                                     nameSpan.textContent = ingredient.name;
                                     
                                     const priceSpan = document.createElement('span');
@@ -1340,13 +1347,14 @@ teste
                                     quantitySelector.appendChild(quantityDisplay);
                                     quantitySelector.appendChild(plusBtn);
 
+                                    optionDiv.appendChild(checkbox);
                                     optionDiv.appendChild(nameSpan);
                                     optionDiv.appendChild(priceSpan);
                                     optionDiv.appendChild(quantitySelector);
                                     
                                     categoryDiv.appendChild(optionDiv);
 
-                                    handleQuantityChange(plusBtn, minusBtn, quantityDisplay, ingredient);
+                                    handleQuantityChange(plusBtn, minusBtn, quantityDisplay, ingredient, checkbox);
                                 }
                             }
                         });
