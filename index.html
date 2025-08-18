@@ -1,3 +1,4 @@
+teste
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -883,7 +884,6 @@
             let isCheckoutInitiated = false; 
             let discountPromotion = null;
             let contactInfo = {};
-            let installPromptShown = false;
             
             let selectedAddress = {
                 clientName: null, 
@@ -3039,6 +3039,9 @@
             window.addEventListener('beforeinstallprompt', (e) => {
                 e.preventDefault();
                 deferredPrompt = e;
+                if (!isPwaInstalled()) {
+                    installPromptModal.style.display = 'flex';
+                }
             });
 
             installAppButton.addEventListener('click', () => {
@@ -3063,14 +3066,6 @@
 
             window.addEventListener('appinstalled', () => {
                 installPromptModal.style.display = 'none';
-            });
-
-            window.addEventListener('load', () => {
-                setTimeout(() => {
-                    if (!isPwaInstalled() && deferredPrompt) {
-                        installPromptModal.style.display = 'flex';
-                    }
-                }, 3000); 
             });
             
             window.addEventListener('scroll', () => {
