@@ -1330,7 +1330,9 @@
             }
             
             function updateBurgerPrice() {
-                let total = parseFloat(burgerBuilderModal.dataset.basePrice) || 0;
+                    const basePrice = parseFloat(burgerBuilderModal.dataset.basePrice);
+                    let total = isNaN(basePrice) ? 0 : basePrice;
+
                 
                 const selectedRadios = document.querySelectorAll('input[type="radio"]:checked');
                 selectedRadios.forEach(radio => {
