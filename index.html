@@ -2078,68 +2078,50 @@
                 let message = 'Olá! Gostaria de fazer o seguinte pedido:\n\n';
                 let subtotal = 0;
 
-                const nonDiscountItems = order.filter(item => item.type !== 'discount');
-                nonDiscountItems.forEach(item => {
-                    let itemName = item.name;
-                    let itemDescription = '';
-
-                    if (item.type === 'promotion') {
-                        itemName = item.name.replace('<i class="fas fa-tags text-red-600 mr-2"></i> ', ''); 
-                    } else if (item.selected_slices) {
-                        let sizeLabel = `${item.selected_slices} FATIAS`.toUpperCase();
-                        message += `- ${sizeLabel}: ${item.name} R$ ${item.price.toFixed(2).replace('.', ',')}\n`;
-                        return;
-                    } else if (item.type === 'custom_burger') {
-                        itemName = `Hambúrguer Personalizado`;
-                        itemDescription = item.ingredients.map(ing => `  - ${ing.quantity > 1 ? `${ing.quantity}x ` : ''}${ing.name}`).join('\n');
-                        message += `- ${itemName}: R$ ${item.price.toFixed(2).replace('.', ',')}\n${itemDescription}\n`;
-                    }
-
-                    if (item.type !== 'custom_burger') {
-                        message += `- ${itemName}: R$ ${item.price.toFixed(2).replace('.', ',')}\n`;
-                    }
+                order.forEach(item => {
                     subtotal += item.price;
+                    if (item.type === 'custom_burger') {
+                        message += `- *${item.name}:* R$ ${item.price.toFixed(2).replace('.', ',')}\n`;
+                        message += `  *Ingredientes:*\n`;
+                        item.ingredients.forEach(ing => {
+                            message += `  - ${ing.name} *(x${ing.quantity})*\n`;
+                        });
+                    } else if (item.selected_slices) {
+                        let sizeLabel = `${item.selected_slices} FATIAS`;
+                        message += `- *${sizeLabel}:* ${item.name} R$ ${item.price.toFixed(2).replace('.', ',')}\n`;
+                    } else {
+                        message += `- ${item.name}: R$ ${item.price.toFixed(2).replace('.', ',')}\n`;
+                    }
                 });
+
+                message += `\nSubtotal: R$ ${subtotal.toFixed(2).replace('.', ',')}`;
                 
                 let finalDiscountAmount = 0;
                 if (discountPromotion) {
                     finalDiscountAmount = subtotal * (discountPromotion.promoPrice / 100);
-                    message += `\nDesconto (${discountPromotion.promoPrice}%): -R$ ${finalDiscountAmount.toFixed(2).replace('.', ',')}`;
+                    message += `\nDesconto: -R$ ${finalDiscountAmount.toFixed(2).replace('.', ',')}`;
                 }
 
+                message += `\nTaxa de entrega: R$ ${selectedAddress.deliveryFee.toFixed(2).replace('.', ',')}`;
                 const total = subtotal - finalDiscountAmount + selectedAddress.deliveryFee;
-
-                message += `\nSubtotal: R$ ${subtotal.toFixed(2).replace('.', ',')}`;
-                message += `\nTaxa de entrega (${selectedAddress.bairro || 'Não informado'}): R$ ${selectedAddress.deliveryFee.toFixed(2).replace('.', ',')}`;
-                message += `\nTotal: R$ ${total.toFixed(2).replace('.', ',')}`;
-                
-                if (selectedAddress.clientName && selectedAddress.bairro && selectedAddress.rua && selectedAddress.numero) {
-                    message += `\n\nDados da Entrega:\n`;
-                    message += `Nome: ${selectedAddress.clientName}\n`;
-                    message += `Bairro: ${selectedAddress.bairro}\n`;
-                    message += `Rua: ${selectedAddress.rua}, Nº ${selectedAddress.numero}\n`;
-                    if (selectedAddress.referencia) {
-                        message += `Ponto de Referência: ${selectedAddress.referencia}\n`;
-                    }
-                } else {
-                    message += `\n\nDados da Entrega: Não informado. Por favor, confirme o endereço e nome com o cliente.`
-                }
-
+                message += `\n*Total: R$ ${total.toFixed(2).replace('.', ',')}*`;
 
                 if (selectedPaymentMethod) {
+                    let paymentDetails = '';
                     if (typeof selectedPaymentMethod === 'object' && selectedPaymentMethod.method === 'Dinheiro') {
-                        message += `\nForma de Pagamento: ${selectedPaymentMethod.method}`;
-                        message += `\nTroco para: R$ ${selectedPaymentMethod.trocoPara.toFixed(2).replace('.', ',')}`;
-                        message += `\nTroco: R$ ${selectedPaymentMethod.trocoTotal.toFixed(2).replace('.', ',')}`;
-                    } else if (selectedPaymentMethod === 'Pix' && contactInfo.chavepix) {
-                         message += `\nForma de Pagamento: Pix`;
-                         message += `\nChave Pix: ${contactInfo.chavepix}`;
+                        paymentDetails = `Dinheiro (Troco para: R$ ${selectedPaymentMethod.trocoPara.toFixed(2).replace('.', ',')})`;
                     } else {
-                        message += `\nForma de Pagamento: ${selectedPaymentMethod}`;
+                        paymentDetails = selectedPaymentMethod;
                     }
+                    message += `\n*Pagamento:* ${paymentDetails}`;
                 }
 
-                message += '\n\nObrigado!';
+                message += `\n\n*Dados da Entrega:*`;
+                message += `\nNome: ${selectedAddress.clientName}`;
+                message += `\nEndereço: ${selectedAddress.rua}, Nº ${selectedAddress.numero}, ${selectedAddress.bairro}`;
+                if (selectedAddress.referencia) {
+                    message += `\nReferência: ${selectedAddress.referencia}`;
+                }
 
                 const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
                 window.open(whatsappUrl, '_blank');
