@@ -1,3 +1,4 @@
+teste
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1185,6 +1186,7 @@
 
             function handleQuantityChange(plusBtn, minusBtn, quantityDisplay, ingredient, checkbox) {
                 const categoryContainer = plusBtn.closest('.ingredient-category');
+                const optionDiv = plusBtn.closest('.ingredient-option');
                 const categoryLimit = parseInt(categoryContainer.dataset.limit, 10) || Infinity;
                 const ingredientLimit = parseInt(ingredient.ingredientLimit, 10) || 1;
 
@@ -1207,6 +1209,7 @@
                     currentQuantity++;
                     quantityDisplay.textContent = currentQuantity;
                     checkbox.checked = true;
+                    optionDiv.classList.add('selected');
                     updateBurgerPrice();
                 });
 
@@ -1217,6 +1220,7 @@
                         quantityDisplay.textContent = currentQuantity;
                         if (currentQuantity === 0) {
                             checkbox.checked = false;
+                            optionDiv.classList.remove('selected');
                         }
                         updateBurgerPrice();
                     }
@@ -3170,3 +3174,4 @@
     </script>
 </body>
 </html>
+", there is a bug in the code. When I try to add a custom burger, the modal doesn't show up. Can you please fix the b
