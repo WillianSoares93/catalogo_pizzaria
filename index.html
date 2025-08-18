@@ -1,3 +1,4 @@
+teste
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -883,6 +884,7 @@
             let isCheckoutInitiated = false; 
             let discountPromotion = null;
             let contactInfo = {};
+            let installPromptShown = false;
             
             let selectedAddress = {
                 clientName: null, 
@@ -3056,14 +3058,11 @@
             window.addEventListener('beforeinstallprompt', (e) => {
                 e.preventDefault();
                 deferredPrompt = e;
-                
-                if (!isPwaInstalled()) {
-                    installPromptModal.style.display = 'flex';
-                }
             });
 
             installAppButton.addEventListener('click', () => {
                 installPromptModal.style.display = 'none';
+                installPromptShown = true;
                 
                 if (deferredPrompt) {
                     deferredPrompt.prompt();
@@ -3080,15 +3079,17 @@
 
             closeInstallPromptModalBtn.addEventListener('click', () => {
                 installPromptModal.style.display = 'none';
+                installPromptShown = true;
             });
 
             window.addEventListener('appinstalled', () => {
                 installPromptModal.style.display = 'none';
+                installPromptShown = true;
             });
 
             window.addEventListener('load', () => {
                 setTimeout(() => {
-                    if (!isPwaInstalled() && deferredPrompt) {
+                    if (!isPwaInstalled() && deferredPrompt && !installPromptShown) {
                         installPromptModal.style.display = 'flex';
                     }
                 }, 3000); 
@@ -3116,4 +3117,3 @@
     </script>
 </body>
 </html>
-", there is a bug in the code. When I try to add a custom burger, the modal doesn't show up. Can you please fix the b
