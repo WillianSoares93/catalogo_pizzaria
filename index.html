@@ -1,3 +1,4 @@
+teste
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -3048,11 +3049,6 @@
             window.addEventListener('beforeinstallprompt', (e) => {
                 // e.preventDefault(); // Removido para permitir o comportamento padrão do navegador
                 deferredPrompt = e;
-                if (!isPwaInstalled()) {
-                    // Opcional: Você ainda pode mostrar seu botão/modal personalizado aqui se quiser,
-                    // mas o do navegador também poderá aparecer.
-                    // installPromptModal.style.display = 'flex';
-                }
             });
 
             installAppButton.addEventListener('click', () => {
