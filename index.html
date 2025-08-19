@@ -8,7 +8,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" href="https://raw.githubusercontent.com/WillianSoares93/cardapio_samia/refs/heads/main/logo.png" type="image/png">
-    <!-- CORREÇÃO: Caminho relativo para o manifest.json -->
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
     <style>
@@ -884,6 +883,8 @@
             let isCheckoutInitiated = false; 
             let discountPromotion = null;
             let contactInfo = {};
+            // CORREÇÃO: Variável para controlar se o prompt já foi exibido
+            let installPromptShown = false;
             
             let selectedAddress = {
                 clientName: null, 
@@ -2761,25 +2762,21 @@
 
             function showInstallPrompt() {
                 const isInstalled = isPwaInstalled();
-                console.log(`Tentando mostrar o prompt. deferredPrompt: ${!!deferredPrompt}, App instalado: ${isInstalled}`);
-                // Mostra o prompt apenas se o evento foi capturado e o app não está instalado
-                if (deferredPrompt && !isInstalled) {
+                // Mostra o prompt apenas se o evento foi capturado, o app não está instalado e o prompt ainda não foi exibido nesta sessão
+                if (deferredPrompt && !isInstalled && !installPromptShown) {
                     const installPromptModal = document.getElementById('install-prompt-modal');
-                    console.log('Condições satisfeitas. Mostrando o modal de instalação.');
                     installPromptModal.style.display = 'flex';
-                } else {
-                     console.log('Condições não satisfeitas. O modal não será exibido.');
+                    // Define o flag para true para não mostrar novamente na mesma visita
+                    installPromptShown = true; 
                 }
             }
 
             window.addEventListener('beforeinstallprompt', (e) => {
-                console.log('Evento beforeinstallprompt disparado.');
                 // Previne o mini-infobar de aparecer em alguns navegadores
                 e.preventDefault();
                 // Guarda o evento para que possa ser acionado mais tarde.
                 deferredPrompt = e;
                 // Mostra o nosso modal de instalação customizado
-                console.log('deferredPrompt foi guardado. Tentando mostrar o modal.');
                 showInstallPrompt();
             });
 
@@ -3066,7 +3063,6 @@
                 showAddressInputModal();
             });
 
-            // CORREÇÃO: Caminho relativo para o service-worker.js e logs de depuração
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('service-worker.js')
                     .then(registration => {
@@ -3118,9 +3114,6 @@
             });
 
             loadMenuAndRender();
-            
-            // Adiciona um pequeno atraso para não ser intrusivo ao carregar a página
-            setTimeout(showInstallPrompt, 5000); 
 
         });
     </script>
