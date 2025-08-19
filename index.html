@@ -1337,14 +1337,12 @@
                 const parsed = parseFloat(numericString);
                 return isNaN(parsed) ? 0 : parsed;
             }
-
+            
             function updateBurgerPrice() {
-                // USA A NOVA FUNÇÃO AQUI para o preço base
                 let total = parsePrice(burgerBuilderModal.dataset.basePrice);
                 
                 const selectedRadios = document.querySelectorAll('#burger-builder-modal input[type="radio"]:checked');
                 selectedRadios.forEach(radio => {
-                    // USA A NOVA FUNÇÃO AQUI para os ingredientes de seleção única
                     total += parsePrice(radio.dataset.price);
                 });
 
@@ -1353,7 +1351,6 @@
                     const quantity = parseInt(display.textContent, 10);
                     if (quantity > 0) {
                         const optionDiv = display.closest('.ingredient-option');
-                        // USA A NOVA FUNÇÃO AQUI para os ingredientes com quantidade
                         const price = parsePrice(optionDiv.dataset.price);
                         total += quantity * price;
                     }
@@ -3049,16 +3046,17 @@
             }
 
             window.addEventListener('beforeinstallprompt', (e) => {
-                e.preventDefault();
+                // e.preventDefault(); // Removido para permitir o comportamento padrão do navegador
                 deferredPrompt = e;
-                if (!isPwaInstalled() && !sessionStorage.getItem('installPromptShown')) {
-                    installPromptModal.style.display = 'flex';
+                if (!isPwaInstalled()) {
+                    // Opcional: Você ainda pode mostrar seu botão/modal personalizado aqui se quiser,
+                    // mas o do navegador também poderá aparecer.
+                    // installPromptModal.style.display = 'flex';
                 }
             });
 
             installAppButton.addEventListener('click', () => {
                 installPromptModal.style.display = 'none';
-                sessionStorage.setItem('installPromptShown', 'true');
                 if (deferredPrompt) {
                     deferredPrompt.prompt();
                     deferredPrompt.userChoice.then((choiceResult) => {
@@ -3074,11 +3072,9 @@
 
             closeInstallPromptModalBtn.addEventListener('click', () => {
                 installPromptModal.style.display = 'none';
-                sessionStorage.setItem('installPromptShown', 'true');
             });
 
             window.addEventListener('appinstalled', () => {
-                sessionStorage.setItem('installPromptShown', 'true');
                 installPromptModal.style.display = 'none';
             });
             
