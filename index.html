@@ -1,3 +1,4 @@
+teste
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -2756,6 +2757,28 @@
                 return false;
             }
 
+            // --- INÍCIO DAS CORREÇÕES PARA O POP-UP DE INSTALAÇÃO ---
+
+            function showInstallPrompt() {
+                // Mostra o prompt apenas se o evento foi capturado e o app não está instalado
+                if (deferredPrompt && !isPwaInstalled()) {
+                    const installPromptModal = document.getElementById('install-prompt-modal');
+                    installPromptModal.style.display = 'flex';
+                }
+            }
+
+            window.addEventListener('beforeinstallprompt', (e) => {
+                // Previne o mini-infobar de aparecer em alguns navegadores
+                e.preventDefault();
+                // Guarda o evento para que possa ser acionado mais tarde.
+                deferredPrompt = e;
+                // Mostra o nosso modal de instalação customizado
+                showInstallPrompt();
+            });
+
+            // --- FIM DAS CORREÇÕES PARA O POP-UP DE INSTALAÇÃO ---
+
+
             cartButton.addEventListener('click', toggleOrderSidebar);
             closeSidebarBtn.addEventListener('click', closeOrderSidebar);
             backToMenuBtn.addEventListener('click', backToMenu);
@@ -3044,11 +3067,7 @@
                         }
                     });
             }
-
-            window.addEventListener('beforeinstallprompt', (e) => {
-                deferredPrompt = e;
-            });
-
+            
             installAppButton.addEventListener('click', () => {
                 installPromptModal.style.display = 'none';
                 if (deferredPrompt) {
@@ -3090,6 +3109,10 @@
             });
 
             loadMenuAndRender();
+            
+            // Adiciona um pequeno atraso para não ser intrusivo ao carregar a página
+            setTimeout(showInstallPrompt, 5000); 
+
         });
     </script>
 </body>
