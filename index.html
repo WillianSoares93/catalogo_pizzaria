@@ -628,8 +628,9 @@
             </div>
 
             <div id="address-summary-section" class="border border-gray-200 rounded-lg p-4 mb-6 bg-gray-50 hidden">
-                <h4 class="font-bold text-gray-800 mb-2">Detalhes da Entrega:</h4>
+                <h4 id="address-summary-title" class="font-bold text-gray-800 mb-2">Detalhes da Entrega:</h4>
                 <p id="client-name-display" class="text-gray-700 text-sm"></p>
+                <p id="client-phone-display" class="text-gray-700 text-sm"></p>
                 <p id="address-display" class="text-gray-700 text-sm"></p>
                 <p id="neighborhood-display" class="text-gray-600 text-sm"></p>
                 <p id="reference-display" class="text-gray-600 text-sm italic"></p>
@@ -807,6 +808,12 @@
                 </label>
                 <input type="text" id="clientNameInput" placeholder="Seu nome" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
             </div>
+            <div class="mb-4" id="phone-field">
+                <label for="clientPhoneInput" class="block text-gray-700 text-sm font-bold mb-2">
+                    Contato (WhatsApp):
+                </label>
+                <input type="tel" id="clientPhoneInput" placeholder="Seu número com DDD" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            </div>
             <div class="mb-4" id="neighborhood-field">
                 <label for="neighborhoodSelect" class="block text-gray-700 text-sm font-bold mb-2">
                     Bairro:
@@ -893,7 +900,8 @@
             let isPickup = false;
 
             let selectedAddress = {
-                clientName: null, 
+                clientName: null,
+                phone: null, 
                 bairro: null,
                 rua: null,
                 numero: null,
@@ -961,6 +969,7 @@
             const addressInputModal = document.getElementById('address-input-modal');
             const closeAddressModalBtn = document.getElementById('close-address-modal');
             const clientNameInput = document.getElementById('clientNameInput');
+            const clientPhoneInput = document.getElementById('clientPhoneInput');
             const neighborhoodSelect = document.getElementById('neighborhoodSelect');
             const streetInput = document.getElementById('streetInput');
             const numberInput = document.getElementById('numberInput');
@@ -969,6 +978,7 @@
             const confirmAddressBtn = document.getElementById('confirmAddressBtn');
             const addressSummarySection = document.getElementById('address-summary-section');
             const clientNameDisplay = document.getElementById('client-name-display');
+            const clientPhoneDisplay = document.getElementById('client-phone-display');
             const addressDisplay = document.getElementById('address-display');
             const neighborhoodDisplay = document.getElementById('neighborhood-display');
             const referenceDisplay = document.getElementById('reference-display');
@@ -2012,7 +2022,6 @@
                     deliveryFeeDisplay.classList.remove('hidden');
                     informAddressBtn.classList.add('hidden');
                     editDeliveryAddressBtn.classList.add('hidden');
-                    addressSummarySection.classList.add('hidden');
                 } else {
                     if (selectedAddress.bairro) {
                         deliveryFeeDisplay.textContent = 'R$ ' + selectedAddress.deliveryFee.toFixed(2).replace('.', ',');
@@ -2025,7 +2034,6 @@
                         informAddressBtn.classList.remove('hidden');
                         editDeliveryAddressBtn.classList.add('hidden');
                     }
-                    updateAddressDisplay();
                 }
                 
                 const total = subtotal - finalDiscountAmount + selectedAddress.deliveryFee;
@@ -2058,6 +2066,7 @@
                     `);
                 }
                 
+                updateAddressDisplay();
                 updateDrinkSuggestionButtons();
             }
             
@@ -2149,9 +2158,11 @@
                 if (isPickup) {
                     message += `\n\n*MODALIDADE: RETIRADA NO LOCAL*`;
                     message += `\nNome do Cliente: ${selectedAddress.clientName}`;
+                    message += `\nContato: ${selectedAddress.phone}`;
                 } else {
                     message += `\n\n*Dados da Entrega:*`;
                     message += `\nNome: ${selectedAddress.clientName}`;
+                    message += `\nContato: ${selectedAddress.phone}`;
                     message += `\nEndereço: ${selectedAddress.rua}, Nº ${selectedAddress.numero}, ${selectedAddress.bairro}`;
                     if (selectedAddress.referencia) {
                         message += `\nReferência: ${selectedAddress.referencia}`;
@@ -2176,13 +2187,13 @@
                 }
 
                 if (isPickup) {
-                    if (!selectedAddress.clientName) {
+                    if (!selectedAddress.clientName || !selectedAddress.phone) {
                         isCheckoutInitiated = true;
                         showAddressInputModal();
                         return;
                     }
                 } else {
-                    if (!selectedAddress.clientName || !selectedAddress.bairro || (!selectedAddress.numero && !noNumberCheckbox.checked)) {
+                    if (!selectedAddress.clientName || !selectedAddress.phone || !selectedAddress.bairro || (!selectedAddress.numero && !noNumberCheckbox.checked)) {
                         isCheckoutInitiated = true;
                         showAddressInputModal();
                         return;
@@ -2559,15 +2570,18 @@
                 updatePromotionButtonVisibility();
                 
                 const fields = ['neighborhood-field', 'street-field', 'number-field', 'reference-field'];
+                const phoneField = document.getElementById('phone-field');
+
                 if (isPickup) {
-                    document.getElementById('address-input-modal').querySelector('h3').textContent = 'Informe seu Nome';
+                    document.getElementById('address-input-modal').querySelector('h3').textContent = 'Informe seus Dados para Retirada';
                     fields.forEach(id => document.getElementById(id).style.display = 'none');
                 } else {
-                    document.getElementById('address-input-modal').querySelector('h3').textContent = 'Informe seus Dados';
+                    document.getElementById('address-input-modal').querySelector('h3').textContent = 'Informe seus Dados de Entrega';
                     fields.forEach(id => document.getElementById(id).style.display = 'block');
                 }
 
                 clientNameInput.value = selectedAddress.clientName || '';
+                clientPhoneInput.value = selectedAddress.phone || '';
                 if (selectedAddress.bairro) {
                     neighborhoodSelect.value = selectedAddress.bairro;
                 } else {
@@ -2600,33 +2614,28 @@
                 });
             }
 
-            function showAddressSummary() {
-                if (selectedAddress.bairro && !isPickup) {
-                    addressSummarySection.classList.remove('hidden');
-                    clientNameDisplay.textContent = `Nome do Cliente: ${selectedAddress.clientName || 'Não informado'}`;
-                    addressDisplay.textContent = `Rua: ${selectedAddress.rua}, Nº ${selectedAddress.numero}`;
-                    neighborhoodDisplay.textContent = `Bairro: ${selectedAddress.bairro}`;
-                    referenceDisplay.textContent = selectedAddress.referencia ? `Ponto de Referência: ${selectedAddress.referencia}` : '';
-                } else {
-                    hideAddressSummary();
-                }
-            }
-
-            function hideAddressSummary() {
-                addressSummarySection.classList.add('hidden');
-                clientNameDisplay.textContent = '';
-                addressDisplay.textContent = '';
-                neighborhoodDisplay.textContent = '';
-                referenceDisplay.textContent = '';
-            }
-
             function updateAddressDisplay() {
-                if (selectedAddress.bairro && !isPickup) {
+                const summaryTitle = document.getElementById('address-summary-title');
+                
+                if (selectedAddress.clientName && selectedAddress.phone) {
                     addressSummarySection.classList.remove('hidden');
-                    clientNameDisplay.textContent = `Nome do Cliente: ${selectedAddress.clientName || 'Não informado'}`;
-                    addressDisplay.textContent = `Rua: ${selectedAddress.rua}, Nº ${selectedAddress.numero}`;
-                    neighborhoodDisplay.textContent = `Bairro: ${selectedAddress.bairro}`;
-                    referenceDisplay.textContent = selectedAddress.referencia ? `Ponto de Referência: ${selectedAddress.referencia}` : '';
+                    clientNameDisplay.textContent = `Nome do Cliente: ${selectedAddress.clientName}`;
+                    clientPhoneDisplay.textContent = `Contato: ${selectedAddress.phone}`;
+
+                    if (isPickup) {
+                        summaryTitle.textContent = 'Detalhes da Retirada:';
+                        addressDisplay.style.display = 'none';
+                        neighborhoodDisplay.style.display = 'none';
+                        referenceDisplay.style.display = 'none';
+                    } else {
+                        summaryTitle.textContent = 'Detalhes da Entrega:';
+                        addressDisplay.style.display = 'block';
+                        neighborhoodDisplay.style.display = 'block';
+                        referenceDisplay.style.display = 'block';
+                        addressDisplay.textContent = `Rua: ${selectedAddress.rua}, Nº ${selectedAddress.numero}`;
+                        neighborhoodDisplay.textContent = `Bairro: ${selectedAddress.bairro}`;
+                        referenceDisplay.textContent = selectedAddress.referencia ? `Ponto de Referência: ${selectedAddress.referencia}` : '';
+                    }
                 } else {
                     addressSummarySection.classList.add('hidden');
                 }
@@ -2788,10 +2797,6 @@
                     updateCartCount(); 
                     updateOrderDisplay(); 
                     updateCheckoutButtonText(); 
-                    showAddressSummary(); 
-                    
-                    toggleAddItemButtons(true);
-                    toggleCategoryButtons(true);
                     
                     setTimeout(() => {
                         window.dispatchEvent(new Event('scroll'));
@@ -3048,12 +3053,14 @@
 
             confirmAddressBtn.addEventListener('click', function() {
                 const clientName = clientNameInput.value.trim();
+                const clientPhone = clientPhoneInput.value.trim();
                 
-                if (!clientName) {
-                    showMessageModal('Por favor, informe seu nome para continuar.');
+                if (!clientName || !clientPhone) {
+                    showMessageModal('Por favor, informe seu nome e contato para continuar.');
                     return;
                 }
                 selectedAddress.clientName = clientName;
+                selectedAddress.phone = clientPhone;
 
                 if (isPickup) {
                     selectedAddress.bairro = null;
