@@ -603,6 +603,12 @@
                     <span id="discount-value-display" class="font-bold">- R$ 0,00</span>
                 </div>
                 
+                <!-- NOVO CHECKBOX DE RETIRADA -->
+                <div class="flex items-center mb-2">
+                    <input type="checkbox" id="pickupCheckbox" class="form-checkbox h-5 w-5 text-red-600 rounded focus:ring-red-500">
+                    <label for="pickupCheckbox" class="ml-2 text-gray-700 font-medium">Irei fazer a Retirada</label>
+                </div>
+                
                 <div id="deliveryFeeSection" class="flex justify-between mb-2">
                     <span class="text-gray-600">Taxa de entrega:</span>
                     <div id="deliveryFeeContainer" class="flex items-center">
@@ -802,7 +808,7 @@
                 </label>
                 <input type="text" id="clientNameInput" placeholder="Seu nome" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
             </div>
-            <div class="mb-4">
+            <div class="mb-4" id="neighborhood-field">
                 <label for="neighborhoodSelect" class="block text-gray-700 text-sm font-bold mb-2">
                     Bairro:
                 </label>
@@ -810,13 +816,13 @@
                     <option value="">Selecione um bairro</option>
                     </select>
             </div>
-            <div class="mb-4">
+            <div class="mb-4" id="street-field">
                 <label for="streetInput" class="block text-gray-700 text-sm font-bold mb-2">
                     Rua:
                 </label>
                 <input type="text" id="streetInput" placeholder="Nome da Rua" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
             </div>
-            <div class="mb-4">
+            <div class="mb-4" id="number-field">
                 <div class="flex items-center justify-between mb-2">
                     <label for="numberInput" class="block text-gray-700 text-sm font-bold">
                         Número:
@@ -828,7 +834,7 @@
                 </div>
                 <input type="number" inputmode="numeric" id="numberInput" placeholder="Número" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
             </div>
-            <div class="mb-6">
+            <div class="mb-6" id="reference-field">
                 <label for="referencePointInput" class="block text-gray-700 text-sm font-bold mb-2">
                     Ponto de Referência (Opcional):
                 </label>
@@ -883,9 +889,11 @@
             let isCheckoutInitiated = false; 
             let discountPromotion = null;
             let contactInfo = {};
-            // CORREÇÃO: Variável para controlar se o prompt já foi exibido
             let installPromptShown = false;
             
+            // NOVA VARIÁVEL DE ESTADO PARA RETIRADA
+            let isPickup = false;
+
             let selectedAddress = {
                 clientName: null, 
                 bairro: null,
@@ -975,6 +983,9 @@
             const footerPhone = document.getElementById('footer-phone');
             const footerEmail = document.getElementById('footer-email');
             const socialLinksContainer = document.getElementById('social-links-container');
+            
+            // NOVA CONSTANTE PARA O CHECKBOX
+            const pickupCheckbox = document.getElementById('pickupCheckbox');
 
             let currentPizzaData = {}; 
             let firstHalfPizza = null; 
@@ -1999,16 +2010,27 @@
                     }
                 }
                 
-                if (selectedAddress.bairro) {
-                    deliveryFeeDisplay.textContent = 'R$ ' + selectedAddress.deliveryFee.toFixed(2).replace('.', ',');
+                // LÓGICA ATUALIZADA PARA A TAXA DE ENTREGA
+                if (isPickup) {
+                    selectedAddress.deliveryFee = 0;
+                    deliveryFeeDisplay.textContent = 'R$ 0,00';
                     deliveryFeeDisplay.classList.remove('hidden');
                     informAddressBtn.classList.add('hidden');
-                    editDeliveryAddressBtn.classList.remove('hidden');
-                } else {
-                    deliveryFeeDisplay.textContent = '';
-                    deliveryFeeDisplay.classList.add('hidden');
-                    informAddressBtn.classList.remove('hidden');
                     editDeliveryAddressBtn.classList.add('hidden');
+                    addressSummarySection.classList.add('hidden');
+                } else {
+                    if (selectedAddress.bairro) {
+                        deliveryFeeDisplay.textContent = 'R$ ' + selectedAddress.deliveryFee.toFixed(2).replace('.', ',');
+                        deliveryFeeDisplay.classList.remove('hidden');
+                        informAddressBtn.classList.add('hidden');
+                        editDeliveryAddressBtn.classList.remove('hidden');
+                    } else {
+                        deliveryFeeDisplay.textContent = '';
+                        deliveryFeeDisplay.classList.add('hidden');
+                        informAddressBtn.classList.remove('hidden');
+                        editDeliveryAddressBtn.classList.add('hidden');
+                    }
+                    updateAddressDisplay(); // Mostra o resumo do endereço se houver
                 }
                 
                 const total = subtotal - finalDiscountAmount + selectedAddress.deliveryFee;
@@ -2042,7 +2064,6 @@
                 }
                 
                 updateDrinkSuggestionButtons();
-                updateAddressDisplay();
             }
             
             function removeItem(index) {
@@ -2114,7 +2135,10 @@
                     message += `\nDesconto: -R$ ${finalDiscountAmount.toFixed(2).replace('.', ',')}`;
                 }
 
-                message += `\nTaxa de entrega: R$ ${selectedAddress.deliveryFee.toFixed(2).replace('.', ',')}`;
+                // LÓGICA ATUALIZADA PARA A MENSAGEM
+                if (!isPickup) {
+                    message += `\nTaxa de entrega: R$ ${selectedAddress.deliveryFee.toFixed(2).replace('.', ',')}`;
+                }
                 const total = subtotal - finalDiscountAmount + selectedAddress.deliveryFee;
                 message += `\n*Total: R$ ${total.toFixed(2).replace('.', ',')}*`;
 
@@ -2128,11 +2152,16 @@
                     message += `\n*Pagamento:* ${paymentDetails}`;
                 }
 
-                message += `\n\n*Dados da Entrega:*`;
-                message += `\nNome: ${selectedAddress.clientName}`;
-                message += `\nEndereço: ${selectedAddress.rua}, Nº ${selectedAddress.numero}, ${selectedAddress.bairro}`;
-                if (selectedAddress.referencia) {
-                    message += `\nReferência: ${selectedAddress.referencia}`;
+                if (isPickup) {
+                    message += `\n\n*MODALIDADE: RETIRADA NO LOCAL*`;
+                    message += `\nNome do Cliente: ${selectedAddress.clientName}`;
+                } else {
+                    message += `\n\n*Dados da Entrega:*`;
+                    message += `\nNome: ${selectedAddress.clientName}`;
+                    message += `\nEndereço: ${selectedAddress.rua}, Nº ${selectedAddress.numero}, ${selectedAddress.bairro}`;
+                    if (selectedAddress.referencia) {
+                        message += `\nReferência: ${selectedAddress.referencia}`;
+                    }
                 }
 
                 const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
@@ -2152,10 +2181,19 @@
                     return;
                 }
 
-                if (!selectedAddress.clientName || !selectedAddress.bairro || (!selectedAddress.numero && !noNumberCheckbox.checked)) {
-                    isCheckoutInitiated = true;
-                    showAddressInputModal();
-                    return;
+                // LÓGICA ATUALIZADA PARA O CHECKOUT
+                if (isPickup) {
+                    if (!selectedAddress.clientName) {
+                        isCheckoutInitiated = true;
+                        showAddressInputModal();
+                        return;
+                    }
+                } else {
+                    if (!selectedAddress.clientName || !selectedAddress.bairro || (!selectedAddress.numero && !noNumberCheckbox.checked)) {
+                        isCheckoutInitiated = true;
+                        showAddressInputModal();
+                        return;
+                    }
                 }
 
                 const hasDrinks = order.some(item => item.category === 'bebidas');
@@ -2467,7 +2505,6 @@
                     
                     let newActiveCategory = null;
                     
-                    // Encontra a categoria cuja seção está mais próxima do topo da viewport
                     let closestSection = null;
                     let minDistance = Infinity;
 
@@ -2484,7 +2521,6 @@
                         newActiveCategory = closestSection.id.replace('-section', '');
                     }
                     
-                    // Lógica para o caso de pizzas meio a meio
                     if (isSelectingHalfPizza) {
                         if (isFirstHalfPromotional) {
                             if (newActiveCategory && newActiveCategory.toLowerCase() !== 'promocionais') {
@@ -2528,6 +2564,17 @@
             function showAddressInputModal() {
                 addressInputModal.style.display = 'flex';
                 updatePromotionButtonVisibility();
+                
+                // LÓGICA ATUALIZADA PARA O MODAL DE ENDEREÇO
+                const fields = ['neighborhood-field', 'street-field', 'number-field', 'reference-field'];
+                if (isPickup) {
+                    document.getElementById('address-input-modal').querySelector('h3').textContent = 'Informe seu Nome';
+                    fields.forEach(id => document.getElementById(id).style.display = 'none');
+                } else {
+                    document.getElementById('address-input-modal').querySelector('h3').textContent = 'Informe seus Dados';
+                    fields.forEach(id => document.getElementById(id).style.display = 'block');
+                }
+
                 clientNameInput.value = selectedAddress.clientName || '';
                 if (selectedAddress.bairro) {
                     neighborhoodSelect.value = selectedAddress.bairro;
@@ -2562,7 +2609,7 @@
             }
 
             function showAddressSummary() {
-                if (selectedAddress.bairro) {
+                if (selectedAddress.bairro && !isPickup) {
                     addressSummarySection.classList.remove('hidden');
                     clientNameDisplay.textContent = `Nome do Cliente: ${selectedAddress.clientName || 'Não informado'}`;
                     addressDisplay.textContent = `Rua: ${selectedAddress.rua}, Nº ${selectedAddress.numero}`;
@@ -2582,7 +2629,7 @@
             }
 
             function updateAddressDisplay() {
-                if (selectedAddress.bairro && selectedAddress.rua) {
+                if (selectedAddress.bairro && !isPickup) {
                     addressSummarySection.classList.remove('hidden');
                     clientNameDisplay.textContent = `Nome do Cliente: ${selectedAddress.clientName || 'Não informado'}`;
                     addressDisplay.textContent = `Rua: ${selectedAddress.rua}, Nº ${selectedAddress.numero}`;
@@ -2681,6 +2728,25 @@
                 const txid = "pedido" + Date.now();
                 return gerarPayload(pixKey, amount, merchantName, merchantCity, txid);
             }
+
+            // NOVA FUNÇÃO PARA GERENCIAR O CHECKBOX DE RETIRADA
+            function handlePickupToggle() {
+                isPickup = pickupCheckbox.checked;
+
+                if (isPickup) {
+                    // Se mudar para retirada, zera a taxa de entrega
+                    selectedAddress.deliveryFee = 0;
+                } else {
+                    // Se voltar para entrega, recalcula a taxa se um bairro já foi escolhido
+                    if (selectedAddress.bairro) {
+                        const feeData = deliveryFeesData.find(fee => fee.neighborhood === selectedAddress.bairro);
+                        selectedAddress.deliveryFee = feeData ? feeData.deliveryFee : 0;
+                    } else {
+                        selectedAddress.deliveryFee = 0;
+                    }
+                }
+                updateOrderDisplay();
+            }
             
             async function loadMenuAndRender() {
                 try {
@@ -2758,35 +2824,29 @@
                 return false;
             }
 
-            // --- INÍCIO DAS CORREÇÕES PARA O POP-UP DE INSTALAÇÃO ---
-
             function showInstallPrompt() {
                 const isInstalled = isPwaInstalled();
-                // Mostra o prompt apenas se o evento foi capturado, o app não está instalado e o prompt ainda não foi exibido nesta sessão
                 if (deferredPrompt && !isInstalled && !installPromptShown) {
                     const installPromptModal = document.getElementById('install-prompt-modal');
                     installPromptModal.style.display = 'flex';
-                    // Define o flag para true para não mostrar novamente na mesma visita
                     installPromptShown = true; 
                 }
             }
 
             window.addEventListener('beforeinstallprompt', (e) => {
-                // Previne o mini-infobar de aparecer em alguns navegadores
                 e.preventDefault();
-                // Guarda o evento para que possa ser acionado mais tarde.
                 deferredPrompt = e;
-                // Mostra o nosso modal de instalação customizado
                 showInstallPrompt();
             });
-
-            // --- FIM DAS CORREÇÕES PARA O POP-UP DE INSTALAÇÃO ---
 
 
             cartButton.addEventListener('click', toggleOrderSidebar);
             closeSidebarBtn.addEventListener('click', closeOrderSidebar);
             backToMenuBtn.addEventListener('click', backToMenu);
             checkoutButton.addEventListener('click', handleCheckoutFlow);
+            
+            // ADICIONA O EVENT LISTENER PARA O CHECKBOX
+            pickupCheckbox.addEventListener('change', handlePickupToggle);
 
             orderItemsContainer.addEventListener('click', function(event) {
                 const removeButton = event.target.closest('.remove-item-btn');
@@ -3007,44 +3067,55 @@
 
             confirmAddressBtn.addEventListener('click', function() {
                 const clientName = clientNameInput.value.trim();
-                const bairro = neighborhoodSelect.value;
-                const rua = streetInput.value.trim();
-                let numero = numberInput.value.trim();
-                const referencia = referencePointInput.value.trim();
-                const isNoNumber = noNumberCheckbox.checked;
-
-                if (!clientName || !bairro || !rua) {
-                    showMessageModal('Por favor, preencha o nome do cliente, o bairro e a rua para continuar.');
-                    return;
-                }
                 
-                if (!isNoNumber && !numero) {
-                    showMessageModal('Por favor, preencha o número ou marque a opção "Sem Número".');
+                if (!clientName) {
+                    showMessageModal('Por favor, informe seu nome para continuar.');
                     return;
                 }
+                selectedAddress.clientName = clientName;
 
-                if (isNoNumber) {
-                    numero = 'S/N';
+                if (isPickup) {
+                    selectedAddress.bairro = null;
+                    selectedAddress.rua = null;
+                    selectedAddress.numero = null;
+                    selectedAddress.referencia = null;
+                    selectedAddress.deliveryFee = 0;
+                } else {
+                    const bairro = neighborhoodSelect.value;
+                    const rua = streetInput.value.trim();
+                    let numero = numberInput.value.trim();
+                    const referencia = referencePointInput.value.trim();
+                    const isNoNumber = noNumberCheckbox.checked;
+
+                    if (!bairro || !rua) {
+                        showMessageModal('Por favor, preencha o bairro e a rua para continuar.');
+                        return;
+                    }
+                    
+                    if (!isNoNumber && !numero) {
+                        showMessageModal('Por favor, preencha o número ou marque a opção "Sem Número".');
+                        return;
+                    }
+
+                    if (isNoNumber) {
+                        numero = 'S/N';
+                    }
+
+                    const selectedFee = deliveryFeesData.find(fee => fee.neighborhood === bairro);
+                    if (!selectedFee) {
+                        showMessageModal('Bairro selecionado inválido. Por favor, selecione um bairro da lista.');
+                        return;
+                    }
+                    
+                    selectedAddress.bairro = bairro;
+                    selectedAddress.rua = rua;
+                    selectedAddress.numero = numero;
+                    selectedAddress.referencia = referencia;
+                    selectedAddress.deliveryFee = selectedFee.deliveryFee;
                 }
-
-                const selectedFee = deliveryFeesData.find(fee => fee.neighborhood === bairro);
-                if (!selectedFee) {
-                    showMessageModal('Bairro selecionado inválido. Por favor, selecione um bairro da lista.');
-                    return;
-                }
-
-                selectedAddress = {
-                    clientName: clientName,
-                    bairro: bairro,
-                    rua: rua,
-                    numero: numero,
-                    referencia: referencia,
-                    deliveryFee: selectedFee.deliveryFee
-                };
 
                 hideAddressInputModal();
                 updateOrderDisplay();
-                showAddressSummary();
                 
                 if (isCheckoutInitiated) {
                     handleCheckoutFlow();
