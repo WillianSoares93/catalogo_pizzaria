@@ -1,4 +1,3 @@
-teste
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -604,7 +603,6 @@ teste
                     <span id="discount-value-display" class="font-bold">- R$ 0,00</span>
                 </div>
                 
-                <!-- NOVO CHECKBOX DE RETIRADA -->
                 <div class="flex items-center mb-2">
                     <input type="checkbox" id="pickupCheckbox" class="form-checkbox h-5 w-5 text-red-600 rounded focus:ring-red-500">
                     <label for="pickupCheckbox" class="ml-2 text-gray-700 font-medium">Irei fazer a Retirada</label>
@@ -892,7 +890,6 @@ teste
             let contactInfo = {};
             let installPromptShown = false;
             
-            // NOVA VARIÁVEL DE ESTADO PARA RETIRADA
             let isPickup = false;
 
             let selectedAddress = {
@@ -984,8 +981,6 @@ teste
             const footerPhone = document.getElementById('footer-phone');
             const footerEmail = document.getElementById('footer-email');
             const socialLinksContainer = document.getElementById('social-links-container');
-            
-            // NOVA CONSTANTE PARA O CHECKBOX
             const pickupCheckbox = document.getElementById('pickupCheckbox');
 
             let currentPizzaData = {}; 
@@ -2011,7 +2006,6 @@ teste
                     }
                 }
                 
-                // LÓGICA ATUALIZADA PARA A TAXA DE ENTREGA
                 if (isPickup) {
                     selectedAddress.deliveryFee = 0;
                     deliveryFeeDisplay.textContent = 'R$ 0,00';
@@ -2031,7 +2025,7 @@ teste
                         informAddressBtn.classList.remove('hidden');
                         editDeliveryAddressBtn.classList.add('hidden');
                     }
-                    updateAddressDisplay(); // Mostra o resumo do endereço se houver
+                    updateAddressDisplay();
                 }
                 
                 const total = subtotal - finalDiscountAmount + selectedAddress.deliveryFee;
@@ -2136,7 +2130,6 @@ teste
                     message += `\nDesconto: -R$ ${finalDiscountAmount.toFixed(2).replace('.', ',')}`;
                 }
 
-                // LÓGICA ATUALIZADA PARA A MENSAGEM
                 if (!isPickup) {
                     message += `\nTaxa de entrega: R$ ${selectedAddress.deliveryFee.toFixed(2).replace('.', ',')}`;
                 }
@@ -2182,7 +2175,6 @@ teste
                     return;
                 }
 
-                // LÓGICA ATUALIZADA PARA O CHECKOUT
                 if (isPickup) {
                     if (!selectedAddress.clientName) {
                         isCheckoutInitiated = true;
@@ -2566,7 +2558,6 @@ teste
                 addressInputModal.style.display = 'flex';
                 updatePromotionButtonVisibility();
                 
-                // LÓGICA ATUALIZADA PARA O MODAL DE ENDEREÇO
                 const fields = ['neighborhood-field', 'street-field', 'number-field', 'reference-field'];
                 if (isPickup) {
                     document.getElementById('address-input-modal').querySelector('h3').textContent = 'Informe seu Nome';
@@ -2730,15 +2721,12 @@ teste
                 return gerarPayload(pixKey, amount, merchantName, merchantCity, txid);
             }
 
-            // NOVA FUNÇÃO PARA GERENCIAR O CHECKBOX DE RETIRADA
             function handlePickupToggle() {
                 isPickup = pickupCheckbox.checked;
 
                 if (isPickup) {
-                    // Se mudar para retirada, zera a taxa de entrega
                     selectedAddress.deliveryFee = 0;
                 } else {
-                    // Se voltar para entrega, recalcula a taxa se um bairro já foi escolhido
                     if (selectedAddress.bairro) {
                         const feeData = deliveryFeesData.find(fee => fee.neighborhood === selectedAddress.bairro);
                         selectedAddress.deliveryFee = feeData ? feeData.deliveryFee : 0;
@@ -2809,6 +2797,9 @@ teste
                         window.dispatchEvent(new Event('scroll'));
                     }, 100);
 
+                    // CORREÇÃO: Chama o prompt de instalação após um delay
+                    setTimeout(showInstallPrompt, 5000); // 5 segundos de delay
+
                 } catch (error) {
                     console.error('Erro ao carregar o cardápio:', error);
                     showMessageModal('Não foi possível carregar o cardápio no momento. Por favor, tente novamente mais tarde.');
@@ -2816,28 +2807,20 @@ teste
             }
 
             function isPwaInstalled() {
-                if (window.matchMedia('(display-mode: standalone)').matches) {
-                    return true;
-                }
-                if (navigator.standalone) {
-                    return true;
-                }
-                return false;
+                return window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
             }
 
             function showInstallPrompt() {
-                const isInstalled = isPwaInstalled();
-                if (deferredPrompt && !isInstalled && !installPromptShown) {
-                    const installPromptModal = document.getElementById('install-prompt-modal');
+                if (deferredPrompt && !isPwaInstalled() && !installPromptShown) {
                     installPromptModal.style.display = 'flex';
                     installPromptShown = true; 
                 }
             }
-
+            
+            // CORREÇÃO: Apenas salva o evento, não chama o prompt imediatamente
             window.addEventListener('beforeinstallprompt', (e) => {
                 e.preventDefault();
                 deferredPrompt = e;
-                showInstallPrompt();
             });
 
 
@@ -2846,7 +2829,6 @@ teste
             backToMenuBtn.addEventListener('click', backToMenu);
             checkoutButton.addEventListener('click', handleCheckoutFlow);
             
-            // ADICIONA O EVENT LISTENER PARA O CHECKBOX
             pickupCheckbox.addEventListener('change', handlePickupToggle);
 
             orderItemsContainer.addEventListener('click', function(event) {
