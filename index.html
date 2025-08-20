@@ -2797,8 +2797,7 @@
                         window.dispatchEvent(new Event('scroll'));
                     }, 100);
 
-                    // CORREÇÃO: Chama o prompt de instalação após um delay
-                    setTimeout(showInstallPrompt, 5000); // 5 segundos de delay
+                    setTimeout(showInstallPrompt, 2000); 
 
                 } catch (error) {
                     console.error('Erro ao carregar o cardápio:', error);
@@ -2817,7 +2816,6 @@
                 }
             }
             
-            // CORREÇÃO: Apenas salva o evento, não chama o prompt imediatamente
             window.addEventListener('beforeinstallprompt', (e) => {
                 e.preventDefault();
                 deferredPrompt = e;
