@@ -988,10 +988,13 @@
             let isSelectingSecondHalf = false; 
             let qrCodeInstance = null;
 
+            // ARRAY QUE DEFINE OS TAMANHOS DAS PIZZAS.
+            // O novo tamanho de 10 fatias foi adicionado aqui.
             const sizes = [
                 { slices: 4, label: '4 Fatias', priceKey: 'price4Slices' },
                 { slices: 6, label: '6 Fatias', priceKey: 'price6Slices' },
-                { slices: 8, label: '8 Fatias', priceKey: 'basePrice' } 
+                { slices: 8, label: '8 Fatias', priceKey: 'basePrice' },
+                { slices: 10, label: '10 Fatias', priceKey: 'price10Slices' } // Adicionamos o novo tamanho
             ];
             
             function toggleOrderSidebar() {
@@ -1118,6 +1121,7 @@
                         case 'Preço 8 fatias': return 'basePrice';
                         case 'Preço 6 fatias': return 'price6Slices';
                         case 'Preço 4 fatias': return 'price4Slices';
+                        case 'Preço 10 fatias': return 'price10Slices'; // Adicionamos o novo mapeamento
                         case 'Categoria': return 'category';
                         case 'É Pizza? (SIM/NÃO)': return 'isPizza';
                         case 'É Montável? (SIM/NAO)': return 'isCustomizable';
@@ -1161,7 +1165,7 @@
                             if (['neighborhood', 'name', 'category', 'data'].includes(headerKey) && (value === undefined || value === null || value.trim() === '')) {
                                 value = '';
                             }
-                            if (['basePrice', 'price6Slices', 'price4Slices', 'promoPrice', 'deliveryFee', 'price'].includes(headerKey)) {
+                            if (['basePrice', 'price6Slices', 'price4Slices', 'price10Slices', 'promoPrice', 'deliveryFee', 'price'].includes(headerKey)) { // Adicionamos 'price10Slices'
                                 const parsedValue = parseFloat(String(value).replace(',', '.'));
                                 item[headerKey] = isNaN(parsedValue) ? 0 : parsedValue;
                             } else if (headerKey === 'limit' || headerKey === 'ingredientLimit') {
@@ -1514,6 +1518,15 @@
                                             </div>
                                         `;
                                     }
+                                    // Adicionamos a exibição do novo tamanho de 10 fatias
+                                    if (item.price10Slices > 0) {
+                                        pricesHtml += `
+                                            <div class="text-center px-1">
+                                                <span class="text-xs text-gray-500">10 Fatias</span>
+                                                <p class="font-bold text-red-600 whitespace-nowrap">R$ ${item.price10Slices.toFixed(2).replace('.', ',')}</p>
+                                            </div>
+                                        `;
+                                    }
 
                                     itemHtml = `
                                         <div class="flavor-card bg-white rounded-xl overflow-hidden shadow-lg flex flex-col">
@@ -1804,7 +1817,7 @@
 
                         optionDiv.querySelector('.add-full-size-pizza-btn').addEventListener('click', function() {
                             const selectedSlices = parseInt(this.dataset.slices);
-                            const selectedPriceKey = this.dataset.priceKey;
+                            const selectedPriceKey = this.dataset.price-key;
                             addToOrder({
                                 type: 'full',
                                 name: currentPizzaData.name,
@@ -1819,7 +1832,7 @@
 
                         optionDiv.querySelector('.add-half-size-pizza-btn').addEventListener('click', function() {
                             const selectedSlices = parseInt(this.dataset.slices);
-                            const selectedPriceKey = this.dataset.priceKey;
+                            const selectedPriceKey = this.dataset.price-key;
                             firstHalfPizza = {
                                 name: currentPizzaData.name,
                                 price: currentPizzaData[selectedPriceKey] / 2, 
