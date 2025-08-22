@@ -1,4 +1,3 @@
-teste
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -865,6 +864,11 @@ teste
                     <div class="flex justify-center md:justify-start space-x-4 mt-2" id="social-links-container">
                         </div>
                 </div>
+                <div>
+                    <button id="installAppButtonFooter" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-full transition duration-300 hidden">
+                        Instalar Aplicativo
+                    </button>
+                </div>
             </div>
             <div class="border-t border-gray-700 mt-8 pt-6 text-center text-gray-400">
                 <p class="mb-2">
@@ -983,6 +987,7 @@ teste
             const footerEmail = document.getElementById('footer-email');
             const socialLinksContainer = document.getElementById('social-links-container');
             const pickupCheckbox = document.getElementById('pickupCheckbox');
+            const installAppButtonFooter = document.getElementById('installAppButtonFooter');
 
             let currentPizzaData = {}; 
             let firstHalfPizza = null; 
@@ -1523,8 +1528,9 @@ teste
                                         `;
                                     } else {
                                         // Layout original para 3 ou menos tamanhos
+                                        let tempPrices = '';
                                         if (item.price4Slices > 0) {
-                                            pricesHtml += `
+                                            tempPrices += `
                                                 <div class="text-center px-1">
                                                     <span class="text-xs text-gray-500">4 Fatias</span>
                                                     <p class="font-bold text-red-600 whitespace-nowrap">R$ ${item.price4Slices.toFixed(2).replace('.', ',')}</p>
@@ -1532,15 +1538,17 @@ teste
                                             `;
                                         }
                                         if (item.price6Slices > 0) {
-                                            pricesHtml += `
-                                                <div class="text-center px-2 border-l border-r border-gray-200">
+                                            if (tempPrices.length > 0) tempPrices += `<div class="w-px h-full bg-gray-200 mx-2"></div>`;
+                                            tempPrices += `
+                                                <div class="text-center px-1">
                                                     <span class="text-xs text-gray-500">6 Fatias</span>
                                                     <p class="font-bold text-red-600 whitespace-nowrap">R$ ${item.price6Slices.toFixed(2).replace('.', ',')}</p>
                                                 </div>
                                             `;
                                         }
                                         if (item.basePrice > 0) {
-                                            pricesHtml += `
+                                            if (tempPrices.length > 0) tempPrices += `<div class="w-px h-full bg-gray-200 mx-2"></div>`;
+                                            tempPrices += `
                                                 <div class="text-center px-1">
                                                     <span class="text-xs text-gray-500">8 Fatias</span>
                                                     <p class="font-bold text-red-600 whitespace-nowrap">R$ ${item.basePrice.toFixed(2).replace('.', ',')}</p>
@@ -1548,13 +1556,15 @@ teste
                                             `;
                                         }
                                         if (item.price10Slices > 0) {
-                                            pricesHtml += `
+                                            if (tempPrices.length > 0) tempPrices += `<div class="w-px h-full bg-gray-200 mx-2"></div>`;
+                                            tempPrices += `
                                                 <div class="text-center px-1">
                                                     <span class="text-xs text-gray-500">10 Fatias</span>
                                                     <p class="font-bold text-red-600 whitespace-nowrap">R$ ${item.price10Slices.toFixed(2).replace('.', ',')}</p>
                                                 </div>
                                             `;
                                         }
+                                        pricesHtml = `<div class="flex items-baseline space-x-1">${tempPrices}</div>`;
                                     }
 
                                     itemHtml = `
@@ -1566,7 +1576,7 @@ teste
                                                 
                                                 <div class="mt-auto pt-4 border-t border-gray-100">
                                                     <div class="flex justify-between items-center">
-                                                        <div class="flex flex-wrap gap-1 items-baseline">
+                                                        <div class="flex flex-wrap items-baseline gap-1">
                                                             ${pricesHtml}
                                                         </div>
                                                         <button class="add-item-btn bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full text-sm font-medium transition duration-300 flex-shrink-0"
@@ -2835,6 +2845,14 @@ teste
             function isPwaInstalled() {
                 return window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
             }
+            
+            function updateInstallButtonVisibility() {
+                if (!isPwaInstalled() && deferredPrompt) {
+                    installAppButtonFooter.style.display = 'block';
+                } else {
+                    installAppButtonFooter.style.display = 'none';
+                }
+            }
 
             function showInstallPrompt() {
                 if (deferredPrompt && !isPwaInstalled() && !installPromptShown) {
@@ -2846,6 +2864,21 @@ teste
             window.addEventListener('beforeinstallprompt', (e) => {
                 e.preventDefault();
                 deferredPrompt = e;
+                updateInstallButtonVisibility();
+            });
+
+            installAppButtonFooter.addEventListener('click', () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    deferredPrompt.userChoice.then((choiceResult) => {
+                        if (choiceResult.outcome === 'accepted') {
+                            showMessageModal('Sâmia Cardápio está sendo instalado, logo ele aparecerá na sua tela de app.');
+                        } else {
+                            showMessageModal('Você pode instalar o Sâmia Cardápio a qualquer momento pelo menu do navegador.');
+                        }
+                        deferredPrompt = null; 
+                    });
+                }
             });
 
 
@@ -3173,6 +3206,7 @@ teste
 
             window.addEventListener('appinstalled', () => {
                 installPromptModal.style.display = 'none';
+                updateInstallButtonVisibility();
             });
             
             window.addEventListener('scroll', () => {
