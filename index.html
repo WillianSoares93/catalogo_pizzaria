@@ -1,3 +1,4 @@
+teste
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -991,7 +992,8 @@
             const sizes = [
                 { slices: 4, label: '4 Fatias', priceKey: 'price4Slices' },
                 { slices: 6, label: '6 Fatias', priceKey: 'price6Slices' },
-                { slices: 8, label: '8 Fatias', priceKey: 'basePrice' } 
+                { slices: 8, label: '8 Fatias', priceKey: 'basePrice' },
+                { slices: 10, label: '10 Fatias', priceKey: 'price10Slices' }
             ];
             
             function toggleOrderSidebar() {
@@ -1118,6 +1120,7 @@
                         case 'Preço 8 fatias': return 'basePrice';
                         case 'Preço 6 fatias': return 'price6Slices';
                         case 'Preço 4 fatias': return 'price4Slices';
+                        case 'Preço 10 fatias': return 'price10Slices';
                         case 'Categoria': return 'category';
                         case 'É Pizza? (SIM/NÃO)': return 'isPizza';
                         case 'É Montável? (SIM/NAO)': return 'isCustomizable';
@@ -1161,7 +1164,7 @@
                             if (['neighborhood', 'name', 'category', 'data'].includes(headerKey) && (value === undefined || value === null || value.trim() === '')) {
                                 value = '';
                             }
-                            if (['basePrice', 'price6Slices', 'price4Slices', 'promoPrice', 'deliveryFee', 'price'].includes(headerKey)) {
+                            if (['basePrice', 'price6Slices', 'price4Slices', 'price10Slices', 'promoPrice', 'deliveryFee', 'price'].includes(headerKey)) {
                                 const parsedValue = parseFloat(String(value).replace(',', '.'));
                                 item[headerKey] = isNaN(parsedValue) ? 0 : parsedValue;
                             } else if (headerKey === 'limit' || headerKey === 'ingredientLimit') {
@@ -2053,15 +2056,10 @@
                     editDeliveryAddressBtn.classList.add('hidden');
                 } else {
                     if (selectedAddress.bairro) {
-                        deliveryFeeDisplay.textContent = 'R$ ' + selectedAddress.deliveryFee.toFixed(2).replace('.', ',');
-                        deliveryFeeDisplay.classList.remove('hidden');
-                        informAddressBtn.classList.add('hidden');
-                        editDeliveryAddressBtn.classList.remove('hidden');
+                        const feeData = deliveryFeesData.find(fee => fee.neighborhood === selectedAddress.bairro);
+                        selectedAddress.deliveryFee = feeData ? feeData.deliveryFee : 0;
                     } else {
-                        deliveryFeeDisplay.textContent = '';
-                        deliveryFeeDisplay.classList.add('hidden');
-                        informAddressBtn.classList.remove('hidden');
-                        editDeliveryAddressBtn.classList.add('hidden');
+                        selectedAddress.deliveryFee = 0;
                     }
                 }
                 
